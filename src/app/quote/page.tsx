@@ -8,39 +8,58 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft, ArrowRight, Package, Ruler, Ship, User,
-  Check, Info, Plus, Minus
+  Check, Info, Plus, Minus, Warehouse, Truck
 } from "lucide-react";
-import { FURNITURE_PRESETS, calculateShippingQuote, type ShippingQuote } from "@/lib/shipping-calculator";
-import { formatCurrency } from "@/lib/airwallex";
+import {
+  PRODUCT_PRESETS,
+  ZONES,
+  WAREHOUSE_CITIES,
+  RMB_TO_USD,
+  calculateDoorToDoorQuote,
+  calculateWarehousePickupQuote,
+  type ShippingQuote,
+  type DeliveryType,
+} from "@/lib/shipping-calculator";
 import { toast } from "sonner";
 
-type FurnitureItem = {
+type ProductItem = {
   name: string;
   quantity: number;
   cbm: number;
   weightKG: number;
 };
 
+function formatRMB(val: number) {
+  return `¥${val.toLocaleString("en-US")}`;
+}
+
+function formatUSD(val: number) {
+  return `$${val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 export default function QuotePage() {
   const [step, setStep] = useState(1);
-  const [items, setItems] = useState<FurnitureItem[]>([]);
+  const [items, setItems] = useState<ProductItem[]>([]);
   const [customItem, setCustomItem] = useState({ name: "", lengthCm: "", widthCm: "", heightCm: "", weightKG: "" });
-  const [shippingMethod, setShippingMethod] = useState<ShippingQuote["method"]>("lcl");
-  const [addOns, setAddOns] = useState({ insurance: false, lastMile: true, whiteGlove: false });
+
+  // Delivery & destination
+  const [deliveryType, setDeliveryType] = useState<DeliveryType>("door-to-door");
+  const [selectedZone, setSelectedZone] = useState("west-2"); // default WA/OR/CA
+  const [selectedCity, setSelectedCity] = useState("la");
+
   const [contact, setContact] = useState({ name: "", email: "", phone: "" });
   const [quote, setQuote] = useState<ShippingQuote | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   const totalCBM = items.reduce((sum, i) => sum + i.cbm * i.quantity, 0);
   const totalWeight = items.reduce((sum, i) => sum + i.weightKG * i.quantity, 0);
-  // Estimate cargo value (rough: $500/CBM average)
-  const estimatedCargoValue = totalCBM * 500;
+  // Calculate total volumetric weight from CBM (CBM * 1e6 cm³ / 6000)
+  const totalVolumetricKG = (totalCBM * 1_000_000) / 6000;
 
-  const addPresetItem = (preset: typeof FURNITURE_PRESETS[0]) => {
+  const addPresetItem = (preset: (typeof PRODUCT_PRESETS)[0]) => {
     const existing = items.find((i) => i.name === preset.name);
     if (existing) {
       setItems(items.map((i) => i.name === preset.name ? { ...i, quantity: i.quantity + 1 } : i));
@@ -76,8 +95,11 @@ export default function QuotePage() {
   };
 
   const calculateQuote = () => {
-    const q = calculateShippingQuote(shippingMethod, totalCBM, totalWeight, estimatedCargoValue, addOns.insurance, addOns.lastMile);
-    setQuote(q);
+    if (deliveryType === "door-to-door") {
+      setQuote(calculateDoorToDoorQuote(selectedZone, totalWeight, totalVolumetricKG));
+    } else {
+      setQuote(calculateWarehousePickupQuote(selectedCity, totalWeight, totalVolumetricKG));
+    }
   };
 
   const handleSubmit = async () => {
@@ -92,7 +114,7 @@ export default function QuotePage() {
   const canProceed = () => {
     switch (step) {
       case 1: return items.length > 0;
-      case 2: return totalCBM > 0;
+      case 2: return true;
       case 3: return true;
       case 4: return contact.name && contact.email;
       default: return false;
@@ -111,7 +133,7 @@ export default function QuotePage() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-3xl text-center">
             <Badge className="mb-4 bg-teal/20 text-teal border-teal/30">Free Estimate</Badge>
             <h1 className="text-3xl font-bold sm:text-4xl">Shipping Quote Calculator</h1>
-            <p className="mt-3 text-slate-300">Get an instant estimate in under 2 minutes</p>
+            <p className="mt-3 text-slate-300">Get an instant estimate for shipping from China to the USA</p>
           </motion.div>
         </div>
       </section>
@@ -120,28 +142,36 @@ export default function QuotePage() {
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           {/* Progress Bar */}
           <div className="mb-10 flex items-center justify-center gap-2">
-            {[1, 2, 3, 4].map((s) => (
-              <div key={s} className="flex items-center gap-2">
-                <div className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition-all ${
-                  s <= step ? "bg-teal text-white" : "bg-muted text-muted-foreground"
-                }`}>
-                  {s < step ? <Check className="h-5 w-5" /> : s}
+            {[
+              { n: 1, label: "Items" },
+              { n: 2, label: "Destination" },
+              { n: 3, label: "Summary" },
+              { n: 4, label: "Quote" },
+            ].map((s) => (
+              <div key={s.n} className="flex items-center gap-2">
+                <div className="flex flex-col items-center">
+                  <div className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition-all ${
+                    s.n <= step ? "bg-teal text-white" : "bg-muted text-muted-foreground"
+                  }`}>
+                    {s.n < step ? <Check className="h-5 w-5" /> : s.n}
+                  </div>
+                  <span className="text-xs mt-1 text-muted-foreground hidden sm:block">{s.label}</span>
                 </div>
-                {s < 4 && <div className={`h-0.5 w-12 sm:w-20 transition-all ${s < step ? "bg-teal" : "bg-muted"}`} />}
+                {s.n < 4 && <div className={`h-0.5 w-8 sm:w-16 transition-all ${s.n < step ? "bg-teal" : "bg-muted"}`} />}
               </div>
             ))}
           </div>
 
           <AnimatePresence mode="wait">
-            {/* Step 1: Select Items */}
+            {/* ═══ Step 1: Select Items ═══ */}
             {step === 1 && (
               <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                 <h2 className="text-2xl font-bold mb-2">What are you shipping?</h2>
-                <p className="text-muted-foreground mb-6">Select furniture items or add custom pieces.</p>
+                <p className="text-muted-foreground mb-6">Select product presets or add custom items with dimensions.</p>
 
-                {/* Preset Items Grid */}
+                {/* Preset Grid */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-                  {FURNITURE_PRESETS.map((preset) => (
+                  {PRODUCT_PRESETS.map((preset) => (
                     <button
                       key={preset.name}
                       onClick={() => addPresetItem(preset)}
@@ -149,7 +179,7 @@ export default function QuotePage() {
                     >
                       <span className="text-2xl">{preset.icon}</span>
                       <p className="mt-1 text-xs font-medium leading-tight">{preset.name}</p>
-                      <p className="text-xs text-muted-foreground">{preset.cbm} CBM</p>
+                      <p className="text-xs text-muted-foreground">{preset.weightKG} kg</p>
                     </button>
                   ))}
                 </div>
@@ -190,11 +220,92 @@ export default function QuotePage() {
               </motion.div>
             )}
 
-            {/* Step 2: Summary & Review */}
+            {/* ═══ Step 2: Delivery Type & Destination ═══ */}
             {step === 2 && (
               <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <h2 className="text-2xl font-bold mb-2">Choose Delivery Type & Destination</h2>
+                <p className="text-muted-foreground mb-6">Select how you&apos;d like to receive your shipment in the USA.</p>
+
+                {/* Delivery Type Toggle */}
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                  <button
+                    onClick={() => setDeliveryType("door-to-door")}
+                    className={`flex flex-col items-center gap-2 rounded-xl border-2 p-6 transition-all ${
+                      deliveryType === "door-to-door"
+                        ? "border-teal bg-teal/5 shadow-md"
+                        : "border-border/50 hover:border-teal/30"
+                    }`}
+                  >
+                    <Truck className={`h-8 w-8 ${deliveryType === "door-to-door" ? "text-teal" : "text-muted-foreground"}`} />
+                    <p className="font-semibold">Door-to-Door</p>
+                    <p className="text-xs text-muted-foreground text-center">Delivered to your address anywhere in the USA</p>
+                  </button>
+                  <button
+                    onClick={() => setDeliveryType("warehouse-pickup")}
+                    className={`flex flex-col items-center gap-2 rounded-xl border-2 p-6 transition-all ${
+                      deliveryType === "warehouse-pickup"
+                        ? "border-teal bg-teal/5 shadow-md"
+                        : "border-border/50 hover:border-teal/30"
+                    }`}
+                  >
+                    <Warehouse className={`h-8 w-8 ${deliveryType === "warehouse-pickup" ? "text-teal" : "text-muted-foreground"}`} />
+                    <p className="font-semibold">Warehouse Pickup</p>
+                    <p className="text-xs text-muted-foreground text-center">Pick up from a US warehouse (lower rates)</p>
+                  </button>
+                </div>
+
+                {/* Zone / City Selection */}
+                {deliveryType === "door-to-door" ? (
+                  <div>
+                    <h3 className="font-medium mb-3">Select Destination Zone</h3>
+                    <RadioGroup value={selectedZone} onValueChange={setSelectedZone} className="space-y-2">
+                      {ZONES.map((zone) => (
+                        <label
+                          key={zone.id}
+                          className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all ${
+                            selectedZone === zone.id ? "border-teal bg-teal/5" : "border-border/50 hover:border-teal/30"
+                          }`}
+                        >
+                          <RadioGroupItem value={zone.id} />
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">{zone.label}</p>
+                            <p className="text-xs text-muted-foreground">
+                              🕐 {zone.transitDays} · Last-mile surcharge: {formatRMB(zone.lastMileSurchargeRMB)} (~{formatUSD(zone.lastMileSurchargeRMB / RMB_TO_USD)})
+                            </p>
+                          </div>
+                        </label>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                ) : (
+                  <div>
+                    <h3 className="font-medium mb-3">Select Pickup City</h3>
+                    <RadioGroup value={selectedCity} onValueChange={setSelectedCity} className="space-y-2">
+                      {WAREHOUSE_CITIES.map((city) => (
+                        <label
+                          key={city.id}
+                          className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all ${
+                            selectedCity === city.id ? "border-teal bg-teal/5" : "border-border/50 hover:border-teal/30"
+                          }`}
+                        >
+                          <RadioGroupItem value={city.id} />
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">{city.label}</p>
+                            <p className="text-xs text-muted-foreground">{city.labelZh}</p>
+                          </div>
+                        </label>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* ═══ Step 3: Cargo Summary ═══ */}
+            {step === 3 && (
+              <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                 <h2 className="text-2xl font-bold mb-2">Cargo Summary</h2>
-                <p className="text-muted-foreground mb-6">Review your items and total dimensions.</p>
+                <p className="text-muted-foreground mb-6">Review your items, weights, and destination before getting your quote.</p>
 
                 <Card>
                   <CardContent className="pt-6 space-y-4">
@@ -205,20 +316,29 @@ export default function QuotePage() {
                       </div>
                     ))}
                     <Separator />
-                    <div className="flex justify-between font-bold">
-                      <span>Total</span>
-                      <span className="text-teal">{totalCBM.toFixed(1)} CBM · {totalWeight} kg</span>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="space-y-2">
+                        <div className="flex justify-between"><span className="text-muted-foreground">Total CBM</span><span className="font-medium">{totalCBM.toFixed(1)} CBM</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Actual Weight</span><span className="font-medium">{totalWeight} kg</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Volumetric Weight</span><span className="font-medium">{totalVolumetricKG.toFixed(1)} kg</span></div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Chargeable</span>
+                          <span className="font-bold text-teal">{Math.max(totalWeight, totalVolumetricKG).toFixed(1)} kg</span>
+                        </div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span className="font-medium">{deliveryType === "door-to-door" ? "Door-to-Door" : "Warehouse Pickup"}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Destination</span><span className="font-medium text-teal">{
+                          deliveryType === "door-to-door"
+                            ? ZONES.find((z) => z.id === selectedZone)?.label
+                            : WAREHOUSE_CITIES.find((c) => c.id === selectedCity)?.label
+                        }</span></div>
+                      </div>
                     </div>
                     <div className="rounded-lg bg-teal/5 p-4 text-sm">
-                      <p className="flex items-center gap-2 font-medium text-teal">
+                      <p className="flex items-center gap-2 text-teal">
                         <Info className="h-4 w-4" />
-                        {totalCBM <= 15
-                          ? "Your cargo fits well in a shared container (LCL)."
-                          : totalCBM <= 28
-                          ? "Consider a 20ft Full Container (FCL) for better value."
-                          : totalCBM <= 58
-                          ? "A 40ft Container would be the best value for this volume."
-                          : "A 40ft High Cube Container is recommended for this volume."}
+                        Chargeable weight = max(actual, volumetric). Volumetric = (L×W×H cm) ÷ 6000.
                       </p>
                     </div>
                   </CardContent>
@@ -226,83 +346,55 @@ export default function QuotePage() {
               </motion.div>
             )}
 
-            {/* Step 3: Shipping Method */}
-            {step === 3 && (
-              <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h2 className="text-2xl font-bold mb-2">Choose Shipping Method</h2>
-                <p className="text-muted-foreground mb-6">Select your preferred shipping option and add-ons.</p>
-
-                <RadioGroup value={shippingMethod} onValueChange={(v) => setShippingMethod(v as ShippingQuote["method"])} className="space-y-3">
-                  {[
-                    { value: "lcl", label: "LCL Sea Freight", desc: "Shared container · Pay per CBM", transit: "25-35 days", price: `~${formatCurrency(totalCBM * 200)}/est.` },
-                    { value: "fcl-20", label: "20ft Container (FCL)", desc: "Dedicated 28 CBM container", transit: "20-30 days", price: "$2,500-$4,000" },
-                    { value: "fcl-40", label: "40ft Container (FCL)", desc: "Dedicated 58 CBM container", transit: "20-30 days", price: "$4,000-$6,500" },
-                    { value: "fcl-40hq", label: "40ft High Cube (FCL)", desc: "Dedicated 68 CBM container", transit: "20-30 days", price: "$4,500-$7,000" },
-                  ].map((opt) => (
-                    <label key={opt.value} className={`flex cursor-pointer items-start gap-4 rounded-xl border p-4 transition-all ${shippingMethod === opt.value ? "border-teal bg-teal/5 shadow-sm" : "border-border/50 hover:border-teal/30"}`}>
-                      <RadioGroupItem value={opt.value} className="mt-1" />
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="font-semibold">{opt.label}</p>
-                          <span className="text-sm font-medium text-teal">{opt.price}</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{opt.desc}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">🕐 {opt.transit}</p>
-                      </div>
-                    </label>
-                  ))}
-                </RadioGroup>
-
-                {/* Add-ons */}
-                <div className="mt-8 space-y-3">
-                  <h3 className="font-medium">Add-on Services</h3>
-                  {[
-                    { key: "insurance" as const, label: "Cargo Insurance", desc: "Full replacement value coverage", price: `+${formatCurrency(estimatedCargoValue * 0.02)}` },
-                    { key: "lastMile" as const, label: "Last-Mile Delivery", desc: "Seattle metro area door delivery", price: "+$400" },
-                    { key: "whiteGlove" as const, label: "White Glove Setup", desc: "Indoor placement & assembly", price: "+$200" },
-                  ].map((addon) => (
-                    <label key={addon.key} className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 hover:bg-muted/50">
-                      <Checkbox checked={addOns[addon.key]} onCheckedChange={(checked) => setAddOns({ ...addOns, [addon.key]: !!checked })} />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{addon.label}</p>
-                        <p className="text-xs text-muted-foreground">{addon.desc}</p>
-                      </div>
-                      <span className="text-sm text-teal font-medium">{addon.price}</span>
-                    </label>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Step 4: Contact & Submit */}
+            {/* ═══ Step 4: Quote Result & Contact ═══ */}
             {step === 4 && (
               <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                 {!submitted ? (
                   <>
-                    <h2 className="text-2xl font-bold mb-2">Your Estimated Quote</h2>
-                    <p className="text-muted-foreground mb-6">Review your quote and submit to receive a detailed proposal.</p>
+                    <h2 className="text-2xl font-bold mb-2">Your Shipping Quote</h2>
+                    <p className="text-muted-foreground mb-6">Review your estimated cost and submit for a detailed proposal.</p>
 
                     {quote && (
                       <Card className="mb-8 border-teal/30">
                         <CardHeader>
                           <CardTitle className="flex items-center gap-2">
-                            <Ship className="h-5 w-5 text-teal" /> Quote Estimate
+                            <Ship className="h-5 w-5 text-teal" /> Shipping Estimate
                           </CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-3">
-                          <div className="flex justify-between text-sm"><span>Base Freight ({quote.method.toUpperCase()})</span><span>{formatCurrency(quote.baseFreight)}</span></div>
-                          <div className="flex justify-between text-sm"><span>Export Clearance</span><span>{formatCurrency(quote.exportClearance)}</span></div>
-                          <div className="flex justify-between text-sm"><span>Destination Port Fees</span><span>{formatCurrency(quote.destinationFees)}</span></div>
-                          <div className="flex justify-between text-sm"><span>Customs Duty (est. 3%)</span><span>{formatCurrency(quote.customs)}</span></div>
-                          {quote.lastMile > 0 && <div className="flex justify-between text-sm"><span>Last-Mile Delivery</span><span>{formatCurrency(quote.lastMile)}</span></div>}
-                          {quote.insurance > 0 && <div className="flex justify-between text-sm"><span>Cargo Insurance</span><span>{formatCurrency(quote.insurance)}</span></div>}
-                          <Separator />
-                          <div className="flex justify-between text-lg font-bold">
-                            <span>Estimated Total</span>
-                            <span className="text-teal">{formatCurrency(quote.total)}</span>
+                        <CardContent className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-3 text-sm">
+                              <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span className="font-medium">{quote.deliveryType === "door-to-door" ? "Door-to-Door" : "Warehouse Pickup"}</span></div>
+                              <div className="flex justify-between"><span className="text-muted-foreground">Destination</span><span className="font-medium">{quote.destinationLabel}</span></div>
+                              <div className="flex justify-between"><span className="text-muted-foreground">Weight Tier</span><span className="font-medium">{quote.tierLabel}</span></div>
+                              <div className="flex justify-between"><span className="text-muted-foreground">Chargeable Weight</span><span className="font-medium">{quote.chargeableWeightKG} kg</span></div>
+                            </div>
+                            <div className="space-y-3 text-sm">
+                              <div className="flex justify-between"><span className="text-muted-foreground">Rate</span><span className="font-medium">{formatRMB(quote.ratePerKG_RMB)}/kg (~{formatUSD(quote.ratePerKG_RMB / RMB_TO_USD)}/kg)</span></div>
+                              <div className="flex justify-between"><span className="text-muted-foreground">Freight</span><span className="font-medium">{formatRMB(quote.freightRMB)}</span></div>
+                              {quote.lastMileSurchargeRMB > 0 && (
+                                <div className="flex justify-between"><span className="text-muted-foreground">Last-Mile Surcharge</span><span className="font-medium">{formatRMB(quote.lastMileSurchargeRMB)}</span></div>
+                              )}
+                              <div className="flex justify-between"><span className="text-muted-foreground">Transit</span><span className="font-medium">🕐 {quote.transitDays}</span></div>
+                            </div>
                           </div>
-                          <p className="text-xs text-muted-foreground">🕐 Estimated transit: {quote.transitDays}</p>
-                          <p className="text-xs text-muted-foreground">* This is an estimate. Final quote may vary based on actual dimensions and current rates.</p>
+
+                          <Separator />
+
+                          <div className="flex justify-between items-end">
+                            <div>
+                              <p className="text-sm text-muted-foreground">Estimated Total</p>
+                              <p className="text-2xl font-bold text-teal">{formatUSD(quote.totalUSD)}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm text-muted-foreground">In RMB</p>
+                              <p className="text-lg font-semibold text-gold">{formatRMB(quote.totalRMB)}</p>
+                            </div>
+                          </div>
+
+                          <p className="text-xs text-muted-foreground">
+                            * Estimate based on current rates (1 USD ≈ {RMB_TO_USD} RMB). Final quote may vary based on actual dimensions, weight verification, and current exchange rates.
+                          </p>
                         </CardContent>
                       </Card>
                     )}
@@ -332,9 +424,10 @@ export default function QuotePage() {
                       Thank you, {contact.name}! We&apos;ll send a detailed quote to <strong>{contact.email}</strong> within 24 hours.
                     </p>
                     {quote && (
-                      <p className="text-lg font-semibold text-teal">
-                        Estimated: {formatCurrency(quote.total)}
-                      </p>
+                      <div className="space-y-1">
+                        <p className="text-lg font-semibold text-teal">Estimated: {formatUSD(quote.totalUSD)}</p>
+                        <p className="text-sm text-gold">{formatRMB(quote.totalRMB)}</p>
+                      </div>
                     )}
                   </motion.div>
                 )}
@@ -342,7 +435,7 @@ export default function QuotePage() {
             )}
           </AnimatePresence>
 
-          {/* Navigation Buttons */}
+          {/* Navigation */}
           {!submitted && (
             <div className="mt-8 flex justify-between">
               <Button variant="outline" onClick={() => setStep(step - 1)} disabled={step === 1}>
@@ -356,14 +449,15 @@ export default function QuotePage() {
             </div>
           )}
 
-          {/* Live Summary Sidebar (Desktop) */}
+          {/* Live Summary */}
           {items.length > 0 && !submitted && (
             <div className="mt-8 rounded-xl border bg-muted/50 p-4">
               <p className="text-sm font-medium mb-2">📦 Cargo Summary</p>
-              <div className="grid grid-cols-3 gap-4 text-center text-sm">
+              <div className="grid grid-cols-4 gap-4 text-center text-sm">
                 <div><p className="text-2xl font-bold text-navy">{items.reduce((s, i) => s + i.quantity, 0)}</p><p className="text-muted-foreground">Items</p></div>
-                <div><p className="text-2xl font-bold text-teal">{totalCBM.toFixed(1)}</p><p className="text-muted-foreground">Total CBM</p></div>
-                <div><p className="text-2xl font-bold text-gold">{totalWeight}</p><p className="text-muted-foreground">Total kg</p></div>
+                <div><p className="text-2xl font-bold text-teal">{totalCBM.toFixed(1)}</p><p className="text-muted-foreground">CBM</p></div>
+                <div><p className="text-2xl font-bold text-gold">{totalWeight}</p><p className="text-muted-foreground">Actual kg</p></div>
+                <div><p className="text-2xl font-bold text-navy">{totalVolumetricKG.toFixed(0)}</p><p className="text-muted-foreground">Vol. kg</p></div>
               </div>
             </div>
           )}

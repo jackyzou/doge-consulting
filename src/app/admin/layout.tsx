@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, Package, Settings, Ship, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, FileText, Package, Settings, ArrowLeft } from "lucide-react";
+import { DogeLogo } from "@/components/ui/doge-logo";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -22,7 +23,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="flex h-full flex-col">
           <div className="border-b p-4">
             <Link href="/admin" className="flex items-center gap-2 text-lg font-bold">
-              <Ship className="h-6 w-6 text-teal" />
+              <DogeLogo size={28} />
               <span>Doge Admin</span>
             </Link>
           </div>

@@ -23,7 +23,7 @@ const testimonials = [
     name: "David Chen",
     location: "Redmond, WA",
     rating: 5,
-    text: "The tracking system kept me updated every step. When my wardrobe arrived, it was perfectly packed with zero damage. Will definitely use them again for my office furniture.",
+    text: "The tracking system kept me updated every step. When my wardrobe arrived, it was perfectly packed with zero damage. Will definitely use them again for my office setup.",
     items: "Bedroom Set + Custom Wardrobe",
   },
 ];
@@ -42,7 +42,7 @@ export function Testimonials() {
             What Our <span className="text-teal">Customers</span> Say
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            Join hundreds of happy homeowners who saved big on premium furniture.
+            Join hundreds of happy customers who saved big on premium products.
           </p>
         </motion.div>
 

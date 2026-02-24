@@ -15,8 +15,8 @@ const faqs = [
     a: "Sea freight typically takes 20-35 days depending on the shipping method. With sourcing, inspection, packing, and last-mile delivery, the total door-to-door timeline is approximately 5-8 weeks.",
   },
   {
-    q: "What furniture can you source from Foshan?",
-    a: "Foshan is China's largest furniture manufacturing hub. We can source sofas, dining tables (including marble), bed frames, wardrobes, TV consoles, office desks, shelving, and custom pieces. From modern minimalist to traditional Chinese styles.",
+    q: "What products can you source from China?",
+    a: "China is the world's manufacturing powerhouse. We can source furniture, electronics, home goods, textiles, industrial equipment, and custom products. From Foshan furniture to Shenzhen electronics and Yiwu small commodities.",
   },
   {
     q: "How much can I save compared to buying locally?",

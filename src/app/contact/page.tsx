@@ -65,7 +65,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <Label htmlFor="message">Message</Label>
-                  <Textarea id="message" placeholder="Tell us about your furniture shipping needs..." rows={5} required className="mt-1" />
+                  <Textarea id="message" placeholder="Tell us about your shipping needs..." rows={5} required className="mt-1" />
                 </div>
                 <Button type="submit" disabled={sending} className="w-full bg-teal text-white hover:bg-teal/90">
                   {sending ? "Sending..." : "Send Message"}
@@ -79,7 +79,7 @@ export default function ContactPage() {
               <h2 className="text-2xl font-bold mb-6">Contact Information</h2>
 
               {[
-                { icon: Mail, title: "Email", value: "hello@dogeconsulting.com", subtitle: "We respond within 24 hours" },
+                { icon: Mail, title: "Email", value: "dogetech77@gmail.com", subtitle: "We respond within 24 hours" },
                 { icon: Phone, title: "Phone (US)", value: "+1 (206) 555-0188", subtitle: "Mon-Fri 9am-6pm PST" },
                 { icon: Phone, title: "Phone (HK)", value: "+852 5555 0188", subtitle: "Mon-Fri 9am-6pm HKT" },
                 { icon: MessageSquare, title: "WeChat", value: "DogeConsulting", subtitle: "Scan QR code to add us" },

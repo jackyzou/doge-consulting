@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X, Ship, Globe } from "lucide-react";
+import { Menu, X, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { DogeLogo } from "@/components/ui/doge-logo";
 
 const navLinks = [
   { href: "/", label: "Home", labelZh: "首页" },
@@ -24,9 +25,7 @@ export function Header() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-navy text-white">
-            <Ship className="h-5 w-5" />
-          </div>
+          <DogeLogo size={36} />
           <span className="text-xl font-bold text-navy">
             Doge<span className="text-teal">Consulting</span>
           </span>

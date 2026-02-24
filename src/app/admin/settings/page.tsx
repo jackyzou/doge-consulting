@@ -166,7 +166,7 @@ export default function AdminSettingsPage() {
           <CardContent className="space-y-4">
             <div>
               <Label>Admin Email</Label>
-              <Input type="email" defaultValue="admin@dogeconsulting.com" className="mt-1" />
+              <Input type="email" defaultValue="dogetech77@gmail.com" className="mt-1" />
             </div>
             <div>
               <Label>WeChat ID (for alerts)</Label>

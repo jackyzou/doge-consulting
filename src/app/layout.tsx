@@ -11,10 +11,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Doge Consulting | Furniture Shipping from China to USA",
+  title: "Doge Consulting | Product Shipping from China to USA",
   description:
-    "Ship high-quality furniture from Foshan, China to Seattle, USA. Door-to-door service with competitive pricing, full customs clearance, and real-time tracking.",
-  keywords: ["furniture shipping", "China to USA", "Foshan furniture", "Seattle", "international shipping", "sea freight"],
+    "Ship high-quality products from mainland China to the USA. Door-to-door service with competitive pricing, full customs clearance, and real-time tracking.",
+  keywords: ["product shipping", "China to USA", "commodity sourcing", "international shipping", "sea freight", "Chinese manufacturing"],
 };
 
 export default function RootLayout({

@@ -15,7 +15,7 @@ export default function AboutPage() {
             <Badge className="mb-4 bg-teal/20 text-teal border-teal/30">Our Story</Badge>
             <h1 className="text-4xl font-bold sm:text-5xl">About Doge Consulting</h1>
             <p className="mt-4 text-lg text-slate-300">
-              Bridging Foshan&apos;s world-class furniture manufacturing with North American homes.
+              Bridging China&apos;s world-class manufacturing with North American businesses and consumers.
             </p>
           </motion.div>
         </div>
@@ -28,7 +28,7 @@ export default function AboutPage() {
             <div className="space-y-4 text-muted-foreground leading-relaxed">
               <p>
                 <strong className="text-foreground">Doge Consulting</strong> was founded with a simple vision: make
-                premium Chinese furniture accessible and affordable to homeowners in the Pacific Northwest.
+                premium Chinese products accessible and affordable to businesses and homeowners in the United States.
               </p>
               <p>
                 Based in <strong className="text-foreground">Hong Kong</strong> with operations in{" "}
@@ -37,15 +37,15 @@ export default function AboutPage() {
                 positioning and deep manufacturing relationships to deliver exceptional value.
               </p>
               <p>
-                Foshan, in Guangdong Province, is the furniture capital of China — home to thousands of
-                manufacturers producing everything from contemporary sofas to exquisite marble dining tables.
-                Our team has cultivated relationships with the best factories, ensuring quality, reliability,
+                China is the world&apos;s manufacturing powerhouse &mdash; from Foshan&apos;s furniture factories to
+                Shenzhen&apos;s electronics hubs and Yiwu&apos;s small commodity markets.
+                Our team has cultivated relationships with the best manufacturers, ensuring quality, reliability,
                 and factory-direct pricing for every customer.
               </p>
               <p>
                 Our Seattle-based team understands what American homeowners want. We bridge the gap between
                 world-class Chinese manufacturing and North American design preferences, handling all logistics,
-                customs, and delivery so you can focus on enjoying your new furniture.
+                customs, and delivery so you can focus on enjoying your new products.
               </p>
             </div>
           </motion.div>
@@ -97,7 +97,7 @@ export default function AboutPage() {
             {[
               { city: "Seattle, WA", flag: "🇺🇸", role: "Customer Relations & Delivery", desc: "Our US operations hub. We handle customer support, local delivery, and warehouse operations in the greater Seattle area." },
               { city: "Hong Kong SAR", flag: "🇭🇰", role: "Headquarters & Shipping", desc: "Our registered headquarters. We manage contracts, international shipping, payments, and trade operations from Hong Kong." },
-              { city: "Foshan, Guangdong", flag: "🇨🇳", role: "Sourcing & Quality Control", desc: "Our sourcing office in China's furniture capital. Direct relationships with leading manufacturers and quality inspection teams." },
+              { city: "Foshan, Guangdong", flag: "🇨🇳", role: "Sourcing & Quality Control", desc: "Our sourcing office in China's manufacturing heartland. Direct relationships with leading manufacturers and quality inspection teams." },
             ].map((loc, i) => (
               <motion.div
                 key={loc.city}

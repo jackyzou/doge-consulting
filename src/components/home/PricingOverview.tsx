@@ -48,7 +48,7 @@ const tiers = [
     highlight: false,
     transit: "5–8 weeks total",
     features: [
-      "Furniture sourcing from Foshan",
+      "Product sourcing from China",
       "Quality inspection & photos",
       "Professional packing & crating",
       "Ocean freight (LCL or FCL)",

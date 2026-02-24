@@ -9,7 +9,7 @@ const steps = [
     emoji: "🔍",
     title: "Consult & Source",
     titleZh: "咨询采购",
-    description: "Tell us what furniture you need. We source directly from Foshan's best manufacturers at factory prices.",
+    description: "Tell us what products you need. We source directly from China's best manufacturers at factory prices.",
     color: "bg-navy text-white",
   },
   {
@@ -25,7 +25,7 @@ const steps = [
     emoji: "🚢",
     title: "Ship via Hong Kong",
     titleZh: "香港发运",
-    description: "Furniture ships from China through Hong Kong to Seattle. Track your shipment every step of the way.",
+    description: "Your products ship from China through Hong Kong to the USA. Track your shipment every step of the way.",
     color: "bg-navy-light text-white",
   },
   {
@@ -52,7 +52,7 @@ export function HowItWorks() {
             How It <span className="text-teal">Works</span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            From factory floor in Foshan to your front door in Seattle — we handle everything.
+            From factory floor in China to your front door in the USA — we handle everything.
           </p>
         </motion.div>
 

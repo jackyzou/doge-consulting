@@ -201,7 +201,7 @@ export default function PaymentPage() {
                     </div>
                     <Separator />
                     <div className="space-y-2 text-sm">
-                      <div className="flex justify-between"><span className="text-muted-foreground">Furniture</span><span>{formatCurrency(order.subtotal)}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Products</span><span>{formatCurrency(order.subtotal)}</span></div>
                       <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>{formatCurrency(order.shipping)}</span></div>
                       <div className="flex justify-between"><span className="text-muted-foreground">Insurance</span><span>{formatCurrency(order.insurance)}</span></div>
                     </div>

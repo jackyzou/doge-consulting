@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Ship, Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin } from "lucide-react";
+import { DogeLogo } from "@/components/ui/doge-logo";
 
 export function Footer() {
   return (
@@ -9,15 +10,13 @@ export function Footer() {
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal text-white">
-                <Ship className="h-5 w-5" />
-              </div>
+              <DogeLogo size={36} />
               <span className="text-xl font-bold">
                 Doge<span className="text-teal">Consulting</span>
               </span>
             </div>
             <p className="text-sm text-slate-300">
-              Premium furniture shipping from Foshan, China to Seattle, USA.
+              Premium product shipping from mainland China to the USA.
               Door-to-door service with full customs clearance.
             </p>
           </div>
@@ -30,7 +29,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-slate-300">
               <li><Link href="/services" className="hover:text-white transition-colors">Sea Freight (LCL)</Link></li>
               <li><Link href="/services" className="hover:text-white transition-colors">Full Container (FCL)</Link></li>
-              <li><Link href="/services" className="hover:text-white transition-colors">Furniture Sourcing</Link></li>
+              <li><Link href="/services" className="hover:text-white transition-colors">Product Sourcing</Link></li>
               <li><Link href="/services" className="hover:text-white transition-colors">Customs Clearance</Link></li>
               <li><Link href="/services" className="hover:text-white transition-colors">Last-Mile Delivery</Link></li>
             </ul>
@@ -65,7 +64,7 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-teal" />
-                hello@dogeconsulting.com
+                dogetech77@gmail.com
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-teal" />

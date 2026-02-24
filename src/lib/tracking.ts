@@ -2,7 +2,7 @@
 
 export type ShipmentStatus =
   | "order_confirmed"
-  | "furniture_sourced"
+  | "items_sourced"
   | "quality_inspected"
   | "packed_foshan"
   | "departed_china"
@@ -40,14 +40,14 @@ export interface Shipment {
 export function getDefaultMilestones(currentStatus?: ShipmentStatus): ShipmentMilestone[] {
   const statuses: { status: ShipmentStatus; label: string; labelZh: string; description: string }[] = [
     { status: "order_confirmed", label: "Order Confirmed", labelZh: "订单确认", description: "Your order has been confirmed and payment received." },
-    { status: "furniture_sourced", label: "Furniture Sourced", labelZh: "家具采购", description: "Items have been sourced from Foshan manufacturers." },
+    { status: "items_sourced", label: "Items Sourced", labelZh: "产品采购", description: "Items have been sourced from Chinese manufacturers." },
     { status: "quality_inspected", label: "Quality Inspected", labelZh: "质量检验", description: "All items passed quality inspection." },
     { status: "packed_foshan", label: "Packed & Loaded", labelZh: "包装装柜", description: "Items packed and loaded at Foshan warehouse." },
     { status: "departed_china", label: "Departed China", labelZh: "离开中国", description: "Shipment departed from Chinese port." },
     { status: "in_transit", label: "In Transit", labelZh: "运输中", description: "Currently on the water en route to Seattle." },
     { status: "arrived_seattle", label: "Arrived Seattle", labelZh: "到达西雅图", description: "Arrived at Port of Seattle / Tacoma." },
     { status: "customs_cleared", label: "Customs Cleared", labelZh: "清关完成", description: "US customs clearance completed." },
-    { status: "out_for_delivery", label: "Out for Delivery", labelZh: "派送中", description: "Your furniture is on the way!" },
+    { status: "out_for_delivery", label: "Out for Delivery", labelZh: "派送中", description: "Your shipment is on the way!" },
     { status: "delivered", label: "Delivered", labelZh: "已送达", description: "Successfully delivered to your address." },
   ];
 

@@ -11,7 +11,7 @@ import { getShipmentByTrackingId, type Shipment } from "@/lib/tracking";
 
 const statusIcons: Record<string, React.ElementType> = {
   order_confirmed: Check,
-  furniture_sourced: Package,
+  items_sourced: Package,
   quality_inspected: Search,
   packed_foshan: Package,
   departed_china: Ship,

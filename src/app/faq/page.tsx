@@ -15,18 +15,18 @@ const faqCategories = [
     faqs: [
       { q: "How long does shipping take from China to Seattle?", a: "Sea freight typically takes 20-35 days depending on the shipping method (LCL vs FCL). With sourcing, inspection, packing, and last-mile delivery, the total door-to-door timeline is approximately 5-8 weeks." },
       { q: "What is the difference between LCL and FCL?", a: "LCL (Less than Container Load) means your cargo shares a container with other shipments — you pay per cubic meter. FCL (Full Container Load) means you get a dedicated container. FCL is more cost-effective for larger shipments (generally above 15 CBM)." },
-      { q: "What container sizes are available?", a: "We offer 20ft containers (~28 CBM), 40ft containers (~58 CBM), and 40ft High Cube containers (~68 CBM). Our team will recommend the best option based on your furniture list." },
+      { q: "What container sizes are available?", a: "We offer 20ft containers (~28 CBM), 40ft containers (~58 CBM), and 40ft High Cube containers (~68 CBM). Our team will recommend the best option based on your product list." },
       { q: "Can you ship to cities other than Seattle?", a: "Currently, our primary service area is the Greater Seattle/Puget Sound region (Seattle, Bellevue, Redmond, Tacoma, Kirkland, etc.). We're expanding to Vancouver, BC and Portland, OR in 2026." },
       { q: "Do you provide tracking?", a: "Yes! Every shipment receives a unique tracking ID. You can track your shipment's progress through our website, from factory to your front door, with milestone updates at every stage." },
     ],
   },
   {
-    title: "Furniture & Sourcing",
+    title: "Products & Sourcing",
     faqs: [
-      { q: "What furniture can you source from Foshan?", a: "Foshan is China's largest furniture manufacturing hub. We can source sofas, dining tables (including marble and stone tops), bed frames, wardrobes, TV consoles, office furniture, bookshelves, and custom pieces. From modern minimalist to traditional styles." },
-      { q: "How much can I save compared to buying locally?", a: "Most customers save 40-60% compared to US retail prices, even after shipping costs. For example, a marble dining table set that costs $5,000+ in the US can be sourced and shipped for around $2,000-$2,500 total." },
-      { q: "Can I see the furniture before it ships?", a: "Yes! Our Foshan team provides detailed photos and videos of your furniture during quality inspection, before it's packed. We'll send these to you for approval before shipping." },
-      { q: "What if I receive damaged furniture?", a: "All shipments are professionally packed for ocean transport. If damage occurs, our cargo insurance (optional but recommended) covers full replacement value. We also work with manufacturers on warranty claims." },
+      { q: "What products can you source from China?", a: "China is the world's manufacturing powerhouse. We can source furniture (from Foshan), electronics (from Shenzhen), home goods, textiles, industrial equipment, small commodities (from Yiwu), and custom products. We work across multiple manufacturing hubs to find the best quality and pricing for your needs." },
+      { q: "How much can I save compared to buying locally?", a: "Most customers save 40-60% compared to US retail prices, even after shipping costs. For example, a marble dining table set that costs $5,000+ in the US can be sourced and shipped for around $2,000-$2,500 total. Electronics and home goods can see similar or even greater savings." },
+      { q: "Can I see the products before they ship?", a: "Yes! Our China team provides detailed photos and videos of your products during quality inspection, before they're packed. We'll send these to you for approval before shipping." },
+      { q: "What if I receive damaged products?", a: "All shipments are professionally packed for ocean transport. If damage occurs, our cargo insurance (optional but recommended) covers full replacement value. We also work with manufacturers on warranty claims." },
     ],
   },
   {
@@ -42,8 +42,8 @@ const faqCategories = [
     title: "Customs & Regulations",
     faqs: [
       { q: "Do I need to handle customs myself?", a: "No! We handle all customs clearance on both the China export and US import side. Our experienced customs brokers ensure smooth clearance at both ports." },
-      { q: "Are there import duties on furniture?", a: "Furniture imports to the US typically incur duties of 0-5% depending on the material and type. Our team will provide a duty estimate as part of your quote. We optimize documentation to ensure the lowest applicable rates." },
-      { q: "Is there anything that can't be shipped?", a: "Most furniture ships without issue. Items with protected woods (certain rosewood species) may require CITES permits. We'll advise you during the quoting process if any restrictions apply." },
+      { q: "Are there import duties on products from China?", a: "Import duties to the US vary by product category, typically ranging from 0-25% depending on the type and material. Our team will provide a duty estimate as part of your quote. We optimize documentation to ensure the lowest applicable rates." },
+      { q: "Is there anything that can't be shipped?", a: "Most products ship without issue. Some restricted items include hazardous materials, certain chemicals, and products with protected woods (requiring CITES permits). We'll advise you during the quoting process if any restrictions apply." },
     ],
   },
 ];
@@ -57,7 +57,7 @@ export default function FAQPage() {
             <Badge className="mb-4 bg-teal/20 text-teal border-teal/30">Help Center</Badge>
             <h1 className="text-4xl font-bold sm:text-5xl">Frequently Asked Questions</h1>
             <p className="mt-4 text-lg text-slate-300">
-              Everything you need to know about shipping furniture from China to the US.
+              Everything you need to know about shipping products from China to the US.
             </p>
           </motion.div>
         </div>

@@ -8,9 +8,9 @@ import Link from "next/link";
 const services = [
   {
     icon: Search,
-    title: "Furniture Sourcing",
+    title: "Product Sourcing",
     description:
-      "Access Foshan's vast furniture manufacturing hub. We connect you with top factories for sofas, dining sets, beds, marble tables, and more.",
+      "Access mainland China's vast manufacturing hubs. We connect you with top factories for electronics, furniture, home goods, textiles, and more.",
     color: "text-navy",
     bg: "bg-navy/5",
   },
@@ -18,7 +18,7 @@ const services = [
     icon: Package,
     title: "Sea Freight (LCL)",
     description:
-      "Perfect for smaller shipments. Share container space and pay only for what you use. Starting from $150/CBM.",
+      "Perfect for smaller shipments. Share container space and pay only for what you use. Competitive per-KG rates.",
     color: "text-teal",
     bg: "bg-teal/5",
   },
@@ -50,7 +50,7 @@ const services = [
     icon: Shield,
     title: "Cargo Insurance",
     description:
-      "Optional comprehensive cargo insurance covering damage, loss, and delays. Peace of mind for your valuable furniture.",
+      "Optional comprehensive cargo insurance covering damage, loss, and delays. Peace of mind for your valuable shipments.",
     color: "text-navy",
     bg: "bg-navy/5",
   },
@@ -70,7 +70,7 @@ export function ServicesOverview() {
             Our <span className="text-teal">Services</span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            End-to-end furniture shipping solutions, from factory floor to your front door.
+            End-to-end shipping solutions, from factory floor to your front door.
           </p>
         </motion.div>
 

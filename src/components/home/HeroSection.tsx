@@ -28,20 +28,20 @@ export function HeroSection() {
           >
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm backdrop-blur-sm">
               <span className="h-2 w-2 rounded-full bg-teal animate-pulse" />
-              Now shipping Foshan → Seattle
+              Now shipping China → USA
             </div>
 
             <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-              Premium Furniture,{" "}
+              Premium Products,{" "}
               <span className="text-teal">Shipped</span>{" "}
               <span className="text-gold">Direct</span>{" "}
               to Your Door
             </h1>
 
             <p className="max-w-lg text-lg text-slate-300">
-              Source high-quality furniture from Foshan, China and ship it directly
-              to Seattle at up to <strong className="text-white">60% less</strong> than
-              US retail. Full customs clearance, door-to-door delivery.
+              Source high-quality products from mainland China and ship them directly
+              to the USA at up to <strong className="text-white">60% less</strong> than
+              retail. Full customs clearance, door-to-door delivery.
             </p>
 
             <div className="flex flex-col gap-4 sm:flex-row">
@@ -58,7 +58,7 @@ export function HeroSection() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-white/30 text-white hover:bg-white/10 text-base"
+                  className="border-white/30 bg-transparent text-white hover:bg-white/10 text-base"
                 >
                   View Services
                 </Button>
@@ -83,7 +83,7 @@ export function HeroSection() {
                       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gold/20 text-3xl">
                         🏭
                       </div>
-                      <p className="text-sm font-medium">Foshan</p>
+                      <p className="text-sm font-medium">China</p>
                       <p className="text-xs text-slate-400">Factory Direct</p>
                     </div>
                     <div className="flex-1 border-t border-dashed border-teal/50 mx-4 relative">
@@ -103,7 +103,7 @@ export function HeroSection() {
                       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-teal/20 text-3xl">
                         🏠
                       </div>
-                      <p className="text-sm font-medium">Seattle</p>
+                      <p className="text-sm font-medium">USA</p>
                       <p className="text-xs text-slate-400">Your Door</p>
                     </div>
                   </div>

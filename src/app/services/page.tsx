@@ -13,22 +13,22 @@ import Link from "next/link";
 const services = [
   {
     icon: Search,
-    title: "Furniture Sourcing",
-    description: "We connect you directly with Foshan's top furniture manufacturers. From modern minimalist designs to traditional Chinese craftsmanship, we source exactly what you need at factory-direct prices.",
+    title: "Product Sourcing",
+    description: "We connect you directly with China's top manufacturers across Foshan, Shenzhen, Yiwu, and more. From furniture and electronics to home goods and industrial equipment, we source exactly what you need at factory-direct prices.",
     features: ["Factory-direct pricing", "Quality verification", "Photo/video updates", "Sample ordering available"],
     color: "text-navy", bg: "bg-navy/5",
   },
   {
     icon: Package,
     title: "LCL Sea Freight",
-    description: "Share container space with other shipments and pay only for the cubic meters you use. Ideal for smaller furniture orders under 15 CBM.",
+    description: "Share container space with other shipments and pay only for the cubic meters you use. Ideal for smaller orders under 15 CBM.",
     features: ["From $150/CBM", "25-35 day transit", "Consolidation service", "Flexible scheduling"],
     color: "text-teal", bg: "bg-teal/5",
   },
   {
     icon: Container,
     title: "FCL Sea Freight",
-    description: "Dedicated containers for larger shipments. Choose from 20ft, 40ft, or 40ft High Cube containers. The most cost-effective option for furnishing an entire home.",
+    description: "Dedicated containers for larger shipments. Choose from 20ft, 40ft, or 40ft High Cube containers. The most cost-effective option for large orders.",
     features: ["From $2,500/container", "20-30 day transit", "Exclusive container", "Priority handling"],
     color: "text-navy-light", bg: "bg-navy-light/5",
   },
@@ -65,7 +65,7 @@ export default function ServicesPage() {
             <Badge className="mb-4 bg-teal/20 text-teal border-teal/30">End-to-End Solutions</Badge>
             <h1 className="text-4xl font-bold sm:text-5xl">Our Services</h1>
             <p className="mt-4 text-lg text-slate-300">
-              From sourcing to delivery, we handle every step of your furniture shipping journey.
+              From sourcing to delivery, we handle every step of your shipping journey.
             </p>
           </motion.div>
         </div>
@@ -116,7 +116,7 @@ export default function ServicesPage() {
           </h2>
           <div className="grid gap-8 md:grid-cols-3">
             {[
-              { icon: DollarSign, title: "Save Up to 60%", desc: "Factory-direct pricing from Foshan eliminates middlemen and retail markups." },
+              { icon: DollarSign, title: "Save Up to 60%", desc: "Factory-direct pricing from China eliminates middlemen and retail markups." },
               { icon: Clock, title: "5-8 Week Delivery", desc: "Efficient logistics chain from factory to your door in the Seattle area." },
               { icon: Globe, title: "Bilingual Support", desc: "Our team speaks English and Chinese, bridging the gap between you and manufacturers." },
             ].map((item, i) => (
@@ -143,7 +143,7 @@ export default function ServicesPage() {
       <section className="gradient-hero py-16 text-center text-white">
         <div className="mx-auto max-w-2xl px-4">
           <h2 className="text-3xl font-bold">Ready to Get Started?</h2>
-          <p className="mt-4 text-slate-300">Get a free quote tailored to your furniture shipping needs.</p>
+          <p className="mt-4 text-slate-300">Get a free quote tailored to your shipping needs.</p>
           <Link href="/quote">
             <Button size="lg" className="mt-6 bg-teal text-white hover:bg-teal/90">
               Get Free Quote <ArrowRight className="ml-2 h-5 w-5" />

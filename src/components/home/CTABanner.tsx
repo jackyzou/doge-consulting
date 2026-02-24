@@ -16,7 +16,7 @@ export function CTABanner() {
           className="space-y-6"
         >
           <h2 className="text-3xl font-bold sm:text-4xl">
-            Ready to Ship Your Dream Furniture?
+            Ready to Ship Your Products from China?
           </h2>
           <p className="mx-auto max-w-2xl text-lg text-slate-300">
             Get a free, no-obligation quote in under 2 minutes. Our team will
@@ -29,7 +29,7 @@ export function CTABanner() {
               </Button>
             </Link>
             <Link href="/contact">
-              <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 text-base">
+              <Button size="lg" variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10 text-base">
                 Talk to Our Team
               </Button>
             </Link>
