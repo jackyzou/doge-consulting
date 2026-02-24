@@ -1,8 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { DogeLogo } from "@/components/ui/doge-logo";
+import { useTranslation } from "@/lib/i18n";
 
 export function Footer() {
+  const { t } = useTranslation();
+
   return (
     <footer className="border-t bg-navy text-white">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -16,51 +21,50 @@ export function Footer() {
               </span>
             </div>
             <p className="text-sm text-slate-300">
-              Premium product shipping from mainland China to the USA.
-              Door-to-door service with full customs clearance.
+              {t("footer.description")}
             </p>
           </div>
 
           {/* Services */}
           <div>
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-teal">
-              Services
+              {t("footer.servicesTitle")}
             </h3>
             <ul className="space-y-2 text-sm text-slate-300">
-              <li><Link href="/services" className="hover:text-white transition-colors">Sea Freight (LCL)</Link></li>
-              <li><Link href="/services" className="hover:text-white transition-colors">Full Container (FCL)</Link></li>
-              <li><Link href="/services" className="hover:text-white transition-colors">Product Sourcing</Link></li>
-              <li><Link href="/services" className="hover:text-white transition-colors">Customs Clearance</Link></li>
-              <li><Link href="/services" className="hover:text-white transition-colors">Last-Mile Delivery</Link></li>
+              <li><Link href="/services" className="hover:text-white transition-colors">{t("footer.seaFreight")}</Link></li>
+              <li><Link href="/services" className="hover:text-white transition-colors">{t("footer.fullContainer")}</Link></li>
+              <li><Link href="/services" className="hover:text-white transition-colors">{t("footer.productSourcing")}</Link></li>
+              <li><Link href="/services" className="hover:text-white transition-colors">{t("footer.customsClearance")}</Link></li>
+              <li><Link href="/services" className="hover:text-white transition-colors">{t("footer.lastMile")}</Link></li>
             </ul>
           </div>
 
           {/* Company */}
           <div>
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-teal">
-              Company
+              {t("footer.companyTitle")}
             </h3>
             <ul className="space-y-2 text-sm text-slate-300">
-              <li><Link href="/about" className="hover:text-white transition-colors">About Us</Link></li>
-              <li><Link href="/faq" className="hover:text-white transition-colors">FAQ</Link></li>
-              <li><Link href="/contact" className="hover:text-white transition-colors">Contact</Link></li>
-              <li><Link href="/quote" className="hover:text-white transition-colors">Get a Quote</Link></li>
+              <li><Link href="/about" className="hover:text-white transition-colors">{t("footer.aboutUs")}</Link></li>
+              <li><Link href="/faq" className="hover:text-white transition-colors">{t("footer.faqLink")}</Link></li>
+              <li><Link href="/contact" className="hover:text-white transition-colors">{t("footer.contactLink")}</Link></li>
+              <li><Link href="/quote" className="hover:text-white transition-colors">{t("footer.getQuote")}</Link></li>
             </ul>
           </div>
 
           {/* Contact */}
           <div>
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-teal">
-              Contact Us
+              {t("footer.contactTitle")}
             </h3>
             <ul className="space-y-3 text-sm text-slate-300">
               <li className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-teal" />
-                Seattle, WA, USA
+                {t("footer.locationUS")}
               </li>
               <li className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-gold" />
-                Hong Kong SAR
+                {t("footer.locationHK")}
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-teal" />
@@ -75,7 +79,7 @@ export function Footer() {
         </div>
 
         <div className="mt-12 border-t border-slate-700 pt-8 text-center text-sm text-slate-400">
-          <p>© {new Date().getFullYear()} Doge Consulting Ltd. All rights reserved. | Hong Kong Registered Company</p>
+          <p>{t("footer.copyright").replace("{year}", new Date().getFullYear().toString())}</p>
         </div>
       </div>
     </footer>

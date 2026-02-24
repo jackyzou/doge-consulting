@@ -4,8 +4,11 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Ship, Package, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n";
 
 export function HeroSection() {
+  const { t } = useTranslation();
+
   return (
     <section className="relative overflow-hidden gradient-hero text-white">
       {/* Floating decorative elements */}
@@ -28,20 +31,20 @@ export function HeroSection() {
           >
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm backdrop-blur-sm">
               <span className="h-2 w-2 rounded-full bg-teal animate-pulse" />
-              Now shipping China → USA
+              {t("hero.badge")}
             </div>
 
             <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-              Premium Products,{" "}
-              <span className="text-teal">Shipped</span>{" "}
-              <span className="text-gold">Direct</span>{" "}
-              to Your Door
+              {t("hero.title1")}{" "}
+              <span className="text-teal">{t("hero.titleShipped")}</span>{" "}
+              <span className="text-gold">{t("hero.titleDirect")}</span>{" "}
+              {t("hero.title2")}
             </h1>
 
             <p className="max-w-lg text-lg text-slate-300">
-              Source high-quality products from mainland China and ship them directly
-              to the USA at up to <strong className="text-white">60% less</strong> than
-              retail. Full customs clearance, door-to-door delivery.
+              {t("hero.subtitle")}{" "}
+              <strong className="text-white">{t("hero.subtitleBold")}</strong>{" "}
+              {t("hero.subtitleEnd")}
             </p>
 
             <div className="flex flex-col gap-4 sm:flex-row">
@@ -50,7 +53,7 @@ export function HeroSection() {
                   size="lg"
                   className="bg-teal text-white hover:bg-teal/90 text-base px-8"
                 >
-                  Get Free Quote
+                  {t("hero.cta1")}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
@@ -60,7 +63,7 @@ export function HeroSection() {
                   variant="outline"
                   className="border-white/30 bg-transparent text-white hover:bg-white/10 text-base"
                 >
-                  View Services
+                  {t("hero.cta2")}
                 </Button>
               </Link>
             </div>
@@ -83,8 +86,8 @@ export function HeroSection() {
                       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gold/20 text-3xl">
                         🏭
                       </div>
-                      <p className="text-sm font-medium">China</p>
-                      <p className="text-xs text-slate-400">Factory Direct</p>
+                      <p className="text-sm font-medium">{t("hero.china")}</p>
+                      <p className="text-xs text-slate-400">{t("hero.chinaDesc")}</p>
                     </div>
                     <div className="flex-1 border-t border-dashed border-teal/50 mx-4 relative">
                       <Ship className="absolute -top-3 left-1/2 -translate-x-1/2 h-6 w-6 text-teal" />
@@ -93,8 +96,8 @@ export function HeroSection() {
                       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-teal/20 text-3xl">
                         🇭🇰
                       </div>
-                      <p className="text-sm font-medium">Hong Kong</p>
-                      <p className="text-xs text-slate-400">Transit Hub</p>
+                      <p className="text-sm font-medium">{t("hero.hk")}</p>
+                      <p className="text-xs text-slate-400">{t("hero.hkDesc")}</p>
                     </div>
                     <div className="flex-1 border-t border-dashed border-teal/50 mx-4 relative">
                       <Package className="absolute -top-3 left-1/2 -translate-x-1/2 h-6 w-6 text-gold" />
@@ -103,26 +106,26 @@ export function HeroSection() {
                       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-teal/20 text-3xl">
                         🏠
                       </div>
-                      <p className="text-sm font-medium">USA</p>
-                      <p className="text-xs text-slate-400">Your Door</p>
+                      <p className="text-sm font-medium">{t("hero.usa")}</p>
+                      <p className="text-xs text-slate-400">{t("hero.usaDesc")}</p>
                     </div>
                   </div>
 
                   {/* Feature tags */}
                   <div className="grid grid-cols-3 gap-3 pt-4">
                     <div className="rounded-lg bg-white/5 p-3 text-center">
-                      <p className="text-2xl font-bold text-teal">5-8</p>
-                      <p className="text-xs text-slate-400">Weeks Delivery</p>
+                      <p className="text-2xl font-bold text-teal">{t("hero.weeksValue")}</p>
+                      <p className="text-xs text-slate-400">{t("hero.weeksLabel")}</p>
                     </div>
                     <div className="rounded-lg bg-white/5 p-3 text-center">
-                      <p className="text-2xl font-bold text-gold">60%</p>
-                      <p className="text-xs text-slate-400">Cost Savings</p>
+                      <p className="text-2xl font-bold text-gold">{t("hero.savingsValue")}</p>
+                      <p className="text-xs text-slate-400">{t("hero.savingsLabel")}</p>
                     </div>
                     <div className="rounded-lg bg-white/5 p-3 text-center">
                       <div className="flex justify-center">
                         <Shield className="h-6 w-6 text-teal" />
                       </div>
-                      <p className="text-xs text-slate-400 mt-1">Fully Insured</p>
+                      <p className="text-xs text-slate-400 mt-1">{t("hero.insuredLabel")}</p>
                     </div>
                   </div>
                 </div>

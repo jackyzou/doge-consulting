@@ -2,15 +2,18 @@
 
 import { motion } from "framer-motion";
 import { Package, Clock, ThumbsUp, MapPin } from "lucide-react";
-
-const stats = [
-  { icon: Package, value: "500+", label: "Items Shipped", color: "text-teal" },
-  { icon: Clock, value: "5-8", label: "Weeks Average", color: "text-gold" },
-  { icon: ThumbsUp, value: "98%", label: "Satisfaction Rate", color: "text-teal" },
-  { icon: MapPin, value: "Door", label: "to Door Service", color: "text-gold" },
-];
+import { useTranslation } from "@/lib/i18n";
 
 export function StatsBar() {
+  const { t } = useTranslation();
+
+  const stats = [
+    { icon: Package, value: t("stats.itemsValue"), label: t("stats.itemsLabel"), color: "text-teal" },
+    { icon: Clock, value: t("stats.weeksValue"), label: t("stats.weeksLabel"), color: "text-gold" },
+    { icon: ThumbsUp, value: t("stats.satisfactionValue"), label: t("stats.satisfactionLabel"), color: "text-teal" },
+    { icon: MapPin, value: t("stats.doorValue"), label: t("stats.doorLabel"), color: "text-gold" },
+  ];
+
   return (
     <section className="border-b bg-white">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

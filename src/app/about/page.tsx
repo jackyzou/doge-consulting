@@ -4,18 +4,34 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Ship, Users, MapPin, Shield } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 export default function AboutPage() {
+  const { t } = useTranslation();
+
+  const values = [
+    { icon: Shield, title: t("about.val1Title"), desc: t("about.val1Desc") },
+    { icon: Users, title: t("about.val2Title"), desc: t("about.val2Desc") },
+    { icon: Ship, title: t("about.val3Title"), desc: t("about.val3Desc") },
+    { icon: MapPin, title: t("about.val4Title"), desc: t("about.val4Desc") },
+  ];
+
+  const locations = [
+    { city: t("about.loc1City"), flag: "🇺🇸", role: t("about.loc1Role"), desc: t("about.loc1Desc") },
+    { city: t("about.loc2City"), flag: "🇭🇰", role: t("about.loc2Role"), desc: t("about.loc2Desc") },
+    { city: t("about.loc3City"), flag: "🇨🇳", role: t("about.loc3Role"), desc: t("about.loc3Desc") },
+  ];
+
   return (
     <div className="min-h-screen">
       {/* Hero */}
       <section className="gradient-hero py-20 text-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-3xl text-center">
-            <Badge className="mb-4 bg-teal/20 text-teal border-teal/30">Our Story</Badge>
-            <h1 className="text-4xl font-bold sm:text-5xl">About Doge Consulting</h1>
+            <Badge className="mb-4 bg-teal/20 text-teal border-teal/30">{t("about.badge")}</Badge>
+            <h1 className="text-4xl font-bold sm:text-5xl">{t("about.title")}</h1>
             <p className="mt-4 text-lg text-slate-300">
-              Bridging China&apos;s world-class manufacturing with North American businesses and consumers.
+              {t("about.subtitle")}
             </p>
           </motion.div>
         </div>
@@ -26,27 +42,10 @@ export default function AboutPage() {
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="space-y-8">
             <div className="space-y-4 text-muted-foreground leading-relaxed">
-              <p>
-                <strong className="text-foreground">Doge Consulting</strong> was founded with a simple vision: make
-                premium Chinese products accessible and affordable to businesses and homeowners in the United States.
-              </p>
-              <p>
-                Based in <strong className="text-foreground">Hong Kong</strong> with operations in{" "}
-                <strong className="text-foreground">Seattle</strong> and{" "}
-                <strong className="text-foreground">Foshan</strong>, we leverage our unique geographical
-                positioning and deep manufacturing relationships to deliver exceptional value.
-              </p>
-              <p>
-                China is the world&apos;s manufacturing powerhouse &mdash; from Foshan&apos;s furniture factories to
-                Shenzhen&apos;s electronics hubs and Yiwu&apos;s small commodity markets.
-                Our team has cultivated relationships with the best manufacturers, ensuring quality, reliability,
-                and factory-direct pricing for every customer.
-              </p>
-              <p>
-                Our Seattle-based team understands what American homeowners want. We bridge the gap between
-                world-class Chinese manufacturing and North American design preferences, handling all logistics,
-                customs, and delivery so you can focus on enjoying your new products.
-              </p>
+              <p>{t("about.story1")}</p>
+              <p>{t("about.story2")}</p>
+              <p>{t("about.story3")}</p>
+              <p>{t("about.story4")}</p>
             </div>
           </motion.div>
         </div>
@@ -56,15 +55,10 @@ export default function AboutPage() {
       <section className="gradient-mesh py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h2 className="mb-12 text-center text-3xl font-bold">
-            Our <span className="text-teal">Values</span>
+            {t("about.valuesTitle")} <span className="text-teal">{t("about.valuesHighlight")}</span>
           </h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {[
-              { icon: Shield, title: "Trust & Transparency", desc: "Honest pricing, clear timelines, and no hidden fees. We show you exactly what you're paying for." },
-              { icon: Users, title: "Customer First", desc: "Your satisfaction drives everything we do. Bilingual support ensures clear communication at every step." },
-              { icon: Ship, title: "Reliable Logistics", desc: "We partner with established shipping lines and customs brokers with decades of experience." },
-              { icon: MapPin, title: "Local Knowledge", desc: "With team members in Seattle, Hong Kong, and Foshan, we have boots on the ground at every stage." },
-            ].map((val, i) => (
+            {values.map((val, i) => (
               <motion.div
                 key={val.title}
                 initial={{ opacity: 0, y: 20 }}
@@ -91,14 +85,10 @@ export default function AboutPage() {
       <section className="py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h2 className="mb-12 text-center text-3xl font-bold">
-            Our <span className="text-teal">Locations</span>
+            {t("about.locationsTitle")} <span className="text-teal">{t("about.locationsHighlight")}</span>
           </h2>
           <div className="grid gap-8 md:grid-cols-3">
-            {[
-              { city: "Seattle, WA", flag: "🇺🇸", role: "Customer Relations & Delivery", desc: "Our US operations hub. We handle customer support, local delivery, and warehouse operations in the greater Seattle area." },
-              { city: "Hong Kong SAR", flag: "🇭🇰", role: "Headquarters & Shipping", desc: "Our registered headquarters. We manage contracts, international shipping, payments, and trade operations from Hong Kong." },
-              { city: "Foshan, Guangdong", flag: "🇨🇳", role: "Sourcing & Quality Control", desc: "Our sourcing office in China's manufacturing heartland. Direct relationships with leading manufacturers and quality inspection teams." },
-            ].map((loc, i) => (
+            {locations.map((loc, i) => (
               <motion.div
                 key={loc.city}
                 initial={{ opacity: 0, y: 20 }}

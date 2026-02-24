@@ -4,59 +4,56 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, Container, Search, FileCheck, Truck, Shield } from "lucide-react";
 import Link from "next/link";
-
-const services = [
-  {
-    icon: Search,
-    title: "Product Sourcing",
-    description:
-      "Access mainland China's vast manufacturing hubs. We connect you with top factories for electronics, furniture, home goods, textiles, and more.",
-    color: "text-navy",
-    bg: "bg-navy/5",
-  },
-  {
-    icon: Package,
-    title: "Sea Freight (LCL)",
-    description:
-      "Perfect for smaller shipments. Share container space and pay only for what you use. Competitive per-KG rates.",
-    color: "text-teal",
-    bg: "bg-teal/5",
-  },
-  {
-    icon: Container,
-    title: "Full Container (FCL)",
-    description:
-      "Best value for large orders. 20ft, 40ft, or 40ft High Cube containers from $2,500. Up to 68 CBM capacity.",
-    color: "text-navy-light",
-    bg: "bg-navy-light/5",
-  },
-  {
-    icon: FileCheck,
-    title: "Customs Clearance",
-    description:
-      "We handle all export and import documentation, customs clearance at both ends, and ensure compliance with US regulations.",
-    color: "text-gold",
-    bg: "bg-gold/5",
-  },
-  {
-    icon: Truck,
-    title: "Last-Mile Delivery",
-    description:
-      "From Seattle port to your front door. Local LTL delivery available across the Greater Seattle and Puget Sound area.",
-    color: "text-teal",
-    bg: "bg-teal/5",
-  },
-  {
-    icon: Shield,
-    title: "Cargo Insurance",
-    description:
-      "Optional comprehensive cargo insurance covering damage, loss, and delays. Peace of mind for your valuable shipments.",
-    color: "text-navy",
-    bg: "bg-navy/5",
-  },
-];
+import { useTranslation } from "@/lib/i18n";
 
 export function ServicesOverview() {
+  const { t } = useTranslation();
+
+  const services = [
+    {
+      icon: Search,
+      title: t("servicesOverview.s1Title"),
+      description: t("servicesOverview.s1Desc"),
+      color: "text-navy",
+      bg: "bg-navy/5",
+    },
+    {
+      icon: Package,
+      title: t("servicesOverview.s2Title"),
+      description: t("servicesOverview.s2Desc"),
+      color: "text-teal",
+      bg: "bg-teal/5",
+    },
+    {
+      icon: Container,
+      title: t("servicesOverview.s3Title"),
+      description: t("servicesOverview.s3Desc"),
+      color: "text-navy-light",
+      bg: "bg-navy-light/5",
+    },
+    {
+      icon: FileCheck,
+      title: t("servicesOverview.s4Title"),
+      description: t("servicesOverview.s4Desc"),
+      color: "text-gold",
+      bg: "bg-gold/5",
+    },
+    {
+      icon: Truck,
+      title: t("servicesOverview.s5Title"),
+      description: t("servicesOverview.s5Desc"),
+      color: "text-teal",
+      bg: "bg-teal/5",
+    },
+    {
+      icon: Shield,
+      title: t("servicesOverview.s6Title"),
+      description: t("servicesOverview.s6Desc"),
+      color: "text-navy",
+      bg: "bg-navy/5",
+    },
+  ];
+
   return (
     <section className="bg-white py-20" id="services">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -67,10 +64,10 @@ export function ServicesOverview() {
           className="text-center"
         >
           <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-            Our <span className="text-teal">Services</span>
+            {t("servicesOverview.title")} <span className="text-teal">{t("servicesOverview.titleHighlight")}</span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            End-to-end shipping solutions, from factory floor to your front door.
+            {t("servicesOverview.subtitle")}
           </p>
         </motion.div>
 

@@ -1,24 +1,40 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { Menu, X, Globe } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Menu, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DogeLogo } from "@/components/ui/doge-logo";
-
-const navLinks = [
-  { href: "/", label: "Home", labelZh: "首页" },
-  { href: "/services", label: "Services", labelZh: "服务" },
-  { href: "/quote", label: "Get Quote", labelZh: "获取报价" },
-  { href: "/about", label: "About", labelZh: "关于我们" },
-  { href: "/faq", label: "FAQ", labelZh: "常见问题" },
-  { href: "/contact", label: "Contact", labelZh: "联系我们" },
-];
+import { useTranslation, LOCALES } from "@/lib/i18n";
 
 export function Header() {
-  const [lang, setLang] = useState<"en" | "zh">("en");
+  const { t, locale, setLocale } = useTranslation();
   const [open, setOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
+  const langRef = useRef<HTMLDivElement>(null);
+
+  // Close language dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) {
+        setLangOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const currentLocale = LOCALES.find((l) => l.code === locale) || LOCALES[0];
+
+  const navLinks = [
+    { href: "/", label: t("nav.home") },
+    { href: "/services", label: t("nav.services") },
+    { href: "/quote", label: t("nav.quote") },
+    { href: "/about", label: t("nav.about") },
+    { href: "/faq", label: t("nav.faq") },
+    { href: "/contact", label: t("nav.contact") },
+  ];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-white/80 backdrop-blur-md">
@@ -39,23 +55,48 @@ export function Header() {
               href={link.href}
               className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             >
-              {lang === "en" ? link.label : link.labelZh}
+              {link.label}
             </Link>
           ))}
         </nav>
 
         {/* Right actions */}
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setLang(lang === "en" ? "zh" : "en")}
-            className="flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary"
-          >
-            <Globe className="h-4 w-4" />
-            {lang === "en" ? "中文" : "EN"}
-          </button>
+          {/* Language Switcher */}
+          <div className="relative" ref={langRef}>
+            <button
+              onClick={() => setLangOpen(!langOpen)}
+              className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary"
+            >
+              <span>{currentLocale.flag}</span>
+              <span className="hidden sm:inline">{currentLocale.name}</span>
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${langOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            {langOpen && (
+              <div className="absolute right-0 top-full mt-1 w-44 rounded-lg border bg-white py-1 shadow-lg z-50">
+                {LOCALES.map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => {
+                      setLocale(l.code);
+                      setLangOpen(false);
+                    }}
+                    className={`flex w-full items-center gap-2.5 px-3 py-2 text-sm transition-colors hover:bg-secondary ${
+                      l.code === locale ? "bg-teal/5 font-medium text-teal" : "text-foreground"
+                    }`}
+                  >
+                    <span>{l.flag}</span>
+                    <span>{l.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <Link href="/quote" className="hidden sm:block">
             <Button className="bg-teal text-white hover:bg-teal/90">
-              {lang === "en" ? "Free Quote" : "免费报价"}
+              {t("nav.freeQuote")}
             </Button>
           </Link>
 
@@ -75,12 +116,12 @@ export function Header() {
                     onClick={() => setOpen(false)}
                     className="rounded-md px-3 py-2 text-base font-medium text-foreground transition-colors hover:bg-secondary"
                   >
-                    {lang === "en" ? link.label : link.labelZh}
+                    {link.label}
                   </Link>
                 ))}
                 <Link href="/quote" onClick={() => setOpen(false)}>
                   <Button className="mt-4 w-full bg-teal text-white hover:bg-teal/90">
-                    {lang === "en" ? "Get Free Quote" : "获取免费报价"}
+                    {t("nav.getFreeQuote")}
                   </Button>
                 </Link>
               </div>

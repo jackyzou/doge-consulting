@@ -2,43 +2,42 @@
 
 import { motion } from "framer-motion";
 import { Search, PackageCheck, Ship, Truck } from "lucide-react";
-
-const steps = [
-  {
-    icon: Search,
-    emoji: "🔍",
-    title: "Consult & Source",
-    titleZh: "咨询采购",
-    description: "Tell us what products you need. We source directly from China's best manufacturers at factory prices.",
-    color: "bg-navy text-white",
-  },
-  {
-    icon: PackageCheck,
-    emoji: "✅",
-    title: "Inspect & Pack",
-    titleZh: "检验包装",
-    description: "Our team inspects every piece for quality, then professionally packs for safe ocean transport.",
-    color: "bg-teal text-white",
-  },
-  {
-    icon: Ship,
-    emoji: "🚢",
-    title: "Ship via Hong Kong",
-    titleZh: "香港发运",
-    description: "Your products ship from China through Hong Kong to the USA. Track your shipment every step of the way.",
-    color: "bg-navy-light text-white",
-  },
-  {
-    icon: Truck,
-    emoji: "🏠",
-    title: "Deliver to Your Door",
-    titleZh: "送货上门",
-    description: "We handle US customs clearance and deliver right to your home in the Seattle metro area.",
-    color: "bg-gold text-navy",
-  },
-];
+import { useTranslation } from "@/lib/i18n";
 
 export function HowItWorks() {
+  const { t } = useTranslation();
+
+  const steps = [
+    {
+      icon: Search,
+      emoji: "🔍",
+      title: t("howItWorks.step1Title"),
+      description: t("howItWorks.step1Desc"),
+      color: "bg-navy text-white",
+    },
+    {
+      icon: PackageCheck,
+      emoji: "✅",
+      title: t("howItWorks.step2Title"),
+      description: t("howItWorks.step2Desc"),
+      color: "bg-teal text-white",
+    },
+    {
+      icon: Ship,
+      emoji: "🚢",
+      title: t("howItWorks.step3Title"),
+      description: t("howItWorks.step3Desc"),
+      color: "bg-navy-light text-white",
+    },
+    {
+      icon: Truck,
+      emoji: "🏠",
+      title: t("howItWorks.step4Title"),
+      description: t("howItWorks.step4Desc"),
+      color: "bg-gold text-navy",
+    },
+  ];
+
   return (
     <section className="gradient-mesh py-20" id="how-it-works">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -49,10 +48,10 @@ export function HowItWorks() {
           className="text-center"
         >
           <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-            How It <span className="text-teal">Works</span>
+            {t("howItWorks.title")} <span className="text-teal">{t("howItWorks.titleHighlight")}</span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            From factory floor in China to your front door in the USA — we handle everything.
+            {t("howItWorks.subtitle")}
           </p>
         </motion.div>
 

@@ -9,63 +9,66 @@ import {
   ArrowRight, Check, Clock, DollarSign, Globe
 } from "lucide-react";
 import Link from "next/link";
-
-const services = [
-  {
-    icon: Search,
-    title: "Product Sourcing",
-    description: "We connect you directly with China's top manufacturers across Foshan, Shenzhen, Yiwu, and more. From furniture and electronics to home goods and industrial equipment, we source exactly what you need at factory-direct prices.",
-    features: ["Factory-direct pricing", "Quality verification", "Photo/video updates", "Sample ordering available"],
-    color: "text-navy", bg: "bg-navy/5",
-  },
-  {
-    icon: Package,
-    title: "LCL Sea Freight",
-    description: "Share container space with other shipments and pay only for the cubic meters you use. Ideal for smaller orders under 15 CBM.",
-    features: ["From $150/CBM", "25-35 day transit", "Consolidation service", "Flexible scheduling"],
-    color: "text-teal", bg: "bg-teal/5",
-  },
-  {
-    icon: Container,
-    title: "FCL Sea Freight",
-    description: "Dedicated containers for larger shipments. Choose from 20ft, 40ft, or 40ft High Cube containers. The most cost-effective option for large orders.",
-    features: ["From $2,500/container", "20-30 day transit", "Exclusive container", "Priority handling"],
-    color: "text-navy-light", bg: "bg-navy-light/5",
-  },
-  {
-    icon: FileCheck,
-    title: "Customs & Documentation",
-    description: "We handle all the paperwork — export declarations, bills of lading, commercial invoices, packing lists, and US import clearance.",
-    features: ["Export clearance (China)", "Import clearance (US)", "All documentation handled", "Duty optimization"],
-    color: "text-gold", bg: "bg-gold/5",
-  },
-  {
-    icon: Truck,
-    title: "Last-Mile Delivery",
-    description: "From Seattle/Tacoma port to your doorstep. We partner with local LTL carriers for white-glove delivery across the Puget Sound region.",
-    features: ["Port pickup", "Seattle metro delivery", "Indoor placement", "Assembly available"],
-    color: "text-teal", bg: "bg-teal/5",
-  },
-  {
-    icon: Shield,
-    title: "Cargo Insurance",
-    description: "Comprehensive marine cargo insurance covering damage, loss, and delays during international transit. Optional but recommended for high-value items.",
-    features: ["Full replacement value", "Door-to-door coverage", "Damage protection", "Easy claims process"],
-    color: "text-navy", bg: "bg-navy/5",
-  },
-];
+import { useTranslation } from "@/lib/i18n";
 
 export default function ServicesPage() {
+  const { t } = useTranslation();
+
+  const services = [
+    {
+      icon: Search,
+      title: t("servicesPage.s1Title"),
+      description: t("servicesPage.s1Desc"),
+      features: [t("servicesPage.s1F1"), t("servicesPage.s1F2"), t("servicesPage.s1F3"), t("servicesPage.s1F4")],
+      color: "text-navy", bg: "bg-navy/5",
+    },
+    {
+      icon: Package,
+      title: t("servicesPage.s2Title"),
+      description: t("servicesPage.s2Desc"),
+      features: [t("servicesPage.s2F1"), t("servicesPage.s2F2"), t("servicesPage.s2F3"), t("servicesPage.s2F4")],
+      color: "text-teal", bg: "bg-teal/5",
+    },
+    {
+      icon: Container,
+      title: t("servicesPage.s3Title"),
+      description: t("servicesPage.s3Desc"),
+      features: [t("servicesPage.s3F1"), t("servicesPage.s3F2"), t("servicesPage.s3F3"), t("servicesPage.s3F4")],
+      color: "text-navy-light", bg: "bg-navy-light/5",
+    },
+    {
+      icon: FileCheck,
+      title: t("servicesPage.s4Title"),
+      description: t("servicesPage.s4Desc"),
+      features: [t("servicesPage.s4F1"), t("servicesPage.s4F2"), t("servicesPage.s4F3"), t("servicesPage.s4F4")],
+      color: "text-gold", bg: "bg-gold/5",
+    },
+    {
+      icon: Truck,
+      title: t("servicesPage.s5Title"),
+      description: t("servicesPage.s5Desc"),
+      features: [t("servicesPage.s5F1"), t("servicesPage.s5F2"), t("servicesPage.s5F3"), t("servicesPage.s5F4")],
+      color: "text-teal", bg: "bg-teal/5",
+    },
+    {
+      icon: Shield,
+      title: t("servicesPage.s6Title"),
+      description: t("servicesPage.s6Desc"),
+      features: [t("servicesPage.s6F1"), t("servicesPage.s6F2"), t("servicesPage.s6F3"), t("servicesPage.s6F4")],
+      color: "text-navy", bg: "bg-navy/5",
+    },
+  ];
+
   return (
     <div className="min-h-screen">
       {/* Hero */}
       <section className="gradient-hero py-20 text-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-3xl text-center">
-            <Badge className="mb-4 bg-teal/20 text-teal border-teal/30">End-to-End Solutions</Badge>
-            <h1 className="text-4xl font-bold sm:text-5xl">Our Services</h1>
+            <Badge className="mb-4 bg-teal/20 text-teal border-teal/30">{t("servicesPage.badge")}</Badge>
+            <h1 className="text-4xl font-bold sm:text-5xl">{t("servicesPage.title")}</h1>
             <p className="mt-4 text-lg text-slate-300">
-              From sourcing to delivery, we handle every step of your shipping journey.
+              {t("servicesPage.subtitle")}
             </p>
           </motion.div>
         </div>
@@ -112,13 +115,13 @@ export default function ServicesPage() {
       <section className="gradient-mesh py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h2 className="mb-12 text-center text-3xl font-bold">
-            Why Choose <span className="text-teal">Doge Consulting</span>
+            {t("servicesPage.whyTitle")} <span className="text-teal">{t("servicesPage.whyHighlight")}</span>
           </h2>
           <div className="grid gap-8 md:grid-cols-3">
             {[
-              { icon: DollarSign, title: "Save Up to 60%", desc: "Factory-direct pricing from China eliminates middlemen and retail markups." },
-              { icon: Clock, title: "5-8 Week Delivery", desc: "Efficient logistics chain from factory to your door in the Seattle area." },
-              { icon: Globe, title: "Bilingual Support", desc: "Our team speaks English and Chinese, bridging the gap between you and manufacturers." },
+              { icon: DollarSign, title: t("servicesPage.why1Title"), desc: t("servicesPage.why1Desc") },
+              { icon: Clock, title: t("servicesPage.why2Title"), desc: t("servicesPage.why2Desc") },
+              { icon: Globe, title: t("servicesPage.why3Title"), desc: t("servicesPage.why3Desc") },
             ].map((item, i) => (
               <motion.div
                 key={item.title}
@@ -142,11 +145,11 @@ export default function ServicesPage() {
       {/* CTA */}
       <section className="gradient-hero py-16 text-center text-white">
         <div className="mx-auto max-w-2xl px-4">
-          <h2 className="text-3xl font-bold">Ready to Get Started?</h2>
-          <p className="mt-4 text-slate-300">Get a free quote tailored to your shipping needs.</p>
+          <h2 className="text-3xl font-bold">{t("servicesPage.ctaTitle")}</h2>
+          <p className="mt-4 text-slate-300">{t("servicesPage.ctaSubtitle")}</p>
           <Link href="/quote">
             <Button size="lg" className="mt-6 bg-teal text-white hover:bg-teal/90">
-              Get Free Quote <ArrowRight className="ml-2 h-5 w-5" />
+              {t("servicesPage.ctaCta")} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
         </div>

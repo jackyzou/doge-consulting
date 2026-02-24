@@ -6,59 +6,62 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, ArrowRight } from "lucide-react";
 import Link from "next/link";
-
-const tiers = [
-  {
-    name: "LCL Sea Freight",
-    subtitle: "Shared Container",
-    price: "$150–250",
-    unit: "per CBM",
-    highlight: false,
-    transit: "25–35 days",
-    features: [
-      "Pay only for your cargo space",
-      "Ideal for < 15 CBM",
-      "Shared with other shipments",
-      "Full tracking included",
-      "Customs clearance included",
-    ],
-  },
-  {
-    name: "FCL Sea Freight",
-    subtitle: "Full Container",
-    price: "$2,500",
-    unit: "from / container",
-    highlight: true,
-    badge: "Best Value",
-    transit: "20–30 days",
-    features: [
-      "Exclusive container for your cargo",
-      "20ft, 40ft, or 40ft HC options",
-      "Best per-unit cost for large orders",
-      "Priority handling & faster transit",
-      "Full tracking & customs included",
-      "Insurance available",
-    ],
-  },
-  {
-    name: "Full Service",
-    subtitle: "Door to Door",
-    price: "Custom",
-    unit: "quote",
-    highlight: false,
-    transit: "5–8 weeks total",
-    features: [
-      "Product sourcing from China",
-      "Quality inspection & photos",
-      "Professional packing & crating",
-      "Ocean freight (LCL or FCL)",
-      "US customs & delivery",
-      "Dedicated project manager",
-    ],
-  },
-];
+import { useTranslation } from "@/lib/i18n";
 
 export function PricingOverview() {
+  const { t } = useTranslation();
+
+  const tiers = [
+    {
+      name: t("pricing.tier1Name"),
+      subtitle: t("pricing.tier1Subtitle"),
+      price: t("pricing.tier1Price"),
+      unit: t("pricing.tier1Unit"),
+      highlight: false,
+      transit: t("pricing.tier1Transit"),
+      features: [
+        t("pricing.tier1F1"),
+        t("pricing.tier1F2"),
+        t("pricing.tier1F3"),
+        t("pricing.tier1F4"),
+        t("pricing.tier1F5"),
+      ],
+    },
+    {
+      name: t("pricing.tier2Name"),
+      subtitle: t("pricing.tier2Subtitle"),
+      price: t("pricing.tier2Price"),
+      unit: t("pricing.tier2Unit"),
+      highlight: true,
+      badge: t("pricing.tier2Badge"),
+      transit: t("pricing.tier2Transit"),
+      features: [
+        t("pricing.tier2F1"),
+        t("pricing.tier2F2"),
+        t("pricing.tier2F3"),
+        t("pricing.tier2F4"),
+        t("pricing.tier2F5"),
+        t("pricing.tier2F6"),
+      ],
+    },
+    {
+      name: t("pricing.tier3Name"),
+      subtitle: t("pricing.tier3Subtitle"),
+      price: t("pricing.tier3Price"),
+      unit: t("pricing.tier3Unit"),
+      highlight: false,
+      transit: t("pricing.tier3Transit"),
+      features: [
+        t("pricing.tier3F1"),
+        t("pricing.tier3F2"),
+        t("pricing.tier3F3"),
+        t("pricing.tier3F4"),
+        t("pricing.tier3F5"),
+        t("pricing.tier3F6"),
+      ],
+    },
+  ];
+
   return (
     <section className="gradient-mesh py-20" id="pricing">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -69,10 +72,10 @@ export function PricingOverview() {
           className="text-center"
         >
           <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-            Simple, Transparent <span className="text-teal">Pricing</span>
+            {t("pricing.title")} <span className="text-teal">{t("pricing.titleHighlight")}</span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            No hidden fees. Get an instant estimate or request a detailed custom quote.
+            {t("pricing.subtitle")}
           </p>
         </motion.div>
 
@@ -123,7 +126,7 @@ export function PricingOverview() {
                           : "bg-navy text-white hover:bg-navy/90"
                       }`}
                     >
-                      Get Quote <ArrowRight className="ml-2 h-4 w-4" />
+                      {t("pricing.getQuote")} <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
                 </CardContent>

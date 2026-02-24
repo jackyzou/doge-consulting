@@ -3,32 +3,35 @@
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star } from "lucide-react";
-
-const testimonials = [
-  {
-    name: "Michael Zhang",
-    location: "Seattle, WA",
-    rating: 5,
-    text: "Shipped an entire living room set — marble dining table, sofa, and TV console. Saved over $8,000 compared to buying locally. The quality is incredible and the whole process was seamless.",
-    items: "Marble Dining Table Set + Sofa + TV Console",
-  },
-  {
-    name: "Emily Wang",
-    location: "Bellevue, WA",
-    rating: 5,
-    text: "As a new homeowner, furnishing was overwhelming and expensive. Doge Consulting sourced everything from Foshan and delivered it to my door in 6 weeks. Couldn't be happier!",
-    items: "Full Home Furnishing — 12 pieces",
-  },
-  {
-    name: "David Chen",
-    location: "Redmond, WA",
-    rating: 5,
-    text: "The tracking system kept me updated every step. When my wardrobe arrived, it was perfectly packed with zero damage. Will definitely use them again for my office setup.",
-    items: "Bedroom Set + Custom Wardrobe",
-  },
-];
+import { useTranslation } from "@/lib/i18n";
 
 export function Testimonials() {
+  const { t } = useTranslation();
+
+  const testimonials = [
+    {
+      name: t("testimonials.t1Name"),
+      location: t("testimonials.t1Location"),
+      rating: 5,
+      text: t("testimonials.t1Text"),
+      items: t("testimonials.t1Items"),
+    },
+    {
+      name: t("testimonials.t2Name"),
+      location: t("testimonials.t2Location"),
+      rating: 5,
+      text: t("testimonials.t2Text"),
+      items: t("testimonials.t2Items"),
+    },
+    {
+      name: t("testimonials.t3Name"),
+      location: t("testimonials.t3Location"),
+      rating: 5,
+      text: t("testimonials.t3Text"),
+      items: t("testimonials.t3Items"),
+    },
+  ];
+
   return (
     <section className="bg-white py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -39,17 +42,17 @@ export function Testimonials() {
           className="text-center"
         >
           <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-            What Our <span className="text-teal">Customers</span> Say
+            {t("testimonials.title")} <span className="text-teal">{t("testimonials.titleHighlight")}</span> {t("testimonials.titleEnd")}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            Join hundreds of happy customers who saved big on premium products.
+            {t("testimonials.subtitle")}
           </p>
         </motion.div>
 
         <div className="mt-12 grid gap-6 md:grid-cols-3">
-          {testimonials.map((t, i) => (
+          {testimonials.map((item, i) => (
             <motion.div
-              key={t.name}
+              key={item.name}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -58,17 +61,17 @@ export function Testimonials() {
               <Card className="h-full border-border/50">
                 <CardContent className="pt-6">
                   <div className="flex gap-1">
-                    {Array.from({ length: t.rating }).map((_, j) => (
+                    {Array.from({ length: item.rating }).map((_, j) => (
                       <Star key={j} className="h-4 w-4 fill-gold text-gold" />
                     ))}
                   </div>
                   <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
-                    &ldquo;{t.text}&rdquo;
+                    &ldquo;{item.text}&rdquo;
                   </p>
                   <div className="mt-6 border-t pt-4">
-                    <p className="font-semibold text-foreground">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.location}</p>
-                    <p className="mt-1 text-xs text-teal font-medium">{t.items}</p>
+                    <p className="font-semibold text-foreground">{item.name}</p>
+                    <p className="text-xs text-muted-foreground">{item.location}</p>
+                    <p className="mt-1 text-xs text-teal font-medium">{item.items}</p>
                   </div>
                 </CardContent>
               </Card>
