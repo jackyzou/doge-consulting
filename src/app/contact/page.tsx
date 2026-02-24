@@ -18,8 +18,8 @@ export default function ContactPage() {
 
   const contactInfo = [
     { icon: Mail, title: t("contactPage.emailTitle"), value: "dogetech77@gmail.com", subtitle: t("contactPage.emailSubtitle") },
-    { icon: Phone, title: t("contactPage.phoneUS"), value: "+1 (206) 555-0188", subtitle: t("contactPage.phoneUSSubtitle") },
-    { icon: Phone, title: t("contactPage.phoneHK"), value: "+852 5555 0188", subtitle: t("contactPage.phoneHKSubtitle") },
+    { icon: Phone, title: t("contactPage.phoneUS"), value: "+1 (425) 223-0449", subtitle: t("contactPage.phoneUSSubtitle") },
+    { icon: Phone, title: t("contactPage.phoneHK"), value: "+852 6679 7310", subtitle: t("contactPage.phoneHKSubtitle") },
     { icon: MessageSquare, title: t("contactPage.wechat"), value: t("contactPage.wechatValue"), subtitle: t("contactPage.wechatSubtitle") },
   ];
 
