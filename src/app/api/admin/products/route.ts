@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     const products = await prisma.product.findMany({ where, orderBy: { name: "asc" } });
-    return NextResponse.json(products);
+    return NextResponse.json({ products });
   } catch (error) {
     if ((error as Error).message === "Unauthorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if ((error as Error).message === "Forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 });

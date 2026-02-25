@@ -40,7 +40,7 @@ export default function LoginPage() {
       if (data.user.role === "admin") {
         router.push("/admin");
       } else {
-        router.push("/portal");
+        router.push("/");
       }
     } catch {
       setError("Network error. Please try again.");

@@ -44,7 +44,31 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetch("/api/admin/dashboard")
       .then((r) => r.json())
-      .then(setData)
+      .then((raw) => {
+        // Transform API response shape into the DashboardData interface
+        const ordersByStatus: Record<string, number> = {};
+        for (const s of raw.statusCounts || []) {
+          ordersByStatus[s.status] = s.count;
+        }
+
+        const monthlyRevenue: { month: string; revenue: number }[] = Object.entries(
+          (raw.monthlyRevenue || {}) as Record<string, number>
+        )
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([month, revenue]) => ({ month, revenue }));
+
+        setData({
+          totalRevenue: raw.stats?.totalRevenue ?? 0,
+          activeOrders: raw.stats?.activeOrders ?? 0,
+          pendingQuotes: raw.stats?.pendingQuotes ?? 0,
+          totalCustomers: raw.stats?.totalCustomers ?? 0,
+          totalProducts: raw.stats?.totalProducts ?? 0,
+          ordersByStatus,
+          monthlyRevenue,
+          recentOrders: raw.recentOrders ?? [],
+          recentQuotes: raw.recentQuotes ?? [],
+        });
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
