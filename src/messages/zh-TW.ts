@@ -359,6 +359,8 @@ const messages = {
     send: "發送訊息",
     sending: "發送中...",
     sent: "訊息已發送！我們將在24小時內回覆。",
+    error: "發生錯誤，請稍後再試。",
+    rateLimited: "請求過於頻繁，請稍等幾分鐘後再試。",
     infoTitle: "聯絡資訊",
     emailTitle: "電子郵件",
     emailSubtitle: "24小時內回覆",

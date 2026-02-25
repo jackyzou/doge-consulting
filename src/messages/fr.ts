@@ -359,6 +359,8 @@ const messages = {
     send: "Envoyer le message",
     sending: "Envoi en cours...",
     sent: "Message envoyé ! Nous vous répondrons sous 24 heures.",
+    error: "Une erreur s'est produite. Veuillez réessayer plus tard.",
+    rateLimited: "Trop de demandes. Veuillez patienter quelques minutes et réessayer.",
     infoTitle: "Informations de contact",
     emailTitle: "E-mail",
     emailSubtitle: "Nous répondons sous 24 heures",

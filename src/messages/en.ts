@@ -359,6 +359,8 @@ const messages = {
     send: "Send Message",
     sending: "Sending...",
     sent: "Message sent! We'll get back to you within 24 hours.",
+    error: "Something went wrong. Please try again later.",
+    rateLimited: "Too many requests. Please wait a few minutes and try again.",
     infoTitle: "Contact Information",
     emailTitle: "Email",
     emailSubtitle: "We respond within 24 hours",

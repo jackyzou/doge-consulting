@@ -32,11 +32,42 @@ export default function ContactPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSending(true);
-    // Simulate form submission
-    await new Promise((r) => setTimeout(r, 1000));
-    setSending(false);
-    toast.success(t("contactPage.sent"));
-    (e.target as HTMLFormElement).reset();
+
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    const payload = {
+      name: formData.get("name") as string,
+      email: formData.get("email") as string,
+      phone: (formData.get("phone") as string) || "",
+      subject: formData.get("subject") as string,
+      message: formData.get("message") as string,
+    };
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.status === 429) {
+        toast.error(t("contactPage.rateLimited"));
+        return;
+      }
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to send");
+      }
+
+      toast.success(t("contactPage.sent"));
+      form.reset();
+    } catch {
+      toast.error(t("contactPage.error"));
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -63,24 +94,24 @@ export default function ContactPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <Label htmlFor="name">{t("contactPage.name")}</Label>
-                    <Input id="name" placeholder={t("contactPage.namePlaceholder")} required className="mt-1" />
+                    <Input id="name" name="name" placeholder={t("contactPage.namePlaceholder")} required className="mt-1" />
                   </div>
                   <div>
                     <Label htmlFor="email">{t("contactPage.email")}</Label>
-                    <Input id="email" type="email" placeholder={t("contactPage.emailPlaceholder")} required className="mt-1" />
+                    <Input id="email" name="email" type="email" placeholder={t("contactPage.emailPlaceholder")} required className="mt-1" />
                   </div>
                 </div>
                 <div>
                   <Label htmlFor="phone">{t("contactPage.phone")}</Label>
-                  <Input id="phone" placeholder={t("contactPage.phonePlaceholder")} className="mt-1" />
+                  <Input id="phone" name="phone" placeholder={t("contactPage.phonePlaceholder")} className="mt-1" />
                 </div>
                 <div>
                   <Label htmlFor="subject">{t("contactPage.subject")}</Label>
-                  <Input id="subject" placeholder={t("contactPage.subjectPlaceholder")} required className="mt-1" />
+                  <Input id="subject" name="subject" placeholder={t("contactPage.subjectPlaceholder")} required className="mt-1" />
                 </div>
                 <div>
                   <Label htmlFor="message">{t("contactPage.message")}</Label>
-                  <Textarea id="message" placeholder={t("contactPage.messagePlaceholder")} rows={5} required className="mt-1" />
+                  <Textarea id="message" name="message" placeholder={t("contactPage.messagePlaceholder")} rows={5} required className="mt-1" />
                 </div>
                 <Button type="submit" disabled={sending} className="w-full bg-teal text-white hover:bg-teal/90">
                   {sending ? t("contactPage.sending") : t("contactPage.send")}
