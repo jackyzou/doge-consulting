@@ -25,12 +25,12 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen">
       {/* Hero */}
-      <section className="gradient-hero py-20 text-white">
+      <section className="gradient-hero py-24 text-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-3xl text-center">
             <Badge className="mb-4 bg-teal/20 text-teal border-teal/30">{t("about.badge")}</Badge>
             <h1 className="text-4xl font-bold sm:text-5xl">{t("about.title")}</h1>
-            <p className="mt-4 text-lg text-slate-300">
+            <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-200/95">
               {t("about.subtitle")}
             </p>
           </motion.div>
@@ -41,11 +41,13 @@ export default function AboutPage() {
       <section className="py-20">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="space-y-8">
-            <div className="space-y-4 text-muted-foreground leading-relaxed">
-              <p>{t("about.story1")}</p>
-              <p>{t("about.story2")}</p>
-              <p>{t("about.story3")}</p>
-              <p>{t("about.story4")}</p>
+            <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm sm:p-8">
+              <div className="space-y-4 text-muted-foreground leading-relaxed">
+              <p><span className="font-semibold text-foreground">{t("about.storyP1a")}</span>{t("about.storyP1b")}</p>
+              <p>{t("about.storyP2")}</p>
+              <p>{t("about.storyP3")}</p>
+              <p>{t("about.storyP4")}</p>
+              </div>
             </div>
           </motion.div>
         </div>
@@ -96,7 +98,7 @@ export default function AboutPage() {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.15 }}
               >
-                <Card className="h-full border-border/50">
+                <Card className="h-full border-border/50 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
                   <CardContent className="pt-6 text-center">
                     <span className="text-5xl">{loc.flag}</span>
                     <h3 className="mt-4 text-lg font-semibold">{loc.city}</h3>

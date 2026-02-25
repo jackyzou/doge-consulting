@@ -6,103 +6,79 @@ interface DogeLogoProps {
 }
 
 /**
- * Low-poly / origami-style Shiba Inu (Doge) logo
- * Bold geometric facets matching reference art
- * Shield/kite face shape — wide cheeks, pointed ears & chin
- * Warm browns, tans, cream center, grey muzzle accents
+ * Simple low-poly Shiba Inu (Doge) logo
+ * Clean geometric polygon style with warm browns, cream mask, dark eyes & nose
  */
 export function DogeLogo({ className, size = 32 }: DogeLogoProps) {
   return (
     <svg
-      viewBox="0 0 100 116"
+      viewBox="0 0 100 120"
       width={size}
       height={size}
       xmlns="http://www.w3.org/2000/svg"
       className={cn("shrink-0", className)}
       aria-label="Doge Consulting logo"
     >
-      {/* ── Left Ear ── */}
-      <polygon points="18,0 4,28 28,18" fill="#7E5B38" />
-      <polygon points="18,0 28,18 36,22" fill="#A07848" />
-      <polygon points="4,28 28,18 16,40" fill="#6B4B2F" />
+      {/* Left ear */}
+      <polygon points="20,2 5,30 30,22" fill="#B5884E" />
+      <polygon points="5,30 30,22 18,42" fill="#946430" />
 
-      {/* ── Right Ear ── */}
-      <polygon points="82,0 96,28 72,18" fill="#7E5B38" />
-      <polygon points="82,0 72,18 64,22" fill="#A07848" />
-      <polygon points="96,28 72,18 84,40" fill="#6B4B2F" />
+      {/* Right ear */}
+      <polygon points="80,2 95,30 70,22" fill="#B5884E" />
+      <polygon points="95,30 70,22 82,42" fill="#946430" />
 
-      {/* ── Forehead Center ── */}
-      <polygon points="36,22 50,12 50,28" fill="#C8A470" />
-      <polygon points="64,22 50,12 50,28" fill="#C8A470" />
-      <polygon points="36,22 50,28 40,38" fill="#DCC090" />
-      <polygon points="64,22 50,28 60,38" fill="#DCC090" />
+      {/* Forehead */}
+      <polygon points="30,22 50,14 50,30" fill="#D4A05A" />
+      <polygon points="70,22 50,14 50,30" fill="#C8924E" />
+      <polygon points="30,22 50,30 18,42" fill="#B07840" />
+      <polygon points="70,22 50,30 82,42" fill="#B07840" />
 
-      {/* ── Forehead Sides ── */}
-      <polygon points="28,18 36,22 16,40" fill="#946B42" />
-      <polygon points="72,18 64,22 84,40" fill="#946B42" />
-      <polygon points="36,22 40,38 16,40" fill="#A67C52" />
-      <polygon points="64,22 60,38 84,40" fill="#A67C52" />
+      {/* White face mask — center V */}
+      <polygon points="50,30 38,44 50,46" fill="#F5F0E6" />
+      <polygon points="50,30 62,44 50,46" fill="#EDE6D8" />
 
-      {/* ── Center Face — cream V stripe ── */}
-      <polygon points="40,38 50,28 50,42" fill="#EDE0CA" />
-      <polygon points="60,38 50,28 50,42" fill="#EDE0CA" />
-      <polygon points="40,38 50,42 42,50" fill="#F0E6D0" />
-      <polygon points="60,38 50,42 58,50" fill="#F0E6D0" />
+      {/* Eyes */}
+      <polygon points="26,44 38,44 32,54" fill="#1A1A1A" />
+      <polygon points="74,44 62,44 68,54" fill="#1A1A1A" />
 
-      {/* ── Eyes (dark angular) ── */}
-      <polygon points="24,42 40,38 32,52" fill="#1E1A16" />
-      <polygon points="76,42 60,38 68,52" fill="#1E1A16" />
+      {/* Cheeks */}
+      <polygon points="18,42 38,44 26,44" fill="#C49050" />
+      <polygon points="82,42 62,44 74,44" fill="#C49050" />
+      <polygon points="18,42 26,44 8,62" fill="#BA8548" />
+      <polygon points="82,42 74,44 92,62" fill="#BA8548" />
+      <polygon points="26,44 32,54 8,62" fill="#E8DCC8" />
+      <polygon points="74,44 68,54 92,62" fill="#E8DCC8" />
 
-      {/* ── Upper Cheeks ── */}
-      <polygon points="16,40 40,38 24,42" fill="#A67C52" />
-      <polygon points="84,40 60,38 76,42" fill="#A67C52" />
-      <polygon points="16,40 24,42 6,58" fill="#8B6539" />
-      <polygon points="84,40 76,42 94,58" fill="#8B6539" />
+      {/* Under-eye / mid-face white */}
+      <polygon points="32,54 38,44 50,46 44,60" fill="#F2EDE0" />
+      <polygon points="68,54 62,44 50,46 56,60" fill="#F2EDE0" />
 
-      {/* ── Below Eyes ── */}
-      <polygon points="24,42 32,52 6,58" fill="#A67C52" />
-      <polygon points="76,42 68,52 94,58" fill="#A67C52" />
-      <polygon points="32,52 42,50 36,60" fill="#C4A068" />
-      <polygon points="68,52 58,50 64,60" fill="#C4A068" />
+      {/* Nose */}
+      <polygon points="44,60 50,58 56,60 50,66" fill="#3A3A3A" />
 
-      {/* ── Nose Bridge ── */}
-      <polygon points="42,50 50,42 50,56" fill="#EBD8B0" />
-      <polygon points="58,50 50,42 50,56" fill="#EBD8B0" />
-      <polygon points="42,50 44,56 36,60" fill="#D4B480" />
-      <polygon points="58,50 56,56 64,60" fill="#D4B480" />
+      {/* Muzzle */}
+      <polygon points="44,60 50,66 36,68" fill="#D8D0C0" />
+      <polygon points="56,60 50,66 64,68" fill="#D8D0C0" />
+      <polygon points="36,68 50,66 50,76" fill="#9A9080" />
+      <polygon points="64,68 50,66 50,76" fill="#9A9080" />
 
-      {/* ── Nose ── */}
-      <polygon points="44,56 56,56 50,64" fill="#4D4540" />
+      {/* Lower cheeks */}
+      <polygon points="8,62 32,54 36,68" fill="#D0B888" />
+      <polygon points="92,62 68,54 64,68" fill="#D0B888" />
+      <polygon points="8,62 36,68 20,80" fill="#B89058" />
+      <polygon points="92,62 64,68 80,80" fill="#B89058" />
 
-      {/* ── Muzzle (grey tones below nose) ── */}
-      <polygon points="36,60 44,56 40,68" fill="#C8A870" />
-      <polygon points="64,60 56,56 60,68" fill="#C8A870" />
-      <polygon points="44,56 50,64 40,68" fill="#8A7E72" />
-      <polygon points="56,56 50,64 60,68" fill="#8A7E72" />
-      <polygon points="40,68 50,64 50,74" fill="#7A7068" />
-      <polygon points="60,68 50,64 50,74" fill="#7A7068" />
+      {/* Chin */}
+      <polygon points="36,68 50,76 20,80" fill="#A88050" />
+      <polygon points="64,68 50,76 80,80" fill="#A88050" />
+      <polygon points="20,80 50,76 50,96" fill="#C09858" />
+      <polygon points="80,80 50,76 50,96" fill="#C09858" />
 
-      {/* ── Lower Cheeks ── */}
-      <polygon points="6,58 32,52 36,60" fill="#9B7040" />
-      <polygon points="94,58 68,52 64,60" fill="#9B7040" />
-      <polygon points="6,58 36,60 16,76" fill="#8B6539" />
-      <polygon points="94,58 64,60 84,76" fill="#8B6539" />
-
-      {/* ── Upper Chin ── */}
-      <polygon points="36,60 40,68 16,76" fill="#A67C52" />
-      <polygon points="64,60 60,68 84,76" fill="#A67C52" />
-      <polygon points="40,68 50,74 28,82" fill="#B89060" />
-      <polygon points="60,68 50,74 72,82" fill="#B89060" />
-      <polygon points="16,76 40,68 28,82" fill="#946B42" />
-      <polygon points="84,76 60,68 72,82" fill="#946B42" />
-
-      {/* ── Lower Chin ── */}
-      <polygon points="28,82 50,74 50,92" fill="#B89868" />
-      <polygon points="72,82 50,74 50,92" fill="#B89868" />
-      <polygon points="28,82 50,92 38,104" fill="#A67C52" />
-      <polygon points="72,82 50,92 62,104" fill="#A67C52" />
-      <polygon points="38,104 50,92 50,114" fill="#B89060" />
-      <polygon points="62,104 50,92 50,114" fill="#B89060" />
+      {/* Bottom point */}
+      <polygon points="20,80 50,96 36,108" fill="#B08848" />
+      <polygon points="80,80 50,96 64,108" fill="#B08848" />
+      <polygon points="36,108 50,96 50,118" fill="#A07840" />
+      <polygon points="64,108 50,96 50,118" fill="#A07840" />
     </svg>
   );
 }
