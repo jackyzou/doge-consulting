@@ -11,8 +11,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft, ArrowRight, Package, Ruler, Ship, User,
-  Check, Info, Plus, Minus, Warehouse, Truck
+  Check, Info, Plus, Minus, Warehouse, Truck, CreditCard
 } from "lucide-react";
+import Link from "next/link";
 import {
   PRODUCT_PRESETS,
   ZONES,
@@ -424,9 +425,20 @@ export default function QuotePage() {
                     <h2 className="text-3xl font-bold">{t("quotePage.submittedTitle")}</h2>
                     <p className="text-muted-foreground max-w-md mx-auto" dangerouslySetInnerHTML={{ __html: t("quotePage.submittedMsg").replace("{name}", contact.name).replace("{email}", `<strong>${contact.email}</strong>`) }} />
                     {quote && (
-                      <div className="space-y-1">
-                        <p className="text-lg font-semibold text-teal">{t("quotePage.estimated")} {formatUSD(quote.totalUSD)}</p>
-                        <p className="text-sm text-gold">{formatRMB(quote.totalRMB)}</p>
+                      <div className="space-y-4">
+                        <div className="space-y-1">
+                          <p className="text-lg font-semibold text-teal">{t("quotePage.estimated")} {formatUSD(quote.totalUSD)}</p>
+                          <p className="text-sm text-gold">{formatRMB(quote.totalRMB)}</p>
+                        </div>
+                        <Link
+                          href={`/payment?total=${quote.totalUSD}&items=${encodeURIComponent(JSON.stringify(items.map(i => `${i.quantity}x ${i.name}`)))}&name=${encodeURIComponent(contact.name)}&email=${encodeURIComponent(contact.email)}`}
+                        >
+                          <Button size="lg" className="bg-teal text-white hover:bg-teal/90">
+                            <CreditCard className="mr-2 h-5 w-5" />
+                            {t("quotePage.proceedToPayment")}
+                            <ArrowRight className="ml-2 h-5 w-5" />
+                          </Button>
+                        </Link>
                       </div>
                     )}
                   </motion.div>

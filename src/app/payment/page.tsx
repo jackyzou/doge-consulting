@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,66 +10,134 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { CreditCard, Building, Shield, Lock, Check, ArrowRight } from "lucide-react";
+import { CreditCard, Building, Shield, Lock, ArrowRight, AlertCircle } from "lucide-react";
 import { formatCurrency } from "@/lib/airwallex";
 import { toast } from "sonner";
 import { useTranslation } from "@/lib/i18n";
 
-export default function PaymentPage() {
+interface OrderData {
+  orderId: string;
+  items: string[];
+  subtotal: number;
+  shipping: number;
+  insurance: number;
+  total: number;
+  deposit: number;
+  balance: number;
+}
+
+function generateOrderId(): string {
+  const now = new Date();
+  const y = now.getFullYear();
+  const seq = String(Math.floor(Math.random() * 9000) + 1000);
+  return `ORD-${y}-${seq}`;
+}
+
+function PaymentContent() {
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
   const [paymentMethod, setPaymentMethod] = useState<"card" | "bank">("card");
   const [processing, setProcessing] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
 
-  // Demo order data
-  const order = {
-    id: "ORD-2026-001",
-    items: ["Marble Dining Table", "6x Dining Chairs", "TV Console"],
-    subtotal: 8500,
-    shipping: 3200,
-    insurance: 170,
-    total: 11870,
-    deposit: 8309, // 70%
-    balance: 3561, // 30%
-  };
+  // Build order from URL params (coming from quote page) or use demo defaults
+  const [order, setOrder] = useState<OrderData | null>(null);
 
-  const handlePayment = async () => {
+  useEffect(() => {
+    const totalParam = searchParams.get("total");
+    const itemsParam = searchParams.get("items");
+    const nameParam = searchParams.get("name");
+    const emailParam = searchParams.get("email");
+
+    if (totalParam) {
+      // Real data from quote page
+      const total = parseFloat(totalParam);
+      const items = itemsParam ? JSON.parse(decodeURIComponent(itemsParam)) : ["Shipping Services"];
+      const deposit = Math.round(total * 0.7 * 100) / 100;
+      const balance = Math.round((total - deposit) * 100) / 100;
+
+      setOrder({
+        orderId: generateOrderId(),
+        items,
+        subtotal: total,
+        shipping: 0,
+        insurance: 0,
+        total,
+        deposit,
+        balance,
+      });
+      if (nameParam) setCustomerName(nameParam);
+      if (emailParam) setCustomerEmail(emailParam);
+    } else {
+      // Demo order for direct visits
+      setOrder({
+        orderId: generateOrderId(),
+        items: ["Marble Dining Table", "6x Dining Chairs", "TV Console"],
+        subtotal: 8500,
+        shipping: 3200,
+        insurance: 170,
+        total: 11870,
+        deposit: 8309,
+        balance: 3561,
+      });
+    }
+  }, [searchParams]);
+
+  const handlePayment = useCallback(async () => {
+    if (!order) return;
+
+    if (!customerName.trim() || !customerEmail.trim()) {
+      toast.error(t("paymentPage.fillRequired"));
+      return;
+    }
+
+    if (paymentMethod === "bank") {
+      toast.success(t("paymentPage.bankSubmitted"));
+      return;
+    }
+
     setProcessing(true);
 
-    // Simulate Airwallex payment processing
-    await new Promise((r) => setTimeout(r, 2000));
+    try {
+      const res = await fetch("/api/payment/create-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: order.deposit,
+          currency: "USD",
+          orderId: order.orderId,
+          customerEmail: customerEmail.trim(),
+          customerName: customerName.trim(),
+          description: `Doge Consulting – Deposit for ${order.orderId}`,
+          items: order.items,
+        }),
+      });
 
-    setProcessing(false);
-    setSuccess(true);
-    toast.success("Payment successful! You'll receive a confirmation email shortly.");
-  };
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Payment failed");
+      }
 
-  if (success) {
+      const data = await res.json();
+
+      if (data.checkoutUrl) {
+        // Redirect to Airwallex checkout (or demo success page)
+        window.location.href = data.checkoutUrl;
+      } else {
+        throw new Error("No checkout URL returned");
+      }
+    } catch (err) {
+      console.error("Payment error:", err);
+      toast.error(t("paymentPage.paymentError"));
+      setProcessing(false);
+    }
+  }, [order, customerName, customerEmail, paymentMethod, t]);
+
+  if (!order) {
     return (
-      <div className="min-h-screen gradient-mesh flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center space-y-6 max-w-md"
-        >
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-teal/10">
-            <Check className="h-10 w-10 text-teal" />
-          </div>
-          <h1 className="text-3xl font-bold">{t("paymentPage.successTitle")}</h1>
-          <p className="text-muted-foreground">
-            {t("paymentPage.successMsg").replace("{amount}", formatCurrency(order.deposit)).replace("{orderId}", order.id)}
-          </p>
-          <Card className="text-left">
-            <CardContent className="pt-6 space-y-2 text-sm">
-              <div className="flex justify-between"><span>Order ID</span><span className="font-medium">{order.id}</span></div>
-              <div className="flex justify-between"><span>{t("paymentPage.amountPaid")}</span><span className="font-medium text-teal">{formatCurrency(order.deposit)}</span></div>
-              <div className="flex justify-between"><span>{t("paymentPage.balanceDueLabel")}</span><span className="font-medium">{formatCurrency(order.balance)}</span></div>
-              <div className="flex justify-between"><span>{t("paymentPage.paymentMethod")}</span><span className="font-medium">{paymentMethod === "card" ? t("paymentPage.creditCard") : t("paymentPage.bankTransfer")}</span></div>
-              <div className="flex justify-between"><span>{t("paymentPage.processedVia")}</span><span className="font-medium">Airwallex</span></div>
-            </CardContent>
-          </Card>
-          <p className="text-xs text-muted-foreground">{t("paymentPage.confirmationNote")}</p>
-        </motion.div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal/30 border-t-teal" />
       </div>
     );
   }
@@ -93,8 +162,39 @@ export default function PaymentPage() {
             {/* Payment Form */}
             <div className="md:col-span-3 space-y-6">
               <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-                {/* Payment Method Selection */}
+
+                {/* Customer Info */}
                 <Card>
+                  <CardHeader><CardTitle className="text-lg">{t("paymentPage.customerTitle")}</CardTitle></CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="pay-name">{t("paymentPage.yourName")}</Label>
+                      <Input
+                        id="pay-name"
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        placeholder={t("paymentPage.yourNamePlaceholder")}
+                        required
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="pay-email">{t("paymentPage.yourEmail")}</Label>
+                      <Input
+                        id="pay-email"
+                        type="email"
+                        value={customerEmail}
+                        onChange={(e) => setCustomerEmail(e.target.value)}
+                        placeholder={t("paymentPage.yourEmailPlaceholder")}
+                        required
+                        className="mt-1"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Payment Method Selection */}
+                <Card className="mt-6">
                   <CardHeader><CardTitle className="text-lg">{t("paymentPage.methodTitle")}</CardTitle></CardHeader>
                   <CardContent>
                     <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as "card" | "bank")} className="space-y-3">
@@ -118,26 +218,18 @@ export default function PaymentPage() {
                   </CardContent>
                 </Card>
 
-                {/* Card Form */}
+                {/* Card: redirect notice */}
                 {paymentMethod === "card" && (
-                  <Card className="mt-6">
-                    <CardHeader><CardTitle className="text-lg">{t("paymentPage.cardDetailsTitle")}</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <Label>{t("paymentPage.cardNumber")}</Label>
-                        <Input placeholder={t("paymentPage.cardNumberPlaceholder")} className="mt-1" />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div><Label>{t("paymentPage.expiry")}</Label><Input placeholder={t("paymentPage.expiryPlaceholder")} className="mt-1" /></div>
-                        <div><Label>{t("paymentPage.cvc")}</Label><Input placeholder={t("paymentPage.cvcPlaceholder")} className="mt-1" /></div>
-                      </div>
-                      <div>
-                        <Label>{t("paymentPage.cardholderName")}</Label>
-                        <Input placeholder={t("paymentPage.cardholderPlaceholder")} className="mt-1" />
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Shield className="h-4 w-4 text-teal" />
-                        {t("paymentPage.secureNote")}
+                  <Card className="mt-6 border-teal/20 bg-teal/5">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start gap-3">
+                        <Shield className="h-5 w-5 text-teal mt-0.5 shrink-0" />
+                        <div className="space-y-1">
+                          <p className="font-medium text-sm">{t("paymentPage.redirectTitle")}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {t("paymentPage.redirectDesc")}
+                          </p>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -155,11 +247,12 @@ export default function PaymentPage() {
                         <div className="flex justify-between"><span className="text-muted-foreground">{t("paymentPage.accountNumber")}</span><span className="font-medium font-mono">XXX-XXXXXX-XXX</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">{t("paymentPage.swiftCode")}</span><span className="font-medium font-mono">HSBCHKHHHKH</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">{t("paymentPage.currency")}</span><span className="font-medium">USD</span></div>
-                        <div className="flex justify-between"><span className="text-muted-foreground">{t("paymentPage.reference")}</span><span className="font-medium text-teal">{order.id}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">{t("paymentPage.reference")}</span><span className="font-medium text-teal">{order.orderId}</span></div>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                        <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
                         {t("paymentPage.bankNote")}
-                      </p>
+                      </div>
                     </CardContent>
                   </Card>
                 )}
@@ -175,9 +268,14 @@ export default function PaymentPage() {
                       <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                       {t("paymentPage.processing")}
                     </span>
-                  ) : (
+                  ) : paymentMethod === "card" ? (
                     <>
                       {t("paymentPage.payDeposit").replace("{amount}", formatCurrency(order.deposit))}
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </>
+                  ) : (
+                    <>
+                      {t("paymentPage.confirmBankTransfer")}
                       <ArrowRight className="ml-2 h-5 w-5" />
                     </>
                   )}
@@ -191,6 +289,7 @@ export default function PaymentPage() {
                 <Card className="sticky top-24">
                   <CardHeader><CardTitle className="text-lg">{t("paymentPage.orderSummaryTitle")}</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
+                    <div className="text-xs font-mono text-muted-foreground">{order.orderId}</div>
                     <div className="space-y-2">
                       {order.items.map((item) => (
                         <div key={item} className="flex items-center gap-2 text-sm">
@@ -201,9 +300,15 @@ export default function PaymentPage() {
                     </div>
                     <Separator />
                     <div className="space-y-2 text-sm">
-                      <div className="flex justify-between"><span className="text-muted-foreground">{t("paymentPage.products")}</span><span>{formatCurrency(order.subtotal)}</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">{t("paymentPage.shipping")}</span><span>{formatCurrency(order.shipping)}</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">{t("paymentPage.insurance")}</span><span>{formatCurrency(order.insurance)}</span></div>
+                      {order.subtotal > 0 && (
+                        <div className="flex justify-between"><span className="text-muted-foreground">{t("paymentPage.products")}</span><span>{formatCurrency(order.subtotal)}</span></div>
+                      )}
+                      {order.shipping > 0 && (
+                        <div className="flex justify-between"><span className="text-muted-foreground">{t("paymentPage.shipping")}</span><span>{formatCurrency(order.shipping)}</span></div>
+                      )}
+                      {order.insurance > 0 && (
+                        <div className="flex justify-between"><span className="text-muted-foreground">{t("paymentPage.insurance")}</span><span>{formatCurrency(order.insurance)}</span></div>
+                      )}
                     </div>
                     <Separator />
                     <div className="flex justify-between font-bold">
@@ -231,5 +336,19 @@ export default function PaymentPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function PaymentPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+      }
+    >
+      <PaymentContent />
+    </Suspense>
   );
 }
