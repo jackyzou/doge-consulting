@@ -1,0 +1,292 @@
+// Doge Consulting – full business management schema
+// SQLite for local-first operation
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ──────────────────────────────────────────
+// Auth & Users
+// ──────────────────────────────────────────
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("user") // "admin" | "user"
+  phone        String?
+  company      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  orders   Order[]
+  quotes   Quote[]
+  payments Payment[]
+}
+
+// ──────────────────────────────────────────
+// Product Catalog
+// ──────────────────────────────────────────
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String   // "furniture", "electronics", "home-goods", etc.
+  sku         String   @unique
+  unitPrice   Float    // USD
+  unit        String   @default("piece") // "piece", "set", "kg", "cbm"
+  lengthCm    Float?
+  widthCm     Float?
+  heightCm    Float?
+  weightKg    Float?
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  isCatalog   Boolean  @default(false) // show on public catalog page
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  quoteItems QuoteItem[]
+  orderItems OrderItem[]
+}
+
+// ──────────────────────────────────────────
+// Quotes / Purchase Orders
+// ──────────────────────────────────────────
+model Quote {
+  id             String   @id @default(cuid())
+  quoteNumber    String   @unique // "QT-2026-0001"
+  status         String   @default("draft") // draft, sent, accepted, rejected, expired, converted
+  
+  // Customer info
+  customerId     String?
+  customer       User?    @relation(fields: [customerId], references: [id])
+  customerName   String
+  customerEmail  String
+  customerPhone  String?
+  customerCompany String?
+
+  // Financials
+  subtotal       Float    @default(0)
+  shippingCost   Float    @default(0)
+  insuranceCost  Float    @default(0)
+  customsDuty    Float    @default(0)
+  discount       Float    @default(0)
+  taxAmount      Float    @default(0)
+  totalAmount    Float    @default(0)
+  currency       String   @default("USD")
+  depositPercent Float    @default(70)
+
+  // Shipping details
+  shippingMethod String?  // "LCL", "FCL_20GP", "FCL_40GP", "FCL_40HC"
+  originCity     String   @default("Foshan")
+  destinationCity String  @default("Seattle, WA")
+  estimatedTransit String?
+
+  notes          String?
+  validUntil     DateTime?
+  sentAt         DateTime?
+  acceptedAt     DateTime?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  items          QuoteItem[]
+  order          Order?     // quote → order conversion
+  paymentLink    PaymentLink?
+}
+
+model QuoteItem {
+  id          String  @id @default(cuid())
+  quoteId     String
+  quote       Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id])
+  
+  name        String
+  description String?
+  quantity    Int     @default(1)
+  unitPrice   Float
+  totalPrice  Float
+  unit        String  @default("piece")
+  lengthCm    Float?
+  widthCm     Float?
+  heightCm    Float?
+  weightKg    Float?
+}
+
+// ──────────────────────────────────────────
+// Orders
+// ──────────────────────────────────────────
+model Order {
+  id           String   @id @default(cuid())
+  orderNumber  String   @unique // "ORD-2026-0001"
+  status       String   @default("pending") // pending, confirmed, sourcing, packing, in_transit, customs, delivered, closed, cancelled
+
+  // Link to quote
+  quoteId      String?  @unique
+  quote        Quote?   @relation(fields: [quoteId], references: [id])
+
+  // Customer
+  customerId   String?
+  customer     User?    @relation(fields: [customerId], references: [id])
+  customerName String
+  customerEmail String
+  customerPhone String?
+
+  // Financials
+  subtotal     Float    @default(0)
+  shippingCost Float    @default(0)
+  insuranceCost Float   @default(0)
+  customsDuty  Float    @default(0)
+  discount     Float    @default(0)
+  taxAmount    Float    @default(0)
+  totalAmount  Float    @default(0)
+  depositAmount Float   @default(0)
+  balanceDue   Float    @default(0)
+  currency     String   @default("USD")
+
+  // Shipping
+  shippingMethod String?
+  originCity     String  @default("Foshan")
+  destinationCity String @default("Seattle, WA")
+  trackingId     String?
+  vessel         String?
+  estimatedDelivery DateTime?
+
+  notes          String?
+  closedAt       DateTime?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  items          OrderItem[]
+  payments       Payment[]
+  statusHistory  OrderStatusHistory[]
+  documents      Document[]
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id])
+
+  name        String
+  description String?
+  quantity    Int     @default(1)
+  unitPrice   Float
+  totalPrice  Float
+  unit        String  @default("piece")
+}
+
+model OrderStatusHistory {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    String
+  note      String?
+  changedBy String?  // admin user name
+  createdAt DateTime @default(now())
+}
+
+// ──────────────────────────────────────────
+// Payments
+// ──────────────────────────────────────────
+model Payment {
+  id              String   @id @default(cuid())
+  paymentNumber   String   @unique // "PAY-2026-0001"
+  orderId         String
+  order           Order    @relation(fields: [orderId], references: [id])
+  customerId      String?
+  customer        User?    @relation(fields: [customerId], references: [id])
+
+  amount          Float
+  currency        String   @default("USD")
+  method          String   // "credit_card", "debit_card", "ach", "wire"
+  status          String   @default("pending") // pending, processing, completed, failed, refunded
+  type            String   @default("deposit") // "deposit", "balance", "full"
+
+  // External payment reference
+  externalId      String?  // Airwallex payment intent ID
+  externalUrl     String?  // Airwallex checkout URL
+  
+  paidAt          DateTime?
+  failedAt        DateTime?
+  refundedAt      DateTime?
+  notes           String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  paymentLink     PaymentLink?
+}
+
+model PaymentLink {
+  id          String   @id @default(cuid())
+  token       String   @unique @default(cuid()) // public URL token
+  quoteId     String?  @unique
+  quote       Quote?   @relation(fields: [quoteId], references: [id])
+  paymentId   String?  @unique
+  payment     Payment? @relation(fields: [paymentId], references: [id])
+
+  amount      Float
+  currency    String   @default("USD")
+  description String?
+  status      String   @default("active") // active, used, expired
+  expiresAt   DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ──────────────────────────────────────────
+// Documents (invoices, receipts, POs)
+// ──────────────────────────────────────────
+model Document {
+  id           String   @id @default(cuid())
+  documentNumber String @unique // "INV-2026-0001", "REC-2026-0001", "PO-2026-0001"
+  type         String   // "invoice", "receipt", "purchase_order", "proforma"
+  orderId      String
+  order        Order    @relation(fields: [orderId], references: [id])
+
+  // Stored as JSON string
+  data         String   // JSON blob with full document data
+  pdfPath      String?  // relative path to generated PDF
+
+  issuedAt     DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ──────────────────────────────────────────
+// Email Log
+// ──────────────────────────────────────────
+model EmailLog {
+  id        String   @id @default(cuid())
+  to        String
+  subject   String
+  type      String   // "quote_sent", "order_confirmed", "payment_received", "order_closed", "payment_link"
+  status    String   @default("sent") // "sent", "failed"
+  orderId   String?
+  error     String?
+  createdAt DateTime @default(now())
+}
+
+// ──────────────────────────────────────────
+// App Settings (key-value store)
+// ──────────────────────────────────────────
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

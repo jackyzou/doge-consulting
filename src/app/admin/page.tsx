@@ -1,127 +1,246 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, Package, FileText, TrendingUp, ArrowUpRight, Clock, Ship } from "lucide-react";
+import {
+  DollarSign, Package, FileText, TrendingUp, ArrowUpRight,
+  Ship, Loader2, Users, ShoppingCart,
+} from "lucide-react";
 
-const stats = [
-  { title: "Total Revenue", value: "$128,400", change: "+12.5%", icon: DollarSign, trend: "up" as const },
-  { title: "Active Orders", value: "24", change: "+3 this week", icon: Package, trend: "up" as const },
-  { title: "Pending Quotes", value: "8", change: "5 new today", icon: FileText, trend: "neutral" as const },
-  { title: "CBM Shipped", value: "342", change: "+18% MoM", icon: TrendingUp, trend: "up" as const },
-];
-
-const recentOrders = [
-  { id: "DC-2026-001", customer: "Sarah M.", items: "Dining Set, Console", status: "in_transit", amount: 11870, eta: "Feb 15, 2026" },
-  { id: "DC-2026-002", customer: "James L.", items: "Sofa, Coffee Table", status: "packing", amount: 6250, eta: "Mar 1, 2026" },
-  { id: "DC-2026-003", customer: "Emily W.", items: "Bed Frame, Wardrobe", status: "sourcing", amount: 9400, eta: "Mar 20, 2026" },
-  { id: "DC-2026-004", customer: "Michael C.", items: "Office Desk, Shelves", status: "delivered", amount: 4800, eta: "Jan 28, 2026" },
-  { id: "DC-2026-005", customer: "Lisa R.", items: "Marble Dining Table", status: "customs", amount: 7600, eta: "Feb 8, 2026" },
-];
+interface DashboardData {
+  totalRevenue: number;
+  activeOrders: number;
+  pendingQuotes: number;
+  totalCustomers: number;
+  totalProducts: number;
+  ordersByStatus: Record<string, number>;
+  monthlyRevenue: { month: string; revenue: number }[];
+  recentOrders: { id: string; orderNumber: string; customerName: string; status: string; totalAmount: number; createdAt: string }[];
+  recentQuotes: { id: string; quoteNumber: string; customerName: string; status: string; totalAmount: number; createdAt: string }[];
+}
 
 const statusColors: Record<string, string> = {
+  pending: "bg-amber-500/10 text-amber-600",
+  confirmed: "bg-blue-500/10 text-blue-600",
   sourcing: "bg-amber-500/10 text-amber-600",
   packing: "bg-blue-500/10 text-blue-600",
   in_transit: "bg-purple-500/10 text-purple-600",
   customs: "bg-orange-500/10 text-orange-600",
   delivered: "bg-emerald-500/10 text-emerald-600",
+  closed: "bg-gray-500/10 text-gray-600",
+  draft: "bg-gray-500/10 text-gray-600",
+  sent: "bg-blue-500/10 text-blue-600",
+  accepted: "bg-emerald-500/10 text-emerald-600",
+  rejected: "bg-red-500/10 text-red-600",
+  converted: "bg-teal-500/10 text-teal-600",
 };
 
 export default function AdminDashboard() {
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/admin/dashboard")
+      .then((r) => r.json())
+      .then(setData)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading || !data) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-teal" />
+      </div>
+    );
+  }
+
+  const maxRevenue = Math.max(...data.monthlyRevenue.map((m) => m.revenue), 1);
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">Overview of your shipping operations</p>
+        <p className="text-muted-foreground">Overview of your business operations</p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div className="rounded-lg bg-teal/10 p-2">
-                  <stat.icon className="h-5 w-5 text-teal" />
-                </div>
-                <span className="flex items-center gap-1 text-xs text-emerald-600">
-                  <ArrowUpRight className="h-3 w-3" />
-                  {stat.change}
-                </span>
-              </div>
-              <div className="mt-3">
-                <p className="text-2xl font-bold">{stat.value}</p>
-                <p className="text-xs text-muted-foreground">{stat.title}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="rounded-lg bg-teal/10 p-2"><DollarSign className="h-5 w-5 text-teal" /></div>
+              <span className="flex items-center gap-1 text-xs text-emerald-600"><ArrowUpRight className="h-3 w-3" />Revenue</span>
+            </div>
+            <div className="mt-3">
+              <p className="text-2xl font-bold">${data.totalRevenue.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Total Revenue</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="rounded-lg bg-purple-500/10 p-2"><Package className="h-5 w-5 text-purple-600" /></div>
+              <span className="flex items-center gap-1 text-xs text-purple-600"><ArrowUpRight className="h-3 w-3" />Active</span>
+            </div>
+            <div className="mt-3">
+              <p className="text-2xl font-bold">{data.activeOrders}</p>
+              <p className="text-xs text-muted-foreground">Active Orders</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="rounded-lg bg-amber-500/10 p-2"><FileText className="h-5 w-5 text-amber-600" /></div>
+              <span className="flex items-center gap-1 text-xs text-amber-600"><ArrowUpRight className="h-3 w-3" />Pending</span>
+            </div>
+            <div className="mt-3">
+              <p className="text-2xl font-bold">{data.pendingQuotes}</p>
+              <p className="text-xs text-muted-foreground">Pending Quotes</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="rounded-lg bg-blue-500/10 p-2"><Users className="h-5 w-5 text-blue-600" /></div>
+              <span className="flex items-center gap-1 text-xs text-blue-600">{data.totalProducts} products</span>
+            </div>
+            <div className="mt-3">
+              <p className="text-2xl font-bold">{data.totalCustomers}</p>
+              <p className="text-xs text-muted-foreground">Total Customers</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Recent Orders */}
+      {/* Revenue Chart */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Ship className="h-5 w-5 text-teal" />
-            Recent Orders
-          </CardTitle>
+          <CardTitle className="flex items-center gap-2"><TrendingUp className="h-5 w-5 text-teal" />Monthly Revenue</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="pb-3 font-medium">Order ID</th>
-                  <th className="pb-3 font-medium">Customer</th>
-                  <th className="pb-3 font-medium hidden sm:table-cell">Items</th>
-                  <th className="pb-3 font-medium">Status</th>
-                  <th className="pb-3 font-medium text-right">Amount</th>
-                  <th className="pb-3 font-medium hidden md:table-cell">ETA</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {recentOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-muted/50 transition-colors">
-                    <td className="py-3 font-medium text-teal">{order.id}</td>
-                    <td className="py-3">{order.customer}</td>
-                    <td className="py-3 text-muted-foreground hidden sm:table-cell">{order.items}</td>
-                    <td className="py-3">
-                      <Badge className={statusColors[order.status] || ""} variant="secondary">
-                        {order.status.replace("_", " ")}
-                      </Badge>
-                    </td>
-                    <td className="py-3 text-right font-medium">${order.amount.toLocaleString()}</td>
-                    <td className="py-3 text-muted-foreground hidden md:table-cell">
-                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{order.eta}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {data.monthlyRevenue.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">No revenue data yet</p>
+          ) : (
+            <div className="flex items-end gap-2 h-48">
+              {data.monthlyRevenue.map((m) => (
+                <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
+                  <span className="text-xs font-medium text-muted-foreground">${(m.revenue / 1000).toFixed(1)}k</span>
+                  <div className="w-full bg-teal/80 rounded-t-md min-h-[4px] transition-all" style={{ height: `${(m.revenue / maxRevenue) * 160}px` }} />
+                  <span className="text-xs text-muted-foreground">{m.month}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
+      {/* Order Status Breakdown */}
+      {Object.keys(data.ordersByStatus).length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="flex items-center gap-2"><Package className="h-5 w-5 text-teal" />Orders by Status</CardTitle></CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-3">
+              {Object.entries(data.ordersByStatus).map(([status, count]) => (
+                <div key={status} className="flex items-center gap-2 rounded-lg border px-3 py-2">
+                  <Badge className={statusColors[status] || "bg-gray-100"} variant="secondary">{status.replace(/_/g, " ")}</Badge>
+                  <span className="text-lg font-bold">{count}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Recent Orders */}
+        <Card>
+          <CardHeader className="flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2"><Ship className="h-5 w-5 text-teal" />Recent Orders</CardTitle>
+            <Link href="/admin/orders" className="text-sm text-teal hover:underline">View all →</Link>
+          </CardHeader>
+          <CardContent>
+            {data.recentOrders.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">No orders yet</p>
+            ) : (
+              <div className="space-y-3">
+                {data.recentOrders.map((order) => (
+                  <div key={order.id} className="flex items-center justify-between rounded-lg border p-3">
+                    <div>
+                      <p className="font-medium text-teal">{order.orderNumber}</p>
+                      <p className="text-xs text-muted-foreground">{order.customerName}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">${order.totalAmount.toLocaleString()}</p>
+                      <Badge className={statusColors[order.status] || ""} variant="secondary">{order.status.replace(/_/g, " ")}</Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Quotes */}
+        <Card>
+          <CardHeader className="flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5 text-teal" />Recent Quotes</CardTitle>
+            <Link href="/admin/quotes" className="text-sm text-teal hover:underline">View all →</Link>
+          </CardHeader>
+          <CardContent>
+            {data.recentQuotes.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">No quotes yet</p>
+            ) : (
+              <div className="space-y-3">
+                {data.recentQuotes.map((quote) => (
+                  <div key={quote.id} className="flex items-center justify-between rounded-lg border p-3">
+                    <div>
+                      <p className="font-medium text-teal">{quote.quoteNumber}</p>
+                      <p className="text-xs text-muted-foreground">{quote.customerName}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">${quote.totalAmount.toLocaleString()}</p>
+                      <Badge className={statusColors[quote.status] || ""} variant="secondary">{quote.status}</Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Quick Actions */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="cursor-pointer hover:border-teal/50 transition-colors">
-          <CardContent className="flex items-center gap-3 pt-6">
-            <div className="rounded-lg bg-teal/10 p-2"><FileText className="h-5 w-5 text-teal" /></div>
-            <div><p className="font-medium">View Quotes</p><p className="text-xs text-muted-foreground">8 pending review</p></div>
-          </CardContent>
-        </Card>
-        <Card className="cursor-pointer hover:border-teal/50 transition-colors">
-          <CardContent className="flex items-center gap-3 pt-6">
-            <div className="rounded-lg bg-amber-500/10 p-2"><Package className="h-5 w-5 text-amber-600" /></div>
-            <div><p className="font-medium">Manage Orders</p><p className="text-xs text-muted-foreground">24 active shipments</p></div>
-          </CardContent>
-        </Card>
-        <Card className="cursor-pointer hover:border-teal/50 transition-colors">
-          <CardContent className="flex items-center gap-3 pt-6">
-            <div className="rounded-lg bg-purple-500/10 p-2"><TrendingUp className="h-5 w-5 text-purple-600" /></div>
-            <div><p className="font-medium">Analytics</p><p className="text-xs text-muted-foreground">View detailed reports</p></div>
-          </CardContent>
-        </Card>
+        <Link href="/admin/quotes">
+          <Card className="cursor-pointer hover:border-teal/50 transition-colors">
+            <CardContent className="flex items-center gap-3 pt-6">
+              <div className="rounded-lg bg-teal/10 p-2"><FileText className="h-5 w-5 text-teal" /></div>
+              <div><p className="font-medium">Manage Quotes</p><p className="text-xs text-muted-foreground">Create & send quotes</p></div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/products">
+          <Card className="cursor-pointer hover:border-teal/50 transition-colors">
+            <CardContent className="flex items-center gap-3 pt-6">
+              <div className="rounded-lg bg-amber-500/10 p-2"><ShoppingCart className="h-5 w-5 text-amber-600" /></div>
+              <div><p className="font-medium">Product Catalog</p><p className="text-xs text-muted-foreground">Configure products</p></div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/customers">
+          <Card className="cursor-pointer hover:border-teal/50 transition-colors">
+            <CardContent className="flex items-center gap-3 pt-6">
+              <div className="rounded-lg bg-purple-500/10 p-2"><Users className="h-5 w-5 text-purple-600" /></div>
+              <div><p className="font-medium">CRM</p><p className="text-xs text-muted-foreground">Customer management</p></div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   );
