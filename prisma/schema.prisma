@@ -86,7 +86,7 @@ model Quote {
 
   // Shipping details
   shippingMethod String?  // "LCL", "FCL_20GP", "FCL_40GP", "FCL_40HC"
-  originCity     String   @default("Foshan")
+  originCity     String   @default("Shenzhen")
   destinationCity String  @default("Seattle, WA")
   estimatedTransit String?
 
@@ -156,7 +156,7 @@ model Order {
 
   // Shipping
   shippingMethod String?
-  originCity     String  @default("Foshan")
+  originCity     String  @default("Shenzhen")
   destinationCity String @default("Seattle, WA")
   trackingId     String?
   vessel         String?

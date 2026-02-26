@@ -14,7 +14,7 @@ const statusIcons: Record<string, React.ElementType> = {
   order_confirmed: Check,
   items_sourced: Package,
   quality_inspected: Search,
-  packed_foshan: Package,
+  packed_shenzhen: Package,
   departed_china: Ship,
   in_transit: Ship,
   arrived_seattle: MapPin,

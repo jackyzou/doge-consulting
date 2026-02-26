@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
         currency: body.currency || "USD",
         depositPercent: body.depositPercent || 70,
         shippingMethod: body.shippingMethod,
-        originCity: body.originCity || "Foshan",
+        originCity: body.originCity || "Shenzhen",
         destinationCity: body.destinationCity || "Seattle, WA",
         estimatedTransit: body.estimatedTransit,
         notes: body.notes,

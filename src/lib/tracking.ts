@@ -4,7 +4,7 @@ export type ShipmentStatus =
   | "order_confirmed"
   | "items_sourced"
   | "quality_inspected"
-  | "packed_foshan"
+  | "packed_shenzhen"
   | "departed_china"
   | "in_transit"
   | "arrived_seattle"
@@ -42,7 +42,7 @@ export function getDefaultMilestones(currentStatus?: ShipmentStatus): ShipmentMi
     { status: "order_confirmed", label: "Order Confirmed", labelZh: "订单确认", description: "Your order has been confirmed and payment received." },
     { status: "items_sourced", label: "Items Sourced", labelZh: "产品采购", description: "Items have been sourced from Chinese manufacturers." },
     { status: "quality_inspected", label: "Quality Inspected", labelZh: "质量检验", description: "All items passed quality inspection." },
-    { status: "packed_foshan", label: "Packed & Loaded", labelZh: "包装装柜", description: "Items packed and loaded at Foshan warehouse." },
+    { status: "packed_shenzhen", label: "Packed & Loaded", labelZh: "包装装柜", description: "Items packed and loaded at Shenzhen warehouse." },
     { status: "departed_china", label: "Departed China", labelZh: "离开中国", description: "Shipment departed from Chinese port." },
     { status: "in_transit", label: "In Transit", labelZh: "运输中", description: "Currently on the water en route to Seattle." },
     { status: "arrived_seattle", label: "Arrived Seattle", labelZh: "到达西雅图", description: "Arrived at Port of Seattle / Tacoma." },
@@ -71,7 +71,7 @@ export const DEMO_SHIPMENTS: Record<string, Shipment> = {
     trackingId: "DC-2026-001",
     orderId: "ORD-001",
     customerName: "John Smith",
-    origin: "Foshan, Guangdong, China",
+    origin: "Shenzhen, Guangdong, China",
     destination: "Seattle, WA, USA",
     items: ["Marble Dining Table", "6x Dining Chairs", "TV Console", "Coffee Table"],
     totalCBM: 4.5,
@@ -88,13 +88,13 @@ export const DEMO_SHIPMENTS: Record<string, Shipment> = {
     trackingId: "DC-2026-002",
     orderId: "ORD-002",
     customerName: "Sarah Chen",
-    origin: "Foshan, Guangdong, China",
+    origin: "Shenzhen, Guangdong, China",
     destination: "Bellevue, WA, USA",
     items: ["King Bed Frame", "2x Nightstands", "Wardrobe", "Dresser"],
     totalCBM: 6.2,
     totalWeight: 350,
     method: "Sea Freight (LCL)",
-    milestones: getDefaultMilestones("packed_foshan").map((m, i) => ({
+    milestones: getDefaultMilestones("packed_shenzhen").map((m, i) => ({
       ...m,
       date: i < 4 ? `2026-02-${String(i * 4 + 5).padStart(2, "0")}` : undefined,
     })),

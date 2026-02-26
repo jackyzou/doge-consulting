@@ -2,7 +2,7 @@
 
 **Product sourcing & shipping from mainland China to the USA.**
 
-Doge Consulting connects US businesses and consumers with China's manufacturing hubs—furniture from Foshan, electronics from Shenzhen, small commodities from Yiwu, and more. This repository contains the company website: a Next.js application with an instant quote calculator, shipment tracking, Airwallex payment integration, and an admin panel.
+Doge Consulting connects US businesses and consumers with China's manufacturing hubs—furniture and electronics from Shenzhen, small commodities from Yiwu, and more. This repository contains the company website: a Next.js application with an instant quote calculator, shipment tracking, Airwallex payment integration, and an admin panel.
 
 ---
 

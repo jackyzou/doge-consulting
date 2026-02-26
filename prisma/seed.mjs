@@ -75,7 +75,7 @@ if (!existingQuote) {
      shippingMethod, originCity, destinationCity, estimatedTransit, validUntil, sentAt, createdAt, updatedAt)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?,
             ?, ?, ?, ?, 0, 0, ?, 'USD', 70,
-            ?, 'Foshan', 'Seattle, WA', ?, datetime('now','+30 days'), datetime('now'), datetime('now'), datetime('now'))`)
+            ?, 'Shenzhen', 'Seattle, WA', ?, datetime('now','+30 days'), datetime('now'), datetime('now'), datetime('now'))`)
     .run(quoteId, "QT-2026-0001", "sent", realCustId, "Sarah Mitchell", "sarah@example.com", "+1-206-555-0101", "Mitchell Interiors",
          2250, 800, 60, 150, 3260,
          "LCL", "5-8 weeks");
@@ -98,7 +98,7 @@ if (!existingOrder) {
      shippingMethod, originCity, destinationCity, trackingId, vessel, estimatedDelivery, createdAt, updatedAt)
     VALUES (?, ?, ?, ?, ?, ?, ?,
             ?, ?, ?, ?, 0, 0, ?, ?, ?, 'USD',
-            ?, 'Foshan', 'Seattle, WA', ?, ?, datetime('2026-03-15'), datetime('now'), datetime('now'))`)
+            ?, 'Shenzhen', 'Seattle, WA', ?, ?, datetime('2026-03-15'), datetime('now'), datetime('now'))`)
     .run(orderId, "ORD-2026-0001", "in_transit", realCustId, "Sarah Mitchell", "sarah@example.com", "+1-206-555-0101",
          2250, 800, 60, 150, 3260, 2282, 978,
          "LCL", "DC-2026-001", "COSCO Pacific");
@@ -115,7 +115,7 @@ if (!existingOrder) {
     (id, orderId, status, note, changedBy, createdAt) VALUES (?, ?, ?, ?, ?, ?)`);
   insertSH.run(cuid(), orderId, "pending", "Order created", "System", "2026-01-05T00:00:00.000Z");
   insertSH.run(cuid(), orderId, "confirmed", "Deposit received", "Jacky Zou", "2026-01-06T00:00:00.000Z");
-  insertSH.run(cuid(), orderId, "sourcing", "Sourcing from Foshan", "Jacky Zou", "2026-01-10T00:00:00.000Z");
+  insertSH.run(cuid(), orderId, "sourcing", "Sourcing from Shenzhen", "Jacky Zou", "2026-01-10T00:00:00.000Z");
   insertSH.run(cuid(), orderId, "packing", "Products inspected, packing", "Jacky Zou", "2026-01-20T00:00:00.000Z");
   insertSH.run(cuid(), orderId, "in_transit", "Shipped via COSCO Pacific", "Jacky Zou", "2026-02-01T00:00:00.000Z");
 

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Ship, Users, MapPin, Shield } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
+import GlobalPresenceMap from "@/components/home/GlobalPresenceMap";
 
 export default function AboutPage() {
   const { t } = useTranslation();
@@ -20,6 +21,14 @@ export default function AboutPage() {
     { city: t("about.loc1City"), flag: "🇺🇸", role: t("about.loc1Role"), desc: t("about.loc1Desc") },
     { city: t("about.loc2City"), flag: "🇭🇰", role: t("about.loc2Role"), desc: t("about.loc2Desc") },
     { city: t("about.loc3City"), flag: "🇨🇳", role: t("about.loc3Role"), desc: t("about.loc3Desc") },
+  ];
+
+  // Map pin positions: x/y as percentage coordinates mapped to SVG viewBox (1000x500)
+  // x: 0-100 → 0-1000, y: 0-100 → 0-500
+  const mapLocations = [
+    { city: "Seattle", role: t("about.loc1Role"), flag: "🇺🇸", x: 15, y: 22 },
+    { city: "Hong Kong", role: t("about.loc2Role"), flag: "🇭🇰", x: 76, y: 29 },
+    { city: "Shenzhen", role: t("about.loc3Role"), flag: "🇨🇳", x: 75, y: 26 },
   ];
 
   return (
@@ -89,6 +98,17 @@ export default function AboutPage() {
           <h2 className="mb-12 text-center text-3xl font-bold">
             {t("about.locationsTitle")} <span className="text-teal">{t("about.locationsHighlight")}</span>
           </h2>
+
+          {/* Global Presence Map */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-16"
+          >
+            <GlobalPresenceMap locations={mapLocations} />
+          </motion.div>
+
           <div className="grid gap-8 md:grid-cols-3">
             {locations.map((loc, i) => (
               <motion.div
