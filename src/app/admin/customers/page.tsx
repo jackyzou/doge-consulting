@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Users, Search, Mail, Phone, Building, Loader2, ShoppingCart, FileText, DollarSign } from "lucide-react";
+import { Users, Search, Mail, Phone, Building, Loader2, ShoppingCart, FileText, DollarSign, Sparkles } from "lucide-react";
 
 interface Customer {
   id: string;
@@ -65,7 +65,13 @@ export default function AdminCustomersPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-lg font-bold">{c.name}</p>
-                      <Badge variant="outline" className="text-xs">{c.role}</Badge>
+                      {c.role === "lead" ? (
+                        <Badge className="bg-amber-500/10 text-amber-600 text-xs gap-1" variant="secondary"><Sparkles className="h-3 w-3" />Quote Lead</Badge>
+                      ) : c.role === "admin" ? (
+                        <Badge className="bg-teal/10 text-teal text-xs" variant="secondary">Admin</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs">Customer</Badge>
+                      )}
                     </div>
                     <div className="text-right text-xs text-muted-foreground">
                       Joined {new Date(c.createdAt).toLocaleDateString()}

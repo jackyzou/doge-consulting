@@ -27,7 +27,8 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     if ((error as Error).message === "Unauthorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if ((error as Error).message === "Forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error("GET products error:", error);
+    return NextResponse.json({ error: "Internal server error", details: String(error) }, { status: 500 });
   }
 }
 
@@ -50,6 +51,7 @@ export async function POST(request: NextRequest) {
         heightCm: body.heightCm,
         weightKg: body.weightKg,
         imageUrl: body.imageUrl,
+        linkUrl: body.linkUrl,
         isActive: body.isActive ?? true,
         isCatalog: body.isCatalog ?? false,
       },

@@ -56,7 +56,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         data: {
           orderId: id,
           status: body.status,
-          note: body.statusNote || null,
+          note: body.statusNote || body.note || null,
           changedBy: admin.name,
         },
       });

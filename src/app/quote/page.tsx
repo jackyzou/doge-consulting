@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,18 @@ export default function QuotePage() {
   const [items, setItems] = useState<ProductItem[]>([]);
   const [customItem, setCustomItem] = useState({ name: "", lengthCm: "", widthCm: "", heightCm: "", weightKG: "" });
 
+  // Catalog products fetched from admin-configured catalog
+  const [catalogProducts, setCatalogProducts] = useState<{ id: string; name: string; category: string; unitPrice: number; imageUrl?: string; lengthCm?: number; widthCm?: number; heightCm?: number; weightKg?: number }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/catalog")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setCatalogProducts(data);
+      })
+      .catch(console.error);
+  }, []);
+
   // Delivery & destination
   const [deliveryType, setDeliveryType] = useState<DeliveryType>("door-to-door");
   const [selectedZone, setSelectedZone] = useState("west-2"); // default WA/OR/CA
@@ -68,6 +80,19 @@ export default function QuotePage() {
       setItems(items.map((i) => i.name === preset.name ? { ...i, quantity: i.quantity + 1 } : i));
     } else {
       setItems([...items, { name: preset.name, quantity: 1, cbm: preset.cbm, weightKG: preset.weightKG }]);
+    }
+  };
+
+  const addCatalogItem = (product: typeof catalogProducts[0]) => {
+    const existing = items.find((i) => i.name === product.name);
+    if (existing) {
+      setItems(items.map((i) => i.name === product.name ? { ...i, quantity: i.quantity + 1 } : i));
+    } else {
+      const cbm = (product.lengthCm && product.widthCm && product.heightCm)
+        ? Math.round((product.lengthCm / 100) * (product.widthCm / 100) * (product.heightCm / 100) * 100) / 100
+        : 0.1;
+      const weightKG = product.weightKg || 10;
+      setItems([...items, { name: product.name, quantity: 1, cbm, weightKG }]);
     }
   };
 
@@ -110,8 +135,46 @@ export default function QuotePage() {
       toast.error(t("quotePage.fillRequired"));
       return;
     }
-    setSubmitted(true);
-    toast.success(t("quotePage.submittedTitle"));
+
+    try {
+      const destination = deliveryType === "door-to-door"
+        ? ZONES.find((z) => z.id === selectedZone)?.label
+        : WAREHOUSE_CITIES.find((c) => c.id === selectedCity)?.label;
+
+      const res = await fetch("/api/quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerName: contact.name,
+          customerEmail: contact.email,
+          customerPhone: contact.phone,
+          items: items.map((i) => ({
+            name: i.name,
+            quantity: i.quantity,
+            cbm: i.cbm,
+            weightKG: i.weightKG,
+          })),
+          deliveryType,
+          destination: destination || "Seattle, WA",
+          shippingEstimateUSD: quote?.totalUSD || 0,
+          transitDays: quote?.transitDays || null,
+          totalCBM: totalCBM.toFixed(1),
+          totalWeight,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || "Failed to submit quote");
+        return;
+      }
+
+      const data = await res.json();
+      setSubmitted(true);
+      toast.success(`${t("quotePage.submittedTitle")} — ${data.quoteNumber}`);
+    } catch {
+      toast.error("Network error. Please try again.");
+    }
   };
 
   const canProceed = () => {
@@ -172,7 +235,32 @@ export default function QuotePage() {
                 <h2 className="text-2xl font-bold mb-2">{t("quotePage.step1Title")}</h2>
                 <p className="text-muted-foreground mb-6">{t("quotePage.step1Subtitle")}</p>
 
-                {/* Preset Grid */}
+                {/* Catalog Products (from admin-managed catalog) */}
+                {catalogProducts.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="font-medium text-sm mb-3 flex items-center gap-2"><Package className="h-4 w-4 text-teal" /> Our Catalog</h3>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                      {catalogProducts.map((product) => (
+                        <button
+                          key={product.id}
+                          onClick={() => addCatalogItem(product)}
+                          className="group rounded-xl border border-border/50 p-3 text-center transition-all hover:border-teal/50 hover:shadow-md hover:-translate-y-0.5"
+                        >
+                          {product.imageUrl ? (
+                            <img src={product.imageUrl} alt={product.name} className="mx-auto h-10 w-10 rounded object-cover mb-1" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                          ) : (
+                            <span className="text-2xl">📦</span>
+                          )}
+                          <p className="mt-1 text-xs font-medium leading-tight">{product.name}</p>
+                          <p className="text-xs text-muted-foreground">${product.unitPrice}/{product.weightKg ? `${product.weightKg}kg` : "ea"}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Preset Grid (common item types) */}
+                <h3 className="font-medium text-sm mb-3">{catalogProducts.length > 0 ? "Common Items" : ""}</h3>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
                   {PRODUCT_PRESETS.map((preset) => (
                     <button

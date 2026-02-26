@@ -25,7 +25,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const body = await request.json();
 
     const updateData: Record<string, unknown> = {};
-    const allowed = ["name", "description", "category", "sku", "unitPrice", "unit", "lengthCm", "widthCm", "heightCm", "weightKg", "imageUrl", "isActive", "isCatalog"];
+    const allowed = ["name", "description", "category", "sku", "unitPrice", "unit", "lengthCm", "widthCm", "heightCm", "weightKg", "imageUrl", "linkUrl", "isActive", "isCatalog"];
     for (const field of allowed) {
       if (body[field] !== undefined) updateData[field] = body[field];
     }

@@ -6,16 +6,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   DollarSign, Package, FileText, TrendingUp, ArrowUpRight,
-  Ship, Loader2, Users, ShoppingCart,
+  Ship, Loader2, Users, ShoppingCart, ClipboardList,
 } from "lucide-react";
 
 interface DashboardData {
   totalRevenue: number;
+  totalOrders: number;
   activeOrders: number;
+  totalQuotes: number;
   pendingQuotes: number;
   totalCustomers: number;
   totalProducts: number;
   ordersByStatus: Record<string, number>;
+  quotesByStatus: Record<string, number>;
   monthlyRevenue: { month: string; revenue: number }[];
   recentOrders: { id: string; orderNumber: string; customerName: string; status: string; totalAmount: number; createdAt: string }[];
   recentQuotes: { id: string; quoteNumber: string; customerName: string; status: string; totalAmount: number; createdAt: string }[];
@@ -30,11 +33,13 @@ const statusColors: Record<string, string> = {
   customs: "bg-orange-500/10 text-orange-600",
   delivered: "bg-emerald-500/10 text-emerald-600",
   closed: "bg-gray-500/10 text-gray-600",
+  cancelled: "bg-red-500/10 text-red-600",
   draft: "bg-gray-500/10 text-gray-600",
   sent: "bg-blue-500/10 text-blue-600",
   accepted: "bg-emerald-500/10 text-emerald-600",
   rejected: "bg-red-500/10 text-red-600",
   converted: "bg-teal-500/10 text-teal-600",
+  expired: "bg-orange-500/10 text-orange-600",
 };
 
 export default function AdminDashboard() {
@@ -45,10 +50,14 @@ export default function AdminDashboard() {
     fetch("/api/admin/dashboard")
       .then((r) => r.json())
       .then((raw) => {
-        // Transform API response shape into the DashboardData interface
         const ordersByStatus: Record<string, number> = {};
-        for (const s of raw.statusCounts || []) {
+        for (const s of raw.orderStatusCounts || []) {
           ordersByStatus[s.status] = s.count;
+        }
+
+        const quotesByStatus: Record<string, number> = {};
+        for (const s of raw.quoteStatusCounts || []) {
+          quotesByStatus[s.status] = s.count;
         }
 
         const monthlyRevenue: { month: string; revenue: number }[] = Object.entries(
@@ -59,11 +68,14 @@ export default function AdminDashboard() {
 
         setData({
           totalRevenue: raw.stats?.totalRevenue ?? 0,
+          totalOrders: raw.stats?.totalOrders ?? 0,
           activeOrders: raw.stats?.activeOrders ?? 0,
+          totalQuotes: raw.stats?.totalQuotes ?? 0,
           pendingQuotes: raw.stats?.pendingQuotes ?? 0,
           totalCustomers: raw.stats?.totalCustomers ?? 0,
           totalProducts: raw.stats?.totalProducts ?? 0,
           ordersByStatus,
+          quotesByStatus,
           monthlyRevenue,
           recentOrders: raw.recentOrders ?? [],
           recentQuotes: raw.recentQuotes ?? [],
@@ -91,7 +103,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -100,7 +112,7 @@ export default function AdminDashboard() {
             </div>
             <div className="mt-3">
               <p className="text-2xl font-bold">${data.totalRevenue.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Total Revenue</p>
+              <p className="text-xs text-muted-foreground">From {data.totalOrders} orders</p>
             </div>
           </CardContent>
         </Card>
@@ -120,7 +132,7 @@ export default function AdminDashboard() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div className="rounded-lg bg-amber-500/10 p-2"><FileText className="h-5 w-5 text-amber-600" /></div>
-              <span className="flex items-center gap-1 text-xs text-amber-600"><ArrowUpRight className="h-3 w-3" />Pending</span>
+              <span className="flex items-center gap-1 text-xs text-amber-600">{data.totalQuotes} total</span>
             </div>
             <div className="mt-3">
               <p className="text-2xl font-bold">{data.pendingQuotes}</p>
@@ -137,6 +149,18 @@ export default function AdminDashboard() {
             <div className="mt-3">
               <p className="text-2xl font-bold">{data.totalCustomers}</p>
               <p className="text-xs text-muted-foreground">Total Customers</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="rounded-lg bg-emerald-500/10 p-2"><ShoppingCart className="h-5 w-5 text-emerald-600" /></div>
+              <span className="flex items-center gap-1 text-xs text-emerald-600">{data.totalProducts} active</span>
+            </div>
+            <div className="mt-3">
+              <p className="text-2xl font-bold">{data.totalOrders}</p>
+              <p className="text-xs text-muted-foreground">Total Orders</p>
             </div>
           </CardContent>
         </Card>
@@ -164,22 +188,46 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
-      {/* Order Status Breakdown */}
-      {Object.keys(data.ordersByStatus).length > 0 && (
+      {/* Status Breakdowns */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Order Status Breakdown */}
         <Card>
           <CardHeader><CardTitle className="flex items-center gap-2"><Package className="h-5 w-5 text-teal" />Orders by Status</CardTitle></CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-3">
-              {Object.entries(data.ordersByStatus).map(([status, count]) => (
-                <div key={status} className="flex items-center gap-2 rounded-lg border px-3 py-2">
-                  <Badge className={statusColors[status] || "bg-gray-100"} variant="secondary">{status.replace(/_/g, " ")}</Badge>
-                  <span className="text-lg font-bold">{count}</span>
-                </div>
-              ))}
-            </div>
+            {Object.keys(data.ordersByStatus).length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">No orders yet</p>
+            ) : (
+              <div className="flex flex-wrap gap-3">
+                {Object.entries(data.ordersByStatus).map(([status, count]) => (
+                  <div key={status} className="flex items-center gap-2 rounded-lg border px-3 py-2">
+                    <Badge className={statusColors[status] || "bg-gray-100"} variant="secondary">{status.replace(/_/g, " ")}</Badge>
+                    <span className="text-lg font-bold">{count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
-      )}
+
+        {/* Quote Status Breakdown */}
+        <Card>
+          <CardHeader><CardTitle className="flex items-center gap-2"><ClipboardList className="h-5 w-5 text-teal" />Quotes by Status</CardTitle></CardHeader>
+          <CardContent>
+            {Object.keys(data.quotesByStatus).length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">No quotes yet</p>
+            ) : (
+              <div className="flex flex-wrap gap-3">
+                {Object.entries(data.quotesByStatus).map(([status, count]) => (
+                  <div key={status} className="flex items-center gap-2 rounded-lg border px-3 py-2">
+                    <Badge className={statusColors[status] || "bg-gray-100"} variant="secondary">{status.replace(/_/g, " ")}</Badge>
+                    <span className="text-lg font-bold">{count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recent Orders */}

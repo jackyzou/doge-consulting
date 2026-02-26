@@ -46,6 +46,7 @@ model Product {
   heightCm    Float?
   weightKg    Float?
   imageUrl    String?
+  linkUrl     String?  // external product link (e.g. supplier page)
   isActive    Boolean  @default(true)
   isCatalog   Boolean  @default(false) // show on public catalog page
   createdAt   DateTime @default(now())

@@ -82,6 +82,9 @@ export default function AdminOrdersPage() {
 
   const [newStatus, setNewStatus] = useState("");
   const [statusNote, setStatusNote] = useState("");
+  const [trackingId, setTrackingId] = useState("");
+  const [vessel, setVessel] = useState("");
+  const [estimatedDelivery, setEstimatedDelivery] = useState("");
   const [payAmount, setPayAmount] = useState(0);
   const [payMethod, setPayMethod] = useState("credit_card");
   const [payType, setPayType] = useState("deposit");
@@ -105,16 +108,24 @@ export default function AdminOrdersPage() {
     if (!showStatusUpdate || !newStatus) return;
     setSaving(true);
     try {
+      const body: Record<string, unknown> = { status: newStatus, statusNote: statusNote };
+      if (trackingId) body.trackingId = trackingId;
+      if (vessel) body.vessel = vessel;
+      if (estimatedDelivery) body.estimatedDelivery = estimatedDelivery;
+
       const res = await fetch(`/api/admin/orders/${showStatusUpdate.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus, note: statusNote }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error((await res.json()).error);
       toast.success("Order status updated!");
       setShowStatusUpdate(null);
       setNewStatus("");
       setStatusNote("");
+      setTrackingId("");
+      setVessel("");
+      setEstimatedDelivery("");
       fetchOrders();
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "Failed to update");
@@ -228,7 +239,7 @@ export default function AdminOrdersPage() {
                     </div>
                     <div className="flex gap-1 flex-wrap">
                       <Button variant="outline" size="sm" className="gap-1" onClick={() => setShowDetail(order)}><Eye className="h-3 w-3" />View</Button>
-                      <Button variant="outline" size="sm" className="gap-1" onClick={() => { setShowStatusUpdate(order); setNewStatus(order.status); }}><Edit className="h-3 w-3" />Status</Button>
+                      <Button variant="outline" size="sm" className="gap-1" onClick={() => { setShowStatusUpdate(order); setNewStatus(order.status); setTrackingId(order.trackingId || ""); setVessel(order.vessel || ""); setEstimatedDelivery(order.estimatedDelivery ? order.estimatedDelivery.split("T")[0] : ""); }}><Edit className="h-3 w-3" />Status</Button>
                       <Button variant="outline" size="sm" className="gap-1" onClick={() => { setShowPayment(order); setPayAmount(order.balanceDue); }}><CreditCard className="h-3 w-3" />Pay</Button>
                       <Button variant="outline" size="sm" className="gap-1" onClick={() => handleGenerateDoc(order.id, "invoice")}><FileDown className="h-3 w-3" />Invoice</Button>
                     </div>
@@ -339,27 +350,44 @@ export default function AdminOrdersPage() {
 
       {/* Status Update Dialog */}
       <Dialog open={!!showStatusUpdate} onOpenChange={() => setShowStatusUpdate(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Update Order Status</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>New Status</Label>
-              <Select value={newStatus} onValueChange={setNewStatus}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {allStatuses.map((s) => <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>)}
-                </SelectContent>
-              </Select>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Update Order Status & Shipping</DialogTitle></DialogHeader>
+          {showStatusUpdate && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">Order: <span className="font-medium text-foreground">{showStatusUpdate.orderNumber}</span></p>
+              <div>
+                <Label>New Status</Label>
+                <Select value={newStatus} onValueChange={setNewStatus}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {allStatuses.map((s) => <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Tracking ID</Label>
+                <Input value={trackingId} onChange={(e) => setTrackingId(e.target.value)} className="mt-1" placeholder="e.g. DC-2026-003" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Vessel Name</Label>
+                  <Input value={vessel} onChange={(e) => setVessel(e.target.value)} className="mt-1" placeholder="e.g. COSCO Aries" />
+                </div>
+                <div>
+                  <Label>Estimated Delivery</Label>
+                  <Input type="date" value={estimatedDelivery} onChange={(e) => setEstimatedDelivery(e.target.value)} className="mt-1" />
+                </div>
+              </div>
+              <div>
+                <Label>Note</Label>
+                <Textarea value={statusNote} onChange={(e) => setStatusNote(e.target.value)} className="mt-1" rows={2} placeholder="Add a note about this update..." />
+              </div>
             </div>
-            <div>
-              <Label>Note</Label>
-              <Textarea value={statusNote} onChange={(e) => setStatusNote(e.target.value)} className="mt-1" rows={2} placeholder="Add a note about this status change..." />
-            </div>
-          </div>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowStatusUpdate(null)}>Cancel</Button>
             <Button onClick={handleStatusUpdate} disabled={saving} className="bg-teal hover:bg-teal/90">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}Update Status
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}Update
             </Button>
           </DialogFooter>
         </DialogContent>

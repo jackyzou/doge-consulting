@@ -99,11 +99,24 @@ export async function GET(request: NextRequest) {
 
     const documents = await prisma.document.findMany({
       where,
-      select: { id: true, documentNumber: true, type: true, orderId: true, issuedAt: true, createdAt: true },
+      select: {
+        id: true,
+        documentNumber: true,
+        type: true,
+        orderId: true,
+        issuedAt: true,
+        createdAt: true,
+        order: {
+          select: {
+            orderNumber: true,
+            customerName: true,
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json(documents);
+    return NextResponse.json({ documents });
   } catch (error) {
     if ((error as Error).message === "Unauthorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if ((error as Error).message === "Forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 });

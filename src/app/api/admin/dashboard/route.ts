@@ -14,10 +14,11 @@ export async function GET() {
       pendingQuotes,
       totalCustomers,
       totalProducts,
-      payments,
+      revenueOrders,
       recentOrders,
       recentQuotes,
-      statusCounts,
+      orderStatusCounts,
+      quoteStatusCounts,
     ] = await Promise.all([
       prisma.order.count(),
       prisma.order.count({ where: { status: { notIn: ["delivered", "closed", "cancelled"] } } }),
@@ -25,14 +26,18 @@ export async function GET() {
       prisma.quote.count({ where: { status: { in: ["draft", "sent"] } } }),
       prisma.user.count({ where: { role: "user" } }),
       prisma.product.count({ where: { isActive: true } }),
-      prisma.payment.findMany({ where: { status: "completed" }, select: { amount: true, currency: true } }),
+      // Revenue = totalAmount from orders that are converted or paid (not cancelled/pending)
+      prisma.order.findMany({
+        where: { status: { notIn: ["cancelled"] } },
+        select: { totalAmount: true, createdAt: true },
+      }),
       prisma.order.findMany({
         take: 10,
         orderBy: { createdAt: "desc" },
         include: { items: true, payments: true },
       }),
       prisma.quote.findMany({
-        take: 5,
+        take: 10,
         orderBy: { createdAt: "desc" },
         include: { items: true },
       }),
@@ -40,31 +45,29 @@ export async function GET() {
         by: ["status"],
         _count: true,
       }),
+      prisma.quote.groupBy({
+        by: ["status"],
+        _count: true,
+      }),
     ]);
 
-    const totalRevenue = payments.reduce((sum, p) => sum + p.amount, 0);
-    const totalPaid = payments.length;
+    // Total revenue from all non-cancelled orders
+    const totalRevenue = revenueOrders.reduce((sum, o) => sum + o.totalAmount, 0);
 
-    // Monthly revenue (last 6 months)
+    // Monthly revenue from orders (last 6 months)
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-    const monthlyPayments = await prisma.payment.findMany({
-      where: { status: "completed", paidAt: { gte: sixMonthsAgo } },
-      select: { amount: true, paidAt: true },
-    });
-
     const monthlyRevenue: Record<string, number> = {};
-    for (const p of monthlyPayments) {
-      if (p.paidAt) {
-        const key = `${p.paidAt.getFullYear()}-${String(p.paidAt.getMonth() + 1).padStart(2, "0")}`;
-        monthlyRevenue[key] = (monthlyRevenue[key] || 0) + p.amount;
+    for (const o of revenueOrders) {
+      if (o.createdAt && o.createdAt >= sixMonthsAgo) {
+        const key = `${o.createdAt.getFullYear()}-${String(o.createdAt.getMonth() + 1).padStart(2, "0")}`;
+        monthlyRevenue[key] = (monthlyRevenue[key] || 0) + o.totalAmount;
       }
     }
 
     return NextResponse.json({
       stats: {
         totalRevenue,
-        totalPaid,
         totalOrders,
         activeOrders,
         totalQuotes,
@@ -72,7 +75,8 @@ export async function GET() {
         totalCustomers,
         totalProducts,
       },
-      statusCounts: statusCounts.map((s) => ({ status: s.status, count: s._count })),
+      orderStatusCounts: orderStatusCounts.map((s) => ({ status: s.status, count: s._count })),
+      quoteStatusCounts: quoteStatusCounts.map((s) => ({ status: s.status, count: s._count })),
       monthlyRevenue,
       recentOrders,
       recentQuotes,

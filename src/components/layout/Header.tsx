@@ -1,29 +1,73 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
-import { Menu, ChevronDown } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { usePathname } from "next/navigation";
+import { Menu, ChevronDown, LogIn, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DogeLogo } from "@/components/ui/doge-logo";
 import { useTranslation, LOCALES } from "@/lib/i18n";
 
+interface SessionUser {
+  id: string;
+  email: string;
+  name: string;
+  role: "admin" | "user";
+}
+
 export function Header() {
   const { t, locale, setLocale } = useTranslation();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [user, setUser] = useState<SessionUser | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close language dropdown on outside click
+  // Fetch auth status
+  const checkAuth = useCallback(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((data) => {
+        setUser(data.user ?? null);
+      })
+      .catch(() => { setUser(null); })
+      .finally(() => setAuthChecked(true));
+  }, []);
+
+  // Re-check auth on route changes
+  useEffect(() => { checkAuth(); }, [pathname, checkAuth]);
+
+  // Listen for custom auth-changed event (fired from login/signup pages)
+  useEffect(() => {
+    const handler = () => checkAuth();
+    window.addEventListener("auth-changed", handler);
+    return () => window.removeEventListener("auth-changed", handler);
+  }, [checkAuth]);
+
+  // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (langRef.current && !langRef.current.contains(e.target as Node)) {
         setLangOpen(false);
       }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setUser(null);
+    setUserMenuOpen(false);
+    window.location.href = "/";
+  };
 
   const currentLocale = LOCALES.find((l) => l.code === locale) || LOCALES[0];
 
@@ -94,6 +138,55 @@ export function Header() {
             )}
           </div>
 
+          {/* Auth: Login / User Menu */}
+          {authChecked && (
+            user ? (
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary"
+                >
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-teal/10 text-teal text-xs font-bold">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="hidden sm:inline">{user.name.split(" ")[0]}</span>
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${userMenuOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border bg-white py-1 shadow-lg z-50">
+                    <div className="px-3 py-2 border-b">
+                      <p className="text-sm font-medium">{user.name}</p>
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                    </div>
+                    <Link
+                      href={user.role === "admin" ? "/admin" : "/account"}
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-secondary"
+                    >
+                      <User className="h-4 w-4" />
+                      {user.role === "admin" ? "Admin Panel" : "My Account"}
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-500 transition-colors hover:bg-red-50"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link href="/login" className="hidden sm:block">
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <LogIn className="h-4 w-4" />
+                  Sign In
+                </Button>
+              </Link>
+            )
+          )}
+
           <Link href="/quote" className="hidden sm:block">
             <Button className="bg-teal text-white hover:bg-teal/90">
               {t("nav.freeQuote")}
@@ -124,6 +217,32 @@ export function Header() {
                     {t("nav.getFreeQuote")}
                   </Button>
                 </Link>
+                {user ? (
+                  <>
+                    <Link
+                      href={user.role === "admin" ? "/admin" : "/account"}
+                      onClick={() => setOpen(false)}
+                      className="rounded-md px-3 py-2 text-base font-medium text-foreground transition-colors hover:bg-secondary flex items-center gap-2"
+                    >
+                      <User className="h-4 w-4" />
+                      {user.role === "admin" ? "Admin Panel" : "My Account"}
+                    </Link>
+                    <button
+                      onClick={() => { setOpen(false); handleLogout(); }}
+                      className="rounded-md px-3 py-2 text-base font-medium text-red-500 transition-colors hover:bg-red-50 flex items-center gap-2 text-left"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <Link href="/login" onClick={() => setOpen(false)}>
+                    <Button variant="outline" className="w-full gap-2">
+                      <LogIn className="h-4 w-4" />
+                      Sign In / Sign Up
+                    </Button>
+                  </Link>
+                )}
               </div>
             </SheetContent>
           </Sheet>

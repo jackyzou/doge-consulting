@@ -29,6 +29,8 @@ interface Product {
   widthCm?: number;
   heightCm?: number;
   weightKg?: number;
+  imageUrl?: string;
+  linkUrl?: string;
   isActive: boolean;
   isCatalog: boolean;
 }
@@ -47,7 +49,7 @@ export default function AdminProductsPage() {
 
   const [form, setForm] = useState({
     name: "", description: "", category: "furniture", sku: "", unitPrice: 0, unit: "piece",
-    lengthCm: 0, widthCm: 0, heightCm: 0, weightKg: 0, isActive: true, isCatalog: false,
+    lengthCm: 0, widthCm: 0, heightCm: 0, weightKg: 0, imageUrl: "", linkUrl: "", isActive: true, isCatalog: false,
   });
 
   const fetchProducts = useCallback(() => {
@@ -65,7 +67,7 @@ export default function AdminProductsPage() {
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
   const resetForm = () => {
-    setForm({ name: "", description: "", category: "furniture", sku: "", unitPrice: 0, unit: "piece", lengthCm: 0, widthCm: 0, heightCm: 0, weightKg: 0, isActive: true, isCatalog: false });
+    setForm({ name: "", description: "", category: "furniture", sku: "", unitPrice: 0, unit: "piece", lengthCm: 0, widthCm: 0, heightCm: 0, weightKg: 0, imageUrl: "", linkUrl: "", isActive: true, isCatalog: false });
     setEditing(null);
   };
 
@@ -75,6 +77,7 @@ export default function AdminProductsPage() {
       name: p.name, description: p.description || "", category: p.category, sku: p.sku,
       unitPrice: p.unitPrice, unit: p.unit,
       lengthCm: p.lengthCm || 0, widthCm: p.widthCm || 0, heightCm: p.heightCm || 0, weightKg: p.weightKg || 0,
+      imageUrl: p.imageUrl || "", linkUrl: p.linkUrl || "",
       isActive: p.isActive, isCatalog: p.isCatalog,
     });
     setShowForm(true);
@@ -168,9 +171,17 @@ export default function AdminProductsPage() {
                     <tr key={p.id} className="hover:bg-muted/50 transition-colors">
                       <td className="py-3">
                         <div className="flex items-center gap-2">
-                          <Package className="h-4 w-4 text-muted-foreground" />
+                          {p.imageUrl ? (
+                            <img src={p.imageUrl} alt={p.name} className="h-8 w-8 rounded object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                          ) : (
+                            <Package className="h-4 w-4 text-muted-foreground" />
+                          )}
                           <div>
-                            <p className="font-medium">{p.name}</p>
+                            <p className="font-medium">
+                              {p.linkUrl ? (
+                                <a href={p.linkUrl} target="_blank" rel="noopener noreferrer" className="text-teal hover:underline">{p.name}</a>
+                              ) : p.name}
+                            </p>
                             {p.description && <p className="text-xs text-muted-foreground line-clamp-1">{p.description}</p>}
                           </div>
                         </div>
@@ -239,6 +250,16 @@ export default function AdminProductsPage() {
               <div><Label>Height (cm)</Label><Input type="number" value={form.heightCm} onChange={(e) => setForm({ ...form, heightCm: Number(e.target.value) })} className="mt-1" /></div>
               <div><Label>Weight (kg)</Label><Input type="number" value={form.weightKg} onChange={(e) => setForm({ ...form, weightKg: Number(e.target.value) })} className="mt-1" /></div>
             </div>
+            <div className="grid grid-cols-1 gap-4">
+              <div><Label>Image URL</Label><Input value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} className="mt-1" placeholder="https://example.com/image.jpg" /></div>
+              <div><Label>Product Link (external URL)</Label><Input value={form.linkUrl} onChange={(e) => setForm({ ...form, linkUrl: e.target.value })} className="mt-1" placeholder="https://supplier.com/product" /></div>
+            </div>
+            {form.imageUrl && (
+              <div className="border rounded-lg p-3">
+                <Label className="text-xs text-muted-foreground mb-2 block">Image Preview</Label>
+                <img src={form.imageUrl} alt="Product preview" className="max-h-32 rounded object-contain" onError={(e) => (e.currentTarget.style.display = 'none')} />
+              </div>
+            )}
             <div className="flex gap-8">
               <div className="flex items-center gap-2">
                 <Switch checked={form.isActive} onCheckedChange={(v) => setForm({ ...form, isActive: v })} />
@@ -246,7 +267,8 @@ export default function AdminProductsPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Switch checked={form.isCatalog} onCheckedChange={(v) => setForm({ ...form, isCatalog: v })} />
-                <Label>Show in Catalog</Label>
+                <Label>Show in Public Catalog</Label>
+                <span className="text-xs text-muted-foreground">(visible on quote page &amp; public site)</span>
               </div>
             </div>
           </div>

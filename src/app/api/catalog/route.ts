@@ -14,6 +14,7 @@ export async function GET() {
         unitPrice: true,
         unit: true,
         imageUrl: true,
+        linkUrl: true,
         lengthCm: true,
         widthCm: true,
         heightCm: true,
