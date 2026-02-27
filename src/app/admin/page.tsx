@@ -116,7 +116,8 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Link href="/admin/orders">
+        <Card className="cursor-pointer hover:border-teal/50 transition-colors">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div className="rounded-lg bg-purple-500/10 p-2"><Package className="h-5 w-5 text-purple-600" /></div>
@@ -128,7 +129,9 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        </Link>
+        <Link href="/admin/quotes">
+        <Card className="cursor-pointer hover:border-teal/50 transition-colors">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div className="rounded-lg bg-amber-500/10 p-2"><FileText className="h-5 w-5 text-amber-600" /></div>
@@ -140,7 +143,9 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        </Link>
+        <Link href="/admin/customers">
+        <Card className="cursor-pointer hover:border-teal/50 transition-colors">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div className="rounded-lg bg-blue-500/10 p-2"><Users className="h-5 w-5 text-blue-600" /></div>
@@ -152,7 +157,9 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        </Link>
+        <Link href="/admin/orders">
+        <Card className="cursor-pointer hover:border-teal/50 transition-colors">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div className="rounded-lg bg-emerald-500/10 p-2"><ShoppingCart className="h-5 w-5 text-emerald-600" /></div>
@@ -164,6 +171,7 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
+        </Link>
       </div>
 
       {/* Revenue Chart */}

@@ -27,8 +27,8 @@ export default function AboutPage() {
   // x: 0-100 → 0-1000, y: 0-100 → 0-500
   const mapLocations = [
     { city: "Seattle", role: t("about.loc1Role"), flag: "🇺🇸", x: 15, y: 22 },
-    { city: "Hong Kong", role: t("about.loc2Role"), flag: "🇭🇰", x: 76, y: 29 },
-    { city: "Shenzhen", role: t("about.loc3Role"), flag: "🇨🇳", x: 75, y: 26 },
+    { city: "Hong Kong", role: t("about.loc2Role"), flag: "🇭🇰", x: 79, y: 34 },
+    { city: "Shenzhen", role: t("about.loc3Role"), flag: "🇨🇳", x: 72, y: 24 },
   ];
 
   return (
