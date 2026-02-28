@@ -89,18 +89,24 @@ function PaymentSuccessContent() {
         <Card className="text-left border-teal/20 bg-teal/5">
           <CardContent className="pt-6 space-y-3">
             <p className="font-semibold text-sm">{t("paymentSuccess.nextSteps")}</p>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-start gap-2">
-                <Check className="h-4 w-4 text-teal mt-0.5 shrink-0" />
-                {t("paymentSuccess.step1")}
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link href="/account/orders" className="flex items-start gap-2 text-muted-foreground hover:text-teal transition-colors group">
+                  <Check className="h-4 w-4 text-teal mt-0.5 shrink-0" />
+                  <span className="group-hover:underline">{t("paymentSuccess.step1")}</span>
+                </Link>
               </li>
-              <li className="flex items-start gap-2">
-                <Package className="h-4 w-4 text-teal mt-0.5 shrink-0" />
-                {t("paymentSuccess.step2")}
+              <li>
+                <Link href="/account/tracking" className="flex items-start gap-2 text-muted-foreground hover:text-teal transition-colors group">
+                  <Package className="h-4 w-4 text-teal mt-0.5 shrink-0" />
+                  <span className="group-hover:underline">{t("paymentSuccess.step2")}</span>
+                </Link>
               </li>
-              <li className="flex items-start gap-2">
-                <ArrowRight className="h-4 w-4 text-teal mt-0.5 shrink-0" />
-                {t("paymentSuccess.step3")}
+              <li>
+                <Link href="/track" className="flex items-start gap-2 text-muted-foreground hover:text-teal transition-colors group">
+                  <ArrowRight className="h-4 w-4 text-teal mt-0.5 shrink-0" />
+                  <span className="group-hover:underline">{t("paymentSuccess.step3")}</span>
+                </Link>
               </li>
             </ul>
           </CardContent>
@@ -108,16 +114,21 @@ function PaymentSuccessContent() {
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3">
-          <Link href="/track" className="flex-1">
-            <Button variant="outline" className="w-full">
+          <Link href="/account/orders" className="flex-1">
+            <Button className="w-full bg-teal text-white hover:bg-teal/90">
               <Package className="mr-2 h-4 w-4" />
+              View My Orders
+            </Button>
+          </Link>
+          <Link href="/account/tracking" className="flex-1">
+            <Button variant="outline" className="w-full">
+              <ArrowRight className="mr-2 h-4 w-4" />
               {t("paymentSuccess.trackBtn")}
             </Button>
           </Link>
           <Link href="/" className="flex-1">
-            <Button className="w-full bg-teal text-white hover:bg-teal/90">
+            <Button variant="ghost" className="w-full">
               {t("paymentSuccess.homeBtn")}
-              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
         </div>

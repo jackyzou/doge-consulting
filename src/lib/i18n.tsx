@@ -5,6 +5,8 @@ import {
   useContext,
   useState,
   useEffect,
+  useCallback,
+  useRef,
   type ReactNode,
 } from "react";
 
@@ -52,12 +54,30 @@ function getNestedValue(obj: any, path: string): string {
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>("en");
+  const serverSynced = useRef(false);
 
+  // On mount: restore from localStorage first, then try to sync with server
   useEffect(() => {
     const saved = localStorage.getItem("locale") as Locale;
     if (saved && allMessages[saved]) {
       setLocaleState(saved);
     }
+
+    // If user is signed in, fetch their language preference from the server
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.user?.language && allMessages[data.user.language as Locale]) {
+          const serverLocale = data.user.language as Locale;
+          // Server preference takes priority for signed-in users
+          setLocaleState(serverLocale);
+          localStorage.setItem("locale", serverLocale);
+          serverSynced.current = true;
+        }
+      })
+      .catch(() => {
+        // Not signed in or error — use localStorage
+      });
   }, []);
 
   useEffect(() => {
@@ -71,10 +91,24 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = langMap[locale] || "en";
   }, [locale]);
 
-  const setLocale = (l: Locale) => {
+  const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
     localStorage.setItem("locale", l);
-  };
+
+    // Sync to server if user is signed in (fire-and-forget)
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.user) {
+          fetch("/api/customer/profile", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: data.user.name, language: l }),
+          }).catch(() => {});
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const t = (key: string): string => {
     const val = getNestedValue(allMessages[locale], key);

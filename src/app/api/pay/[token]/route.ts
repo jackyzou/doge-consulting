@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { createPaymentIntent, buildCheckoutUrl, isLiveMode } from "@/lib/airwallex";
+import { generateSequenceNumber } from "@/lib/sequence";
+import { sendOrderConfirmedEmail } from "@/lib/email-notifications";
 
 // GET /api/pay/[token] — get payment link details (public)
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ token: string }> }) {
@@ -60,7 +62,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const paymentLink = await prisma.paymentLink.findUnique({
       where: { token },
-      include: { quote: true, payment: true },
+      include: { quote: { include: { items: true } }, payment: true },
     });
 
     if (!paymentLink || paymentLink.status !== "active") {
@@ -76,6 +78,82 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         where: { token },
         data: { status: "used" },
       });
+
+      // Auto-convert quote to order so it appears in the customer's account
+      if (paymentLink.quote && paymentLink.quote.status !== "converted") {
+        const quote = paymentLink.quote;
+        const orderNumber = await generateSequenceNumber("ORD");
+        const depositAmount = quote.totalAmount * (quote.depositPercent / 100);
+
+        // Find or match customer by email
+        const customer = await prisma.user.findUnique({ where: { email: quote.customerEmail } });
+        const customerId = customer?.id || quote.customerId || null;
+
+        const quoteItems = quote.items || [];
+
+        await prisma.order.create({
+          data: {
+            orderNumber,
+            quoteId: quote.id,
+            customerId,
+            customerName: quote.customerName,
+            customerEmail: quote.customerEmail,
+            customerPhone: quote.customerPhone,
+            subtotal: quote.subtotal,
+            shippingCost: quote.shippingCost,
+            insuranceCost: quote.insuranceCost,
+            customsDuty: quote.customsDuty,
+            discount: quote.discount,
+            taxAmount: quote.taxAmount,
+            totalAmount: quote.totalAmount,
+            depositAmount,
+            balanceDue: quote.totalAmount - depositAmount,
+            currency: quote.currency,
+            shippingMethod: quote.shippingMethod,
+            originCity: quote.originCity,
+            destinationCity: quote.destinationCity,
+            status: "confirmed",
+            items: {
+              create: quoteItems.map((i) => ({
+                name: i.name,
+                description: i.description,
+                quantity: i.quantity,
+                unitPrice: i.unitPrice,
+                totalPrice: i.totalPrice,
+                unit: i.unit,
+                productId: i.productId,
+              })),
+            },
+            statusHistory: {
+              create: {
+                status: "confirmed",
+                note: `Deposit paid via payment link (demo). Converted from ${quote.quoteNumber}`,
+                changedBy: "system",
+              },
+            },
+          },
+        });
+
+        // Mark quote as converted
+        await prisma.quote.update({
+          where: { id: quote.id },
+          data: { status: "converted", customerId },
+        });
+
+        // Send order confirmation email (non-blocking)
+        try {
+          await sendOrderConfirmedEmail({
+            orderNumber,
+            customerName: quote.customerName,
+            customerEmail: quote.customerEmail,
+            totalAmount: quote.totalAmount,
+            depositAmount,
+            currency: quote.currency,
+          });
+        } catch (emailErr) {
+          console.error("Failed to send order confirmation email (non-fatal):", emailErr);
+        }
+      }
 
       return NextResponse.json({
         success: true,

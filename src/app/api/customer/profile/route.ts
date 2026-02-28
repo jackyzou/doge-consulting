@@ -8,7 +8,7 @@ export async function GET() {
     const session = await requireAuth();
     const user = await prisma.user.findUnique({
       where: { id: session.id },
-      select: { id: true, email: true, name: true, phone: true, company: true, createdAt: true },
+      select: { id: true, email: true, name: true, phone: true, company: true, language: true, createdAt: true },
     });
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
     return NextResponse.json({ user });
@@ -22,20 +22,22 @@ export async function PATCH(request: NextRequest) {
   try {
     const session = await requireAuth();
     const body = await request.json();
-    const { name, phone, company } = body;
+    const { name, phone, company, language } = body;
 
     if (!name || typeof name !== "string" || name.trim().length === 0) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
+    const validLanguages = ["en", "zh-CN", "zh-TW", "es", "fr"];
     const user = await prisma.user.update({
       where: { id: session.id },
       data: {
         name: name.trim(),
         phone: phone?.trim() || null,
         company: company?.trim() || null,
+        ...(language && validLanguages.includes(language) ? { language } : {}),
       },
-      select: { id: true, email: true, name: true, phone: true, company: true },
+      select: { id: true, email: true, name: true, phone: true, company: true, language: true },
     });
 
     return NextResponse.json({ user });

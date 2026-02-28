@@ -184,7 +184,7 @@ export default function QuotePage() {
 
       if (!res.ok) {
         const data = await res.json();
-        toast.error(data.error || "Failed to submit quote");
+        toast.error(data.error || t("quotePage.failedSubmit"));
         return;
       }
 
@@ -192,7 +192,7 @@ export default function QuotePage() {
       setSubmitted(true);
       toast.success(`${t("quotePage.submittedTitle")} — ${data.quoteNumber}`);
     } catch {
-      toast.error("Network error. Please try again.");
+      toast.error(t("quotePage.networkError"));
     }
   };
 
@@ -257,7 +257,7 @@ export default function QuotePage() {
                 {/* Catalog Products (from admin-managed catalog) */}
                 {catalogProducts.length > 0 && (
                   <div className="mb-6">
-                    <h3 className="font-medium text-sm mb-3 flex items-center gap-2"><Package className="h-4 w-4 text-teal" /> Our Catalog</h3>
+                    <h3 className="font-medium text-sm mb-3 flex items-center gap-2"><Package className="h-4 w-4 text-teal" /> {t("quotePage.ourCatalog")}</h3>
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                       {catalogProducts.map((product) => (
                         <button
@@ -279,7 +279,7 @@ export default function QuotePage() {
                 )}
 
                 {/* Preset Grid (common item types) */}
-                <h3 className="font-medium text-sm mb-3">{catalogProducts.length > 0 ? "Common Items" : ""}</h3>
+                <h3 className="font-medium text-sm mb-3">{catalogProducts.length > 0 ? t("quotePage.commonItems") : ""}</h3>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
                   {PRODUCT_PRESETS.map((preset) => (
                     <button
@@ -521,9 +521,9 @@ export default function QuotePage() {
                               <p className="font-medium text-sm">{sessionUser.name}</p>
                               <p className="text-xs text-muted-foreground">{sessionUser.email}</p>
                             </div>
-                            <Badge className="ml-auto bg-teal/20 text-teal border-teal/30">Signed In</Badge>
+                            <Badge className="ml-auto bg-teal/20 text-teal border-teal/30">{t("quotePage.signedIn")}</Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground">Quote confirmation will be sent to your account email.</p>
+                          <p className="text-sm text-muted-foreground">{t("quotePage.quoteConfirmation")}</p>
                           <Button onClick={handleSubmit} className="w-full bg-teal text-white hover:bg-teal/90" size="lg">
                             {t("quotePage.submitQuote")} <ArrowRight className="ml-2 h-5 w-5" />
                           </Button>

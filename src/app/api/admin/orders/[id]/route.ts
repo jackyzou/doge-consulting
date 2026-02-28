@@ -63,27 +63,33 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
       if (body.status === "closed" || body.status === "delivered") {
         updateData.closedAt = new Date();
-        // Send order closed email
-        await sendOrderClosedEmail({
+      }
+
+      // Send email notifications (non-blocking: don't fail the request if email fails)
+      try {
+        if (body.status === "closed" || body.status === "delivered") {
+          await sendOrderClosedEmail({
+            orderNumber: order.orderNumber,
+            customerName: order.customerName,
+            customerEmail: order.customerEmail,
+            totalAmount: order.totalAmount,
+            currency: order.currency,
+          });
+        }
+
+        await sendOrderStatusEmail({
           orderNumber: order.orderNumber,
           customerName: order.customerName,
           customerEmail: order.customerEmail,
-          totalAmount: order.totalAmount,
-          currency: order.currency,
+          status: body.status,
+          trackingId: body.trackingId || order.trackingId,
+          vessel: body.vessel || order.vessel,
+          estimatedDelivery: body.estimatedDelivery || order.estimatedDelivery?.toISOString() || null,
+          note: body.statusNote || body.note || null,
         });
+      } catch (emailErr) {
+        console.error("Failed to send order status email (non-fatal):", emailErr);
       }
-
-      // Send status change notification for ALL transitions
-      await sendOrderStatusEmail({
-        orderNumber: order.orderNumber,
-        customerName: order.customerName,
-        customerEmail: order.customerEmail,
-        status: body.status,
-        trackingId: body.trackingId || order.trackingId,
-        vessel: body.vessel || order.vessel,
-        estimatedDelivery: body.estimatedDelivery || order.estimatedDelivery?.toISOString() || null,
-        note: body.statusNote || body.note || null,
-      });
     }
 
     const updated = await prisma.order.update({

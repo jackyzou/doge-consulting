@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Package, Ship, Check, Clock, MapPin, Truck, AlertCircle } from "lucide-react";
+import { Search, Package, Ship, Check, Clock, MapPin, Truck, AlertCircle, Loader2, Eye } from "lucide-react";
 import { getShipmentByTrackingId, type Shipment } from "@/lib/tracking";
 import { useTranslation } from "@/lib/i18n";
+import Link from "next/link";
 
 const statusIcons: Record<string, React.ElementType> = {
   order_confirmed: Check,
@@ -28,6 +29,30 @@ export default function TrackPage() {
   const [trackingId, setTrackingId] = useState("");
   const [shipment, setShipment] = useState<Shipment | null>(null);
   const [searched, setSearched] = useState(false);
+
+  // Real order tracking for signed-in users
+  const [orders, setOrders] = useState<{
+    id: string; orderNumber: string; status: string;
+    items: { name: string; quantity: number }[];
+    destinationCity: string; shippingMethod?: string;
+    trackingId?: string; vessel?: string; estimatedDelivery?: string;
+    statusHistory: { status: string; note?: string; createdAt: string }[];
+  }[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [isSignedIn, setIsSignedIn] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(() => {
+        setIsSignedIn(true);
+        return fetch("/api/customer/orders");
+      })
+      .then((r) => r.json())
+      .then((data) => setOrders(data.orders || []))
+      .catch(() => setIsSignedIn(false))
+      .finally(() => setLoadingOrders(false));
+  }, []);
 
   const milestoneLabels: Record<string, string> = {
     "Order Confirmed": t("trackPage.orderConfirmed"),
@@ -85,6 +110,109 @@ export default function TrackPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* My Shipments section for signed-in users */}
+      {isSignedIn && (
+        <section className="py-8 bg-muted/30 border-b">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <Ship className="h-5 w-5 text-teal" />
+                  {t("trackPage.myShipments")}
+                </h2>
+                <p className="text-sm text-muted-foreground">{t("trackPage.myShipmentsDesc")}</p>
+              </div>
+              <Link href="/account/orders">
+                <Button variant="outline" size="sm" className="gap-1">
+                  <Eye className="h-3.5 w-3.5" /> {t("trackPage.allOrders")}
+                </Button>
+              </Link>
+            </div>
+
+            {loadingOrders ? (
+              <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-teal" /></div>
+            ) : orders.length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <Package className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
+                  <p className="font-medium">{t("trackPage.noOrdersYet")}</p>
+                  <p className="text-sm text-muted-foreground">{t("trackPage.noOrdersDesc")}</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {orders.map((order) => {
+                  const allStatuses = ["pending", "confirmed", "sourcing", "packing", "in_transit", "customs", "delivered"];
+                  const currentIdx = allStatuses.indexOf(order.status);
+                  const statusLabels: Record<string, string> = {
+                    pending: t("trackPage.statusPending"), confirmed: t("trackPage.statusConfirmed"), sourcing: t("trackPage.statusSourcing"),
+                    packing: t("trackPage.statusPacking"), in_transit: t("trackPage.statusInTransit"), customs: t("trackPage.statusCustoms"),
+                    delivered: t("trackPage.statusDelivered"), closed: t("trackPage.statusClosed"),
+                  };
+                  const statusColor: Record<string, string> = {
+                    pending: "bg-amber-500/10 text-amber-600",
+                    confirmed: "bg-blue-500/10 text-blue-600",
+                    sourcing: "bg-amber-500/10 text-amber-600",
+                    packing: "bg-indigo-500/10 text-indigo-600",
+                    in_transit: "bg-purple-500/10 text-purple-600",
+                    customs: "bg-orange-500/10 text-orange-600",
+                    delivered: "bg-emerald-500/10 text-emerald-600",
+                    closed: "bg-gray-500/10 text-gray-600",
+                  };
+                  return (
+                    <Link key={order.id} href="/account/tracking">
+                      <Card className="hover:border-teal/40 transition-all hover:shadow-md cursor-pointer h-full">
+                        <CardContent className="pt-5 pb-5">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="font-bold text-teal">{order.orderNumber}</span>
+                            <Badge className={statusColor[order.status] || ""} variant="secondary">
+                              {statusLabels[order.status] || order.status.replace(/_/g, " ")}
+                            </Badge>
+                          </div>
+                          {/* Items */}
+                          <div className="space-y-1 mb-3">
+                            {order.items.slice(0, 3).map((item, i) => (
+                              <div key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <Package className="h-3 w-3 text-teal" />
+                                <span>{item.quantity}× {item.name}</span>
+                              </div>
+                            ))}
+                            {order.items.length > 3 && (
+                              <p className="text-xs text-muted-foreground">{t("trackPage.moreItems").replace("{count}", String(order.items.length - 3))}</p>
+                            )}
+                          </div>
+                          {/* Progress bar */}
+                          <div className="flex gap-1 mb-2">
+                            {allStatuses.map((s, i) => (
+                              <div
+                                key={s}
+                                className={`h-1.5 flex-1 rounded-full ${
+                                  i <= currentIdx ? "bg-teal" : "bg-muted"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          {/* Meta info */}
+                          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{order.destinationCity}</span>
+                            {order.estimatedDelivery && (
+                              <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{t("trackPage.eta")} {new Date(order.estimatedDelivery).toLocaleDateString()}</span>
+                            )}
+                            {order.trackingId && (
+                              <span className="flex items-center gap-1"><Truck className="h-3 w-3" />{order.trackingId}</span>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       <section className="py-12">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">

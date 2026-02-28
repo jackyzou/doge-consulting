@@ -34,17 +34,33 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     // Action: send quote to customer
     if (body.action === "send") {
-      // Generate payment link
+      // Reuse existing payment link or create a new one
       const origin = request.headers.get("origin") || "http://localhost:3000";
-      const paymentLink = await prisma.paymentLink.create({
-        data: {
-          quoteId: quote.id,
-          amount: quote.totalAmount * (quote.depositPercent / 100),
-          currency: quote.currency,
-          description: `Deposit for ${quote.quoteNumber}`,
-          expiresAt: quote.validUntil,
-        },
-      });
+      let paymentLink = await prisma.paymentLink.findUnique({ where: { quoteId: quote.id } });
+
+      if (paymentLink) {
+        // Reset existing link so it can be used again
+        paymentLink = await prisma.paymentLink.update({
+          where: { id: paymentLink.id },
+          data: {
+            status: "active",
+            amount: quote.totalAmount * (quote.depositPercent / 100),
+            currency: quote.currency,
+            description: `Deposit for ${quote.quoteNumber}`,
+            expiresAt: quote.validUntil,
+          },
+        });
+      } else {
+        paymentLink = await prisma.paymentLink.create({
+          data: {
+            quoteId: quote.id,
+            amount: quote.totalAmount * (quote.depositPercent / 100),
+            currency: quote.currency,
+            description: `Deposit for ${quote.quoteNumber}`,
+            expiresAt: quote.validUntil,
+          },
+        });
+      }
 
       const paymentUrl = `${origin}/pay/${paymentLink.token}`;
 
@@ -53,16 +69,20 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         data: { status: "sent", sentAt: new Date() },
       });
 
-      // Send email
-      await sendQuoteSentEmail({
-        quoteNumber: quote.quoteNumber,
-        customerName: quote.customerName,
-        customerEmail: quote.customerEmail,
-        totalAmount: quote.totalAmount,
-        currency: quote.currency,
-        items: quote.items.map((i) => ({ name: i.name, quantity: i.quantity, totalPrice: i.totalPrice })),
-        paymentLinkUrl: paymentUrl,
-      });
+      // Send email (non-blocking: don't fail the request if email fails)
+      try {
+        await sendQuoteSentEmail({
+          quoteNumber: quote.quoteNumber,
+          customerName: quote.customerName,
+          customerEmail: quote.customerEmail,
+          totalAmount: quote.totalAmount,
+          currency: quote.currency,
+          items: quote.items.map((i) => ({ name: i.name, quantity: i.quantity, totalPrice: i.totalPrice })),
+          paymentLinkUrl: paymentUrl,
+        });
+      } catch (emailError) {
+        console.error("Failed to send quote email (non-fatal):", emailError);
+      }
 
       return NextResponse.json({ ok: true, paymentUrl, paymentLinkToken: paymentLink.token });
     }
@@ -116,15 +136,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         data: { status: "converted" },
       });
 
-      // Send order confirmation email
-      await sendOrderConfirmedEmail({
-        orderNumber,
-        customerName: quote.customerName,
-        customerEmail: quote.customerEmail,
-        totalAmount: quote.totalAmount,
-        depositAmount,
-        currency: quote.currency,
-      });
+      // Send order confirmation email (non-blocking)
+      try {
+        await sendOrderConfirmedEmail({
+          orderNumber,
+          customerName: quote.customerName,
+          customerEmail: quote.customerEmail,
+          totalAmount: quote.totalAmount,
+          depositAmount,
+          currency: quote.currency,
+        });
+      } catch (emailError) {
+        console.error("Failed to send order confirmation email (non-fatal):", emailError);
+      }
 
       return NextResponse.json({ ok: true, order });
     }

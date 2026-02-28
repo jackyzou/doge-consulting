@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 // POST /api/auth/signup — public customer self-registration
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name, phone, company } = await request.json();
+    const { email, password, name, phone, company, language } = await request.json();
 
     if (!email || !password || !name) {
       return NextResponse.json({ error: "Name, email, and password are required" }, { status: 400 });
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create user with "user" role (never admin via public signup)
-    const user = await createUser({ email, password, name, role: "user", phone, company });
+    const user = await createUser({ email, password, name, role: "user", phone, company, language });
 
     // Link any existing quotes / orders submitted under this email
     await prisma.quote.updateMany({

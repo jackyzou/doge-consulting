@@ -83,6 +83,7 @@ export async function createUser(data: {
   role?: "admin" | "user";
   phone?: string;
   company?: string;
+  language?: string;
 }) {
   const passwordHash = await hashPassword(data.password);
   return prisma.user.create({
@@ -93,6 +94,7 @@ export async function createUser(data: {
       role: data.role || "user",
       phone: data.phone,
       company: data.company,
+      language: data.language || "en",
     },
   });
 }

@@ -165,14 +165,14 @@ export function Header() {
                       className="flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-secondary"
                     >
                       <User className="h-4 w-4" />
-                      {user.role === "admin" ? "Admin Panel" : "My Account"}
+                      {user.role === "admin" ? t("header.adminPanel") : t("header.myAccount")}
                     </Link>
                     <button
                       onClick={handleLogout}
                       className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-500 transition-colors hover:bg-red-50"
                     >
                       <LogOut className="h-4 w-4" />
-                      Sign Out
+                      {t("header.signOut")}
                     </button>
                   </div>
                 )}
@@ -181,7 +181,7 @@ export function Header() {
               <Link href="/login" className="hidden sm:block">
                 <Button variant="outline" size="sm" className="gap-1.5">
                   <LogIn className="h-4 w-4" />
-                  Sign In
+                  {t("header.signIn")}
                 </Button>
               </Link>
             )
@@ -225,21 +225,21 @@ export function Header() {
                       className="rounded-md px-3 py-2 text-base font-medium text-foreground transition-colors hover:bg-secondary flex items-center gap-2"
                     >
                       <User className="h-4 w-4" />
-                      {user.role === "admin" ? "Admin Panel" : "My Account"}
+                      {user.role === "admin" ? t("header.adminPanel") : t("header.myAccount")}
                     </Link>
                     <button
                       onClick={() => { setOpen(false); handleLogout(); }}
                       className="rounded-md px-3 py-2 text-base font-medium text-red-500 transition-colors hover:bg-red-50 flex items-center gap-2 text-left"
                     >
                       <LogOut className="h-4 w-4" />
-                      Sign Out
+                      {t("header.signOut")}
                     </button>
                   </>
                 ) : (
                   <Link href="/login" onClick={() => setOpen(false)}>
                     <Button variant="outline" className="w-full gap-2">
                       <LogIn className="h-4 w-4" />
-                      Sign In / Sign Up
+                      {t("header.signInSignUp")}
                     </Button>
                   </Link>
                 )}

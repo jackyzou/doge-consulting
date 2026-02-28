@@ -74,11 +74,18 @@ export default function PaymentSuccessPage() {
         </Card>
 
         <div className="text-center space-y-2">
-          <Link href="/track">
-            <Button variant="outline" className="gap-2">
-              <Package className="h-4 w-4" /> Track Your Order
+          <Link href="/account/orders">
+            <Button className="bg-teal hover:bg-teal/90 gap-2">
+              <Package className="h-4 w-4" /> View My Orders
             </Button>
           </Link>
+          <div className="mt-2">
+            <Link href="/track">
+              <Button variant="outline" className="gap-2">
+                <ArrowRight className="h-4 w-4" /> Track Your Order
+              </Button>
+            </Link>
+          </div>
           <p className="text-xs text-muted-foreground">
             Reference: {token?.substring(0, 12)}…
           </p>

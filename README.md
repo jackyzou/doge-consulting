@@ -229,7 +229,7 @@ Exchange rate: **1 USD ≈ 7.2 RMB** (configurable via `RMB_TO_USD` constant).
 
 ### Public Website
 - **🐕 Polygon Doge Logo** — Custom geometric Shiba Inu SVG in brand colors
-- **🌍 Multilingual** — 5 languages (EN, 中文简, 中文繁, ES, FR) with toggle in header
+- **🌍 Multilingual** — 5 languages (EN, 中文简, 中文繁, ES, FR) with toggle in header; **full i18n coverage** across all public pages, login/signup, header navigation, shipment tracking, and quote calculator
 - **📦 Quote Calculator** — 4-step wizard: items → destination → summary → quote with RMB/USD dual display
 - **🚢 Shipment Tracking** — Timeline UI with milestone statuses and demo data (try `DC-2026-001`)
 - **💳 Airwallex Payments** — Credit card & bank transfer (demo/sandbox mode)
@@ -260,10 +260,26 @@ Exchange rate: **1 USD ≈ 7.2 RMB** (configurable via `RMB_TO_USD` constant).
 - **📄 Documents** — Download invoices and receipts
 
 ### Developer Experience
-- **✅ 13 Test Suites** — Vitest unit tests covering auth, API contracts, shipping calculator, PDF, email, sequence generation
+- **✅ 15 Test Suites / 163 Tests** — Vitest unit tests covering auth, API contracts, shipping calculator, PDF, email, sequence generation, login page
 - **🎭 E2E Tests** — Playwright tests for public pages and auth flows
 - **📐 Contract Tests** — Validate API response shapes (e.g., `{ orders: [...] }` not flat arrays)
 - **🧩 Test Helpers** — Factory functions for mock data, Prisma mocks, auth session mocks
+
+### Internationalization (i18n)
+
+All user-facing strings are translated across 5 locales:
+
+| Locale | Language | File |
+|---|---|---|
+| `en` | English | `src/messages/en.ts` |
+| `zh-CN` | 简体中文 (Simplified Chinese) | `src/messages/zh-CN.ts` |
+| `zh-TW` | 繁體中文 (Traditional Chinese) | `src/messages/zh-TW.ts` |
+| `fr` | Français (French) | `src/messages/fr.ts` |
+| `es` | Español (Spanish) | `src/messages/es.ts` |
+
+**Translated pages/components:** Home (8 sections), About, Contact, FAQ, Services, Quote Calculator, Shipment Tracking, Login/Signup, Header (nav + auth), Footer, Payment Success/Cancel.
+
+Language selection persists to `localStorage` and syncs to the user's profile when logged in.
 
 ---
 
@@ -343,7 +359,7 @@ npm run build
 
 ### Unit Tests (Vitest)
 
-The project has 13 test suites covering core business logic and API contracts:
+The project has 15 test suites (163 tests) covering core business logic and API contracts:
 
 ```bash
 # Run all tests

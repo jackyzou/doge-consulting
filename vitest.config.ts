@@ -29,5 +29,6 @@ export default defineConfig({
     },
     // Separate pool for API tests that need real DB
     testTimeout: 15000,
+    hookTimeout: 10000,
   },
 });

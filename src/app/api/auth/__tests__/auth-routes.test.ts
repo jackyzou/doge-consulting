@@ -10,6 +10,7 @@ import { NextRequest } from "next/server";
 // ─── Mock login & getSession from auth lib ──────────────────────
 const mockLogin = vi.fn();
 const mockGetSession = vi.fn();
+const mockUserFindUnique = vi.fn();
 vi.mock("@/lib/auth", () => ({
   login: (...args: unknown[]) => mockLogin(...args),
   getSession: () => mockGetSession(),
@@ -20,6 +21,14 @@ vi.mock("@/lib/auth", () => ({
     sameSite: "lax" as const,
     path: "/",
     maxAge: 7 * 24 * 60 * 60,
+  },
+}));
+
+vi.mock("@/lib/db", () => ({
+  prisma: {
+    user: {
+      findUnique: (...args: unknown[]) => mockUserFindUnique(...args),
+    },
   },
 }));
 
@@ -106,6 +115,7 @@ describe("POST /api/auth/login", () => {
 describe("GET /api/auth/me", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUserFindUnique.mockResolvedValue({ language: "en" });
   });
 
   it("returns user when session is valid", async () => {
@@ -116,7 +126,7 @@ describe("GET /api/auth/me", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.user).toEqual(session);
+    expect(data.user).toEqual({ ...session, language: "en" });
   });
 
   it("returns 401 with null user when no session", async () => {

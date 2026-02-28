@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
 import { prisma } from "./db";
+import { getEmailStrings, getUserLanguage, type EmailStrings } from "./email-i18n";
 
 // ── Shared SMTP transport (lazy, DB-aware) ──
 
@@ -145,7 +146,8 @@ const COLORS = {
   red: "#ef4444",
 };
 
-function emailWrapper(content: string, preheader?: string): string {
+function emailWrapper(content: string, preheader?: string, s?: EmailStrings): string {
+  const t = s || getEmailStrings("en");
   const preheaderHtml = preheader
     ? `<div style="display:none;font-size:1px;color:#fff;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${preheader}</div>`
     : "";
@@ -158,9 +160,9 @@ ${preheaderHtml}
 <tr><td align="center" style="padding:24px 16px;">
   <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
     <!-- Header -->
-    <tr><td style="background:linear-gradient(135deg,${COLORS.navy} 0%,#1e293b 100%);padding:28px 32px;text-align:center;">
-      <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:0.5px;">🐕 Doge Consulting Group</h1>
-      <p style="margin:6px 0 0;color:${COLORS.teal};font-size:13px;font-weight:500;">Premium Shipping from China to USA</p>
+    <tr><td style="background:linear-gradient(135deg,${COLORS.navy} 0%,#1e293b 100%);padding:32px 32px;text-align:center;">
+      <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:800;letter-spacing:0.5px;text-shadow:0 1px 2px rgba(0,0,0,0.3);">🐕 ${t.companyName}</h1>
+      <p style="margin:8px 0 0;color:${COLORS.gold};font-size:14px;font-weight:600;letter-spacing:0.5px;">${t.tagline}</p>
     </td></tr>
     <!-- Content -->
     <tr><td style="padding:32px;">
@@ -170,9 +172,9 @@ ${preheaderHtml}
     <tr><td style="background:${COLORS.grayLight};padding:24px 32px;border-top:1px solid ${COLORS.grayBorder};">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         <tr><td style="text-align:center;">
-          <p style="margin:0;color:${COLORS.grayMuted};font-size:12px;">Doge Consulting Group Limited &middot; Hong Kong</p>
-          <p style="margin:6px 0 0;color:${COLORS.grayMuted};font-size:11px;">This is an automated notification. Please do not reply directly to this email.</p>
-          <p style="margin:6px 0 0;color:${COLORS.grayMuted};font-size:11px;">Need help? Contact us at <a href="mailto:dogetech77@gmail.com" style="color:${COLORS.teal};">dogetech77@gmail.com</a></p>
+          <p style="margin:0;color:${COLORS.grayMuted};font-size:12px;">${t.footerCompany}</p>
+          <p style="margin:6px 0 0;color:${COLORS.grayMuted};font-size:11px;">${t.footerAutoNotice}</p>
+          <p style="margin:6px 0 0;color:${COLORS.grayMuted};font-size:11px;">${t.footerHelp} <a href="mailto:dogetech77@gmail.com" style="color:${COLORS.teal};">dogetech77@gmail.com</a></p>
         </td></tr>
       </table>
     </td></tr>
@@ -228,14 +230,15 @@ function itemsTable(items: { name: string; quantity: number; totalPrice: number 
 }
 
 /** Progress tracker for order status */
-function orderProgressTracker(currentStatus: string): string {
+function orderProgressTracker(currentStatus: string, s?: EmailStrings): string {
+  const t = s || getEmailStrings("en");
   const steps = [
-    { key: "confirmed", label: "Confirmed", icon: "📋" },
-    { key: "sourcing", label: "Sourcing", icon: "🔍" },
-    { key: "packing", label: "Packing", icon: "📦" },
-    { key: "in_transit", label: "In Transit", icon: "🚢" },
-    { key: "customs", label: "Customs", icon: "🛃" },
-    { key: "delivered", label: "Delivered", icon: "✅" },
+    { key: "confirmed", label: t.progressConfirmed, icon: "📋" },
+    { key: "sourcing", label: t.progressSourcing, icon: "🔍" },
+    { key: "packing", label: t.progressPacking, icon: "📦" },
+    { key: "in_transit", label: t.progressInTransit, icon: "🚢" },
+    { key: "customs", label: t.progressCustoms, icon: "🛃" },
+    { key: "delivered", label: t.progressDelivered, icon: "✅" },
   ];
 
   const currentIdx = steps.findIndex((s) => s.key === currentStatus);
@@ -261,6 +264,19 @@ function formatMoney(amount: number, currency: string = "USD"): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
 }
 
+/** Prominent email section title with colored accent bar for high visibility */
+function emailTitle(icon: string, title: string, accentColor: string = COLORS.teal): string {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
+    <tr>
+      <td style="background:${accentColor};width:6px;border-radius:6px 0 0 6px;">&nbsp;</td>
+      <td style="background:${COLORS.navy};padding:20px 24px;border-radius:0 8px 8px 0;">
+        <div style="font-size:28px;line-height:1;">${icon}</div>
+        <h2 style="color:#ffffff;margin:8px 0 0;font-size:24px;font-weight:800;letter-spacing:-0.3px;">${title}</h2>
+      </td>
+    </tr>
+  </table>`;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // ── Notification Functions ──
 // ═══════════════════════════════════════════════════════════════
@@ -279,53 +295,55 @@ export async function sendQuoteRequestedEmail(quote: {
   const enabled = await isNotificationEnabled("quote");
   if (!enabled) return;
 
+  const locale = await getUserLanguage(quote.customerEmail);
+  const s = getEmailStrings(locale);
   const appUrl = await getAppUrl();
   const itemList = quote.items.map((i) =>
     `<li style="padding:4px 0;font-size:14px;">${i.name} &times; ${i.quantity}</li>`
   ).join("");
 
-  // Email to customer
+  // Email to customer (localized)
   await sendEmail({
     to: quote.customerEmail,
-    subject: `Quote Request Received — ${quote.quoteNumber}`,
+    subject: `📩 ${s.quoteRequestReceived} — ${quote.quoteNumber}`,
     type: "quote_requested",
     html: emailWrapper(`
-      <h2 style="color:${COLORS.navy};margin:0 0 8px;font-size:20px;">Quote Request Received 📩</h2>
-      <p style="color:${COLORS.grayText};margin:0 0 20px;font-size:15px;">Hi ${quote.customerName}, we've received your shipping quote request!</p>
+      ${emailTitle("📩", s.quoteRequestReceived)}
+      <p style="color:${COLORS.grayText};margin:0 0 20px;font-size:15px;">${s.hi.replace("{name}", quote.customerName)}, ${s.quoteRequestReceivedDesc}</p>
 
       ${infoBox(`
         <table role="presentation" style="width:100%;" cellpadding="0" cellspacing="0">
-          ${detailRow("Quote Number", `<strong>${quote.quoteNumber}</strong>`)}
-          ${detailRow("Delivery Type", quote.deliveryType === "Door-to-Door" ? "🚛 Door-to-Door" : "🏭 Warehouse Pickup")}
-          ${detailRow("Destination", quote.destination)}
-          ${detailRow("Estimated Cost", `<span style="color:${COLORS.teal};font-weight:700;">${formatMoney(quote.shippingEstimateUSD)}</span>`)}
+          ${detailRow(s.quoteNumber, `<strong>${quote.quoteNumber}</strong>`)}
+          ${detailRow(s.deliveryType, quote.deliveryType === "Door-to-Door" ? "🚛 Door-to-Door" : "🏭 Warehouse Pickup")}
+          ${detailRow(s.destination, quote.destination)}
+          ${detailRow(s.estimatedCost, `<span style="color:${COLORS.teal};font-weight:700;">${formatMoney(quote.shippingEstimateUSD)}</span>`)}
         </table>
       `)}
 
-      <h3 style="color:${COLORS.navy};font-size:15px;margin:20px 0 8px;">Items in your quote:</h3>
+      <h3 style="color:${COLORS.navy};font-size:15px;margin:20px 0 8px;">${s.itemsInQuote}</h3>
       <ul style="margin:0;padding:0 0 0 20px;color:${COLORS.navy};">${itemList}</ul>
 
       <div style="background:${COLORS.blueBg};border-radius:8px;padding:16px;margin:20px 0;text-align:center;">
         <p style="margin:0;font-size:14px;color:${COLORS.navy};">
-          <strong>What happens next?</strong><br/>
-          Our team will review your request and send you a detailed quote with final pricing within 1&ndash;2 business days.
+          <strong>${s.whatHappensNext}</strong><br/>
+          ${s.quoteNextSteps}
         </p>
       </div>
 
-      ${ctaButton("View My Account", `${appUrl}/account`)}
+      ${ctaButton(s.viewMyAccount, `${appUrl}/account`)}
 
-      <p style="color:${COLORS.grayText};font-size:13px;">If you have any questions, feel free to contact us.</p>
-    `, `We received your quote request ${quote.quoteNumber}`),
+      <p style="color:${COLORS.grayText};font-size:13px;">${s.contactUs}</p>
+    `, `${s.quoteRequestReceived} ${quote.quoteNumber}`, s),
   });
 
   // Notify admin
   const adminEmail = await getAdminEmail();
   await sendEmail({
     to: adminEmail,
-    subject: `[New Quote Request] ${quote.quoteNumber} — ${quote.customerName}`,
+    subject: `📬 New Quote Request — ${quote.quoteNumber} — ${quote.customerName}`,
     type: "quote_requested",
     html: emailWrapper(`
-      <h2 style="color:${COLORS.navy};font-size:18px;">New Quote Request</h2>
+      ${emailTitle("📬", "New Quote Request")}
       <p style="font-size:14px;color:${COLORS.grayText};">A new quote request has been submitted:</p>
       ${infoBox(`
         <table role="presentation" style="width:100%;" cellpadding="0" cellspacing="0">
@@ -356,49 +374,51 @@ export async function sendQuoteSentEmail(quote: {
   const enabled = await isNotificationEnabled("quote");
   if (!enabled) return;
 
+  const locale = await getUserLanguage(quote.customerEmail);
+  const s = getEmailStrings(locale);
   const depositAmount = quote.totalAmount * 0.7;
   const paymentSection = quote.paymentLinkUrl
     ? `<div style="background:${COLORS.greenBg};border-radius:8px;padding:20px;margin:20px 0;text-align:center;border:1px solid #bbf7d0;">
-        <p style="margin:0 0 8px;font-size:14px;color:${COLORS.navy};">To proceed, pay the 70% deposit:</p>
+        <p style="margin:0 0 8px;font-size:14px;color:${COLORS.navy};">${s.depositPercent}</p>
         <p style="margin:0 0 16px;font-size:28px;font-weight:700;color:${COLORS.teal};">${formatMoney(depositAmount, quote.currency)}</p>
-        <a href="${quote.paymentLinkUrl}" style="display:inline-block;background:${COLORS.teal};color:#ffffff;padding:14px 40px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">💳 Pay Deposit Now</a>
-        <p style="margin:12px 0 0;font-size:12px;color:${COLORS.grayText};">Secure payment via Airwallex &middot; Credit Card, Debit, ACH, Wire</p>
+        <a href="${quote.paymentLinkUrl}" style="display:inline-block;background:${COLORS.teal};color:#ffffff;padding:14px 40px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;">${s.payDepositNow}</a>
+        <p style="margin:12px 0 0;font-size:12px;color:${COLORS.grayText};">${s.securePayment}</p>
       </div>`
     : "";
 
   await sendEmail({
     to: quote.customerEmail,
-    subject: `Your Quote ${quote.quoteNumber} is Ready — Doge Consulting`,
+    subject: `📋 ${s.quoteReady} — ${quote.quoteNumber}`,
     type: "quote_sent",
     html: emailWrapper(`
-      <h2 style="color:${COLORS.navy};margin:0 0 8px;font-size:20px;">Your Quote is Ready! 📋</h2>
-      <p style="color:${COLORS.grayText};margin:0 0 20px;font-size:15px;">Hi ${quote.customerName}, here's your finalized shipping quote:</p>
+      ${emailTitle("📋", s.quoteReady)}
+      <p style="color:${COLORS.grayText};margin:0 0 20px;font-size:15px;">${s.hi.replace("{name}", quote.customerName)}, ${s.quoteReadyDesc}</p>
 
-      ${infoBox(`<p style="margin:0;font-size:14px;"><strong>Quote Number:</strong> ${quote.quoteNumber}</p>`)}
+      ${infoBox(`<p style="margin:0;font-size:14px;"><strong>${s.quoteNumber}:</strong> ${quote.quoteNumber}</p>`)}
 
       ${itemsTable(quote.items, quote.currency)}
 
       <table role="presentation" style="width:100%;margin:16px 0;">
         <tr>
-          <td style="text-align:right;padding:8px 12px;font-size:16px;font-weight:700;color:${COLORS.navy};">Total:</td>
+          <td style="text-align:right;padding:8px 12px;font-size:16px;font-weight:700;color:${COLORS.navy};">${s.total}:</td>
           <td style="text-align:right;padding:8px 12px;font-size:20px;font-weight:700;color:${COLORS.teal};width:140px;">${formatMoney(quote.totalAmount, quote.currency)}</td>
         </tr>
       </table>
 
       ${paymentSection}
 
-      <p style="color:${COLORS.grayText};font-size:13px;">This quote is valid for 30 days. If you have questions, reply to this email or contact us.</p>
-    `, `Your quote ${quote.quoteNumber} is ready — Total: ${formatMoney(quote.totalAmount, quote.currency)}`),
+      <p style="color:${COLORS.grayText};font-size:13px;">${s.quoteValidDays}</p>
+    `, `${s.quoteReady} ${quote.quoteNumber} — ${s.total}: ${formatMoney(quote.totalAmount, quote.currency)}`, s),
   });
 
   // Notify admin
   const adminEmail = await getAdminEmail();
   await sendEmail({
     to: adminEmail,
-    subject: `[Admin] Quote ${quote.quoteNumber} sent to ${quote.customerName}`,
+    subject: `📤 Quote ${quote.quoteNumber} sent to ${quote.customerName}`,
     type: "quote_sent",
     html: emailWrapper(`
-      <h2 style="color:${COLORS.navy};font-size:18px;">Quote Sent</h2>
+      ${emailTitle("📤", "Quote Sent")}
       ${infoBox(`
         <table role="presentation" style="width:100%;" cellpadding="0" cellspacing="0">
           ${detailRow("Quote", quote.quoteNumber)}
@@ -424,28 +444,31 @@ export async function sendPaymentLinkEmail(params: {
   const enabled = await isNotificationEnabled("payment");
   if (!enabled) return;
 
+  const locale = await getUserLanguage(params.customerEmail);
+  const s = getEmailStrings(locale);
+
   await sendEmail({
     to: params.customerEmail,
-    subject: `Payment Required — ${params.quoteNumber} — Doge Consulting`,
+    subject: `💳 ${s.paymentRequired} — ${params.quoteNumber}`,
     type: "payment_link",
     html: emailWrapper(`
-      <h2 style="color:${COLORS.navy};margin:0 0 8px;font-size:20px;">Payment Required 💳</h2>
-      <p style="color:${COLORS.grayText};margin:0 0 20px;font-size:15px;">Hi ${params.customerName}, please complete your payment to proceed with your order.</p>
+      ${emailTitle("💳", s.paymentRequired)}
+      <p style="color:${COLORS.grayText};margin:0 0 20px;font-size:15px;">${s.hi.replace("{name}", params.customerName)}, ${s.paymentRequiredDesc}</p>
 
       <div style="background:${COLORS.grayLight};border-radius:12px;padding:24px;margin:20px 0;text-align:center;border:1px solid ${COLORS.grayBorder};">
-        <p style="margin:0 0 4px;font-size:13px;color:${COLORS.grayText};text-transform:uppercase;letter-spacing:1px;">Amount Due</p>
+        <p style="margin:0 0 4px;font-size:13px;color:${COLORS.grayText};text-transform:uppercase;letter-spacing:1px;">${s.amountDue}</p>
         <p style="margin:0 0 8px;font-size:36px;font-weight:700;color:${COLORS.teal};">${formatMoney(params.amount, params.currency)}</p>
         <p style="margin:0 0 20px;font-size:14px;color:${COLORS.grayText};">${params.description}</p>
-        <a href="${params.paymentUrl}" style="display:inline-block;background:${COLORS.teal};color:#ffffff;padding:16px 48px;border-radius:8px;text-decoration:none;font-weight:700;font-size:17px;">Pay Now &rarr;</a>
+        <a href="${params.paymentUrl}" style="display:inline-block;background:${COLORS.teal};color:#ffffff;padding:16px 48px;border-radius:8px;text-decoration:none;font-weight:700;font-size:17px;">${s.payNow} &rarr;</a>
       </div>
 
       <div style="text-align:center;margin:16px 0;">
-        <p style="color:${COLORS.grayText};font-size:12px;">🔒 Secured by Airwallex &middot; 256-bit SSL encryption</p>
-        <p style="color:${COLORS.grayText};font-size:12px;">Accepted: Visa &middot; Mastercard &middot; Amex &middot; UnionPay &middot; ACH &middot; Wire</p>
+        <p style="color:${COLORS.grayText};font-size:12px;">🔒 ${s.securedBy}</p>
+        <p style="color:${COLORS.grayText};font-size:12px;">${s.accepted}</p>
       </div>
 
-      <p style="color:${COLORS.grayText};font-size:13px;">If you have trouble with the button above, copy and paste this link:<br/><a href="${params.paymentUrl}" style="color:${COLORS.teal};word-break:break-all;">${params.paymentUrl}</a></p>
-    `, `Payment of ${formatMoney(params.amount, params.currency)} required for ${params.quoteNumber}`),
+      <p style="color:${COLORS.grayText};font-size:13px;">${s.linkTrouble}<br/><a href="${params.paymentUrl}" style="color:${COLORS.teal};word-break:break-all;">${params.paymentUrl}</a></p>
+    `, `${s.paymentRequired} ${formatMoney(params.amount, params.currency)} — ${params.quoteNumber}`, s),
   });
 }
 
@@ -464,43 +487,45 @@ export async function sendPaymentReceivedEmail(payment: {
   const enabled = await isNotificationEnabled("payment");
   if (!enabled) return;
 
+  const locale = await getUserLanguage(payment.customerEmail);
+  const s = getEmailStrings(locale);
   const appUrl = await getAppUrl();
 
   await sendEmail({
     to: payment.customerEmail,
-    subject: `Payment Confirmed — ${payment.paymentNumber} — Doge Consulting`,
+    subject: `✅ ${s.paymentConfirmed} — ${payment.paymentNumber}`,
     type: "payment_received",
     orderId: payment.orderNumber,
     html: emailWrapper(`
-      <h2 style="color:${COLORS.navy};margin:0 0 8px;font-size:20px;">Payment Confirmed ✅</h2>
-      <p style="color:${COLORS.grayText};margin:0 0 20px;font-size:15px;">Hi ${payment.customerName}, we've successfully received your payment!</p>
+      ${emailTitle("✅", s.paymentConfirmed, COLORS.green)}
+      <p style="color:${COLORS.grayText};margin:0 0 20px;font-size:15px;">${s.hi.replace("{name}", payment.customerName)}, ${s.paymentConfirmedDesc}</p>
 
       ${infoBox(`
         <table role="presentation" style="width:100%;" cellpadding="0" cellspacing="0">
           ${detailRow("Payment #", `<strong>${payment.paymentNumber}</strong>`)}
-          ${detailRow("Order #", payment.orderNumber)}
-          ${detailRow("Amount", `<span style="color:${COLORS.green};font-weight:700;">${formatMoney(payment.amount, payment.currency)}</span>`)}
-          ${detailRow("Method", payment.method.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()))}
-          ${detailRow("Type", payment.type.replace(/\b\w/g, (c) => c.toUpperCase()))}
-          ${detailRow("Status", statusBadge("Confirmed", "#065f46", "#d1fae5"))}
+          ${detailRow(s.orderNumber, payment.orderNumber)}
+          ${detailRow(s.amount, `<span style="color:${COLORS.green};font-weight:700;">${formatMoney(payment.amount, payment.currency)}</span>`)}
+          ${detailRow(s.method, payment.method.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()))}
+          ${detailRow(s.type, payment.type.replace(/\b\w/g, (c) => c.toUpperCase()))}
+          ${detailRow(s.status, statusBadge("Confirmed", "#065f46", "#d1fae5"))}
         </table>
       `, COLORS.green, COLORS.greenBg)}
 
-      <p style="font-size:14px;color:${COLORS.navy};">A receipt has been generated and is available in your account.</p>
+      <p style="font-size:14px;color:${COLORS.navy};">${s.receiptAvailable}</p>
 
-      ${ctaButton("View My Orders", `${appUrl}/account/orders`)}
-    `, `Payment of ${formatMoney(payment.amount, payment.currency)} confirmed for order ${payment.orderNumber}`),
+      ${ctaButton(s.viewMyOrders, `${appUrl}/account/orders`)}
+    `, `${s.paymentConfirmed} ${formatMoney(payment.amount, payment.currency)} — ${payment.orderNumber}`, s),
   });
 
   // Notify admin
   const adminEmail = await getAdminEmail();
   await sendEmail({
     to: adminEmail,
-    subject: `[Admin] Payment ${payment.paymentNumber} — ${formatMoney(payment.amount, payment.currency)}`,
+    subject: `💰 Payment ${payment.paymentNumber} — ${formatMoney(payment.amount, payment.currency)}`,
     type: "payment_received",
     orderId: payment.orderNumber,
     html: emailWrapper(`
-      <h2 style="color:${COLORS.navy};font-size:18px;">Payment Received</h2>
+      ${emailTitle("💰", "Payment Received", COLORS.green)}
       ${infoBox(`
         <table role="presentation" style="width:100%;" cellpadding="0" cellspacing="0">
           ${detailRow("Payment", payment.paymentNumber)}
@@ -525,50 +550,52 @@ export async function sendOrderConfirmedEmail(order: {
   depositAmount: number;
   currency: string;
 }) {
+  const locale = await getUserLanguage(order.customerEmail);
+  const s = getEmailStrings(locale);
   const appUrl = await getAppUrl();
 
   await sendEmail({
     to: order.customerEmail,
-    subject: `Order Confirmed — ${order.orderNumber} — Doge Consulting`,
+    subject: `🎉 ${s.orderConfirmed} — ${order.orderNumber}`,
     type: "order_confirmed",
     orderId: order.orderNumber,
     html: emailWrapper(`
-      <h2 style="color:${COLORS.navy};margin:0 0 8px;font-size:20px;">Order Confirmed! 🎉</h2>
-      <p style="color:${COLORS.grayText};margin:0 0 20px;font-size:15px;">Hi ${order.customerName}, great news! Your order has been confirmed and is now being processed.</p>
+      ${emailTitle("🎉", s.orderConfirmed, COLORS.green)}
+      <p style="color:${COLORS.grayText};margin:0 0 20px;font-size:15px;">${s.hi.replace("{name}", order.customerName)}, ${s.orderConfirmedDesc}</p>
 
       ${infoBox(`
         <table role="presentation" style="width:100%;" cellpadding="0" cellspacing="0">
-          ${detailRow("Order Number", `<strong>${order.orderNumber}</strong>`)}
-          ${detailRow("Order Total", formatMoney(order.totalAmount, order.currency))}
-          ${detailRow("Deposit Paid", `<span style="color:${COLORS.green};">${formatMoney(order.depositAmount, order.currency)}</span>`)}
-          ${detailRow("Balance Due", `<span style="color:${COLORS.amber};">${formatMoney(order.totalAmount - order.depositAmount, order.currency)}</span>`)}
+          ${detailRow(s.orderNumber, `<strong>${order.orderNumber}</strong>`)}
+          ${detailRow(s.total, formatMoney(order.totalAmount, order.currency))}
+          ${detailRow(s.deposit, `<span style="color:${COLORS.green};">${formatMoney(order.depositAmount, order.currency)}</span>`)}
+          ${detailRow(s.balanceDue, `<span style="color:${COLORS.amber};">${formatMoney(order.totalAmount - order.depositAmount, order.currency)}</span>`)}
         </table>
       `, COLORS.green, COLORS.greenBg)}
 
-      ${orderProgressTracker("confirmed")}
+      ${orderProgressTracker("confirmed", s)}
 
       <div style="background:${COLORS.blueBg};border-radius:8px;padding:16px;margin:16px 0;">
-        <p style="margin:0;font-size:14px;color:${COLORS.navy};"><strong>What's next?</strong></p>
+        <p style="margin:0;font-size:14px;color:${COLORS.navy};"><strong>${s.whatHappensNext}</strong></p>
         <ul style="margin:8px 0 0;padding:0 0 0 20px;color:${COLORS.grayText};font-size:14px;">
-          <li>Our team will begin sourcing your products from verified suppliers</li>
-          <li>You'll receive email updates at every milestone</li>
-          <li>Track your order anytime from your account dashboard</li>
+          <li>${s.orderNextSteps1}</li>
+          <li>${s.orderNextSteps2}</li>
+          <li>${s.orderNextSteps3}</li>
         </ul>
       </div>
 
-      ${ctaButton("Track My Order", `${appUrl}/account/orders`)}
-    `, `Your order ${order.orderNumber} has been confirmed!`),
+      ${ctaButton(s.trackMyOrder, `${appUrl}/account/orders`)}
+    `, `${s.orderConfirmed} ${order.orderNumber}`, s),
   });
 
   // Notify admin
   const adminEmail = await getAdminEmail();
   await sendEmail({
     to: adminEmail,
-    subject: `[Admin] New Order ${order.orderNumber} — ${formatMoney(order.totalAmount, order.currency)}`,
+    subject: `📦 New Order ${order.orderNumber} — ${formatMoney(order.totalAmount, order.currency)}`,
     type: "order_confirmed",
     orderId: order.orderNumber,
     html: emailWrapper(`
-      <h2 style="color:${COLORS.navy};font-size:18px;">New Order Confirmed</h2>
+      ${emailTitle("📦", "New Order Confirmed", COLORS.green)}
       ${infoBox(`
         <table role="presentation" style="width:100%;" cellpadding="0" cellspacing="0">
           ${detailRow("Order", order.orderNumber)}
@@ -620,6 +647,24 @@ const STATUS_MESSAGES: Record<string, string> = {
   cancelled: "Your order has been cancelled. If you have questions, please contact us.",
 };
 
+function localizedStatusLabel(status: string, s: EmailStrings): string {
+  const map: Record<string, string> = {
+    pending: s.statusPending, confirmed: s.statusConfirmed, sourcing: s.statusSourcing,
+    packing: s.statusPacking, in_transit: s.statusInTransit, customs: s.statusCustoms,
+    delivered: s.statusDelivered, closed: s.statusClosed, cancelled: s.statusCancelled,
+  };
+  return map[status] || status;
+}
+
+function localizedStatusMessage(status: string, s: EmailStrings): string {
+  const map: Record<string, string> = {
+    pending: s.msgPending, confirmed: s.msgConfirmed, sourcing: s.msgSourcing,
+    packing: s.msgPacking, in_transit: s.msgInTransit, customs: s.msgCustoms,
+    delivered: s.msgDelivered, closed: s.msgClosed, cancelled: s.msgCancelled,
+  };
+  return map[status] || status;
+}
+
 export async function sendOrderStatusEmail(order: {
   orderNumber: string;
   customerName: string;
@@ -633,25 +678,28 @@ export async function sendOrderStatusEmail(order: {
   const enabled = await isNotificationEnabled("shipment");
   if (!enabled) return;
 
+  const locale = await getUserLanguage(order.customerEmail);
+  const s = getEmailStrings(locale);
   const appUrl = await getAppUrl();
-  const label = STATUS_LABELS[order.status] || order.status;
+  const label = localizedStatusLabel(order.status, s);
+  const adminLabel = STATUS_LABELS[order.status] || order.status;
   const icon = STATUS_ICONS[order.status] || "📬";
-  const message = STATUS_MESSAGES[order.status] || `Your order status has been updated to: ${label}`;
+  const message = localizedStatusMessage(order.status, s);
 
   // Build details section
   const detailRows: string[] = [];
-  detailRows.push(detailRow("Order Number", `<strong>${order.orderNumber}</strong>`));
-  detailRows.push(detailRow("Status", statusBadge(`${icon} ${label}`, COLORS.navy, COLORS.grayLight)));
-  if (order.trackingId) detailRows.push(detailRow("Tracking ID", order.trackingId));
-  if (order.vessel) detailRows.push(detailRow("Vessel", order.vessel));
+  detailRows.push(detailRow(s.orderNumber, `<strong>${order.orderNumber}</strong>`));
+  detailRows.push(detailRow(s.status, statusBadge(`${icon} ${label}`, COLORS.navy, COLORS.grayLight)));
+  if (order.trackingId) detailRows.push(detailRow(s.trackingId, order.trackingId));
+  if (order.vessel) detailRows.push(detailRow(s.vessel, order.vessel));
   if (order.estimatedDelivery) {
-    const estDate = new Date(order.estimatedDelivery).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-    detailRows.push(detailRow("Est. Delivery", estDate));
+    const estDate = new Date(order.estimatedDelivery).toLocaleDateString(locale === "en" ? "en-US" : locale, { year: "numeric", month: "long", day: "numeric" });
+    detailRows.push(detailRow(s.estimatedDelivery, estDate));
   }
 
   const noteSection = order.note
     ? `<div style="background:${COLORS.amberBg};border-radius:8px;padding:12px 16px;margin:16px 0;border-left:4px solid ${COLORS.amber};">
-        <p style="margin:0;font-size:13px;color:${COLORS.grayText};font-weight:600;">Note from our team:</p>
+        <p style="margin:0;font-size:13px;color:${COLORS.grayText};font-weight:600;">${s.noteFromTeam}</p>
         <p style="margin:4px 0 0;font-size:14px;color:${COLORS.navy};font-style:italic;">${order.note}</p>
       </div>`
     : "";
@@ -661,16 +709,16 @@ export async function sendOrderStatusEmail(order: {
 
   await sendEmail({
     to: order.customerEmail,
-    subject: `${icon} ${label} — Order ${order.orderNumber} — Doge Consulting`,
+    subject: `${icon} ${label} — ${s.orderNumber} ${order.orderNumber}`,
     type: "order_status",
     orderId: order.orderNumber,
     html: emailWrapper(`
-      <h2 style="color:${COLORS.navy};margin:0 0 8px;font-size:20px;">${icon} Order Status Update</h2>
-      <p style="color:${COLORS.grayText};margin:0 0 20px;font-size:15px;">Hi ${order.customerName},</p>
+      ${emailTitle(icon, s.orderStatusUpdate)}
+      <p style="color:${COLORS.grayText};margin:0 0 20px;font-size:15px;">${s.hi.replace("{name}", order.customerName)},</p>
 
       <p style="font-size:15px;color:${COLORS.navy};line-height:1.6;">${message}</p>
 
-      ${showTracker ? orderProgressTracker(order.status) : ""}
+      ${showTracker ? orderProgressTracker(order.status, s) : ""}
 
       ${infoBox(`
         <table role="presentation" style="width:100%;" cellpadding="0" cellspacing="0">
@@ -680,26 +728,26 @@ export async function sendOrderStatusEmail(order: {
 
       ${noteSection}
 
-      ${ctaButton("View Order Details", `${appUrl}/account/orders`)}
+      ${ctaButton(s.viewMyOrders, `${appUrl}/account/orders`)}
 
-      ${order.trackingId ? `<p style="text-align:center;font-size:13px;color:${COLORS.grayText};">You can also track your shipment at <a href="${appUrl}/track" style="color:${COLORS.teal};">dogeconsulting.com/track</a></p>` : ""}
-    `, `${icon} Your order ${order.orderNumber} status: ${label}`),
+      ${order.trackingId ? `<p style="text-align:center;font-size:13px;color:${COLORS.grayText};">${s.trackShipmentAt} <a href="${appUrl}/track" style="color:${COLORS.teal};">dogeconsulting.com/track</a></p>` : ""}
+    `, `${icon} ${label} — ${order.orderNumber}`, s),
   });
 
-  // Notify admin
+  // Notify admin (always English)
   const adminEmail = await getAdminEmail();
   await sendEmail({
     to: adminEmail,
-    subject: `[Admin] Order ${order.orderNumber} → ${label}`,
+    subject: `${icon} Order ${order.orderNumber} → ${adminLabel}`,
     type: "order_status",
     orderId: order.orderNumber,
     html: emailWrapper(`
-      <h2 style="color:${COLORS.navy};font-size:18px;">Order Status Changed</h2>
+      ${emailTitle(icon, "Order Status Changed")}
       ${infoBox(`
         <table role="presentation" style="width:100%;" cellpadding="0" cellspacing="0">
           ${detailRow("Order", order.orderNumber)}
           ${detailRow("Customer", `${order.customerName} (${order.customerEmail})`)}
-          ${detailRow("New Status", `${icon} ${label}`)}
+          ${detailRow("New Status", `${icon} ${adminLabel}`)}
           ${order.trackingId ? detailRow("Tracking", order.trackingId) : ""}
           ${order.vessel ? detailRow("Vessel", order.vessel) : ""}
         </table>
@@ -718,37 +766,39 @@ export async function sendOrderClosedEmail(order: {
   totalAmount: number;
   currency: string;
 }) {
+  const locale = await getUserLanguage(order.customerEmail);
+  const s = getEmailStrings(locale);
   const appUrl = await getAppUrl();
 
   await sendEmail({
     to: order.customerEmail,
-    subject: `🎉 Order Complete — ${order.orderNumber} — Doge Consulting`,
+    subject: `🎉 ${s.orderComplete} — ${order.orderNumber}`,
     type: "order_closed",
     orderId: order.orderNumber,
     html: emailWrapper(`
-      <h2 style="color:${COLORS.navy};margin:0 0 8px;font-size:20px;">Order Complete! 🎊</h2>
-      <p style="color:${COLORS.grayText};margin:0 0 20px;font-size:15px;">Hi ${order.customerName},</p>
+      ${emailTitle("🎊", s.orderComplete, COLORS.green)}
+      <p style="color:${COLORS.grayText};margin:0 0 20px;font-size:15px;">${s.hi.replace("{name}", order.customerName)},</p>
 
-      <p style="font-size:15px;color:${COLORS.navy};line-height:1.6;">Your order <strong>${order.orderNumber}</strong> has been delivered and is now complete. Thank you for choosing Doge Consulting!</p>
+      <p style="font-size:15px;color:${COLORS.navy};line-height:1.6;">${s.orderNumber} <strong>${order.orderNumber}</strong> ${s.orderCompleteDesc}</p>
 
-      ${orderProgressTracker("delivered")}
+      ${orderProgressTracker("delivered", s)}
 
       ${infoBox(`
         <table role="presentation" style="width:100%;" cellpadding="0" cellspacing="0">
-          ${detailRow("Order Number", order.orderNumber)}
-          ${detailRow("Total Amount", formatMoney(order.totalAmount, order.currency))}
-          ${detailRow("Status", statusBadge("✅ Complete", "#065f46", "#d1fae5"))}
+          ${detailRow(s.orderNumber, order.orderNumber)}
+          ${detailRow(s.total, formatMoney(order.totalAmount, order.currency))}
+          ${detailRow(s.status, statusBadge("✅ Complete", "#065f46", "#d1fae5"))}
         </table>
       `, COLORS.green, COLORS.greenBg)}
 
       <div style="background:${COLORS.grayLight};border-radius:8px;padding:16px;margin:16px 0;text-align:center;">
-        <p style="margin:0 0 8px;font-size:15px;color:${COLORS.navy};font-weight:600;">How was your experience?</p>
-        <p style="margin:0;font-size:14px;color:${COLORS.grayText};">We'd love to hear from you! Please contact us if you have any feedback.</p>
+        <p style="margin:0 0 8px;font-size:15px;color:${COLORS.navy};font-weight:600;">${s.feedbackTitle}</p>
+        <p style="margin:0;font-size:14px;color:${COLORS.grayText};">${s.feedbackDesc}</p>
       </div>
 
-      ${ctaButton("View My Orders", `${appUrl}/account/orders`)}
+      ${ctaButton(s.viewMyOrders, `${appUrl}/account/orders`)}
 
-      <p style="color:${COLORS.grayText};font-size:13px;">If you have any issues with your delivery, please contact us within 30 days.</p>
-    `, `Your order ${order.orderNumber} is complete! Thank you for choosing Doge Consulting.`),
+      <p style="color:${COLORS.grayText};font-size:13px;">${s.deliveryIssue}</p>
+    `, `${s.orderComplete} ${order.orderNumber}`, s),
   });
 }

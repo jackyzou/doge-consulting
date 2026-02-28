@@ -8,11 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Eye, EyeOff, LogIn, Loader2, UserPlus } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get("from") || "/";
+  const { t } = useTranslation();
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
@@ -31,18 +33,18 @@ export default function LoginPage() {
 
     try {
       if (mode === "signup") {
-        if (!name) { setError("Name is required"); setLoading(false); return; }
-        if (password.length < 6) { setError("Password must be at least 6 characters"); setLoading(false); return; }
+        if (!name) { setError(t("loginPage.nameRequired")); setLoading(false); return; }
+        if (password.length < 6) { setError(t("loginPage.passwordMin")); setLoading(false); return; }
 
         const res = await fetch("/api/auth/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password, name, phone: phone || undefined, company: company || undefined }),
+          body: JSON.stringify({ email, password, name, phone: phone || undefined, company: company || undefined, language: localStorage.getItem("locale") || "en" }),
         });
         const data = await res.json();
 
         if (!res.ok) {
-          setError(data.error || "Signup failed");
+          setError(data.error || t("loginPage.signupFailed"));
           setLoading(false);
           return;
         }
@@ -60,7 +62,7 @@ export default function LoginPage() {
         const data = await res.json();
 
         if (!res.ok) {
-          setError(data.error || "Login failed");
+          setError(data.error || t("loginPage.loginFailed"));
           setLoading(false);
           return;
         }
@@ -75,7 +77,7 @@ export default function LoginPage() {
         router.refresh();
       }
     } catch {
-      setError("Network error. Please try again.");
+      setError(t("loginPage.networkError"));
       setLoading(false);
     }
   };
@@ -87,11 +89,11 @@ export default function LoginPage() {
           <div className="flex justify-center">
             <DogeLogo size={48} />
           </div>
-          <CardTitle className="text-2xl">{mode === "login" ? "Welcome Back" : "Create Account"}</CardTitle>
+          <CardTitle className="text-2xl">{mode === "login" ? t("loginPage.welcomeBack") : t("loginPage.createAccount")}</CardTitle>
           <CardDescription>
             {mode === "login"
-              ? "Sign in to your Doge Consulting account"
-              : "Sign up to track your quotes, orders and shipments"}
+              ? t("loginPage.signInDesc")
+              : t("loginPage.signUpDesc")}
           </CardDescription>
 
           {/* Mode Toggle */}
@@ -103,7 +105,7 @@ export default function LoginPage() {
                 mode === "login" ? "bg-teal text-white" : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Sign In
+              {t("loginPage.signIn")}
             </button>
             <button
               type="button"
@@ -112,7 +114,7 @@ export default function LoginPage() {
                 mode === "signup" ? "bg-teal text-white" : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Sign Up
+              {t("loginPage.signUp")}
             </button>
           </div>
         </CardHeader>
@@ -126,10 +128,10 @@ export default function LoginPage() {
 
             {mode === "signup" && (
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name *</Label>
+                <Label htmlFor="name">{t("loginPage.fullName")}</Label>
                 <Input
                   id="name"
-                  placeholder="Your full name"
+                  placeholder={t("loginPage.yourFullName")}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
@@ -139,11 +141,11 @@ export default function LoginPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
+              <Label htmlFor="email">{t("loginPage.email")}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t("loginPage.emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -152,12 +154,12 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password *</Label>
+              <Label htmlFor="password">{t("loginPage.password")}</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder={mode === "signup" ? "At least 6 characters" : "••••••••"}
+                  placeholder={mode === "signup" ? t("loginPage.passwordPlaceholderSignup") : "••••••••"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -177,19 +179,19 @@ export default function LoginPage() {
             {mode === "signup" && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label htmlFor="phone">{t("loginPage.phone")}</Label>
                   <Input
                     id="phone"
-                    placeholder="Optional"
+                    placeholder={t("loginPage.optional")}
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="company">Company</Label>
+                  <Label htmlFor="company">{t("loginPage.company")}</Label>
                   <Input
                     id="company"
-                    placeholder="Optional"
+                    placeholder={t("loginPage.optional")}
                     value={company}
                     onChange={(e) => setCompany(e.target.value)}
                   />
@@ -203,11 +205,11 @@ export default function LoginPage() {
               disabled={loading}
             >
               {loading ? (
-                <><Loader2 className="h-4 w-4 animate-spin" />{mode === "login" ? "Signing in…" : "Creating account…"}</>
+                <><Loader2 className="h-4 w-4 animate-spin" />{mode === "login" ? t("loginPage.signingIn") : t("loginPage.creatingAccount")}</>
               ) : mode === "login" ? (
-                <><LogIn className="h-4 w-4" />Sign In</>
+                <><LogIn className="h-4 w-4" />{t("loginPage.signIn")}</>
               ) : (
-                <><UserPlus className="h-4 w-4" />Create Account</>
+                <><UserPlus className="h-4 w-4" />{t("loginPage.createAccount")}</>
               )}
             </Button>
           </form>

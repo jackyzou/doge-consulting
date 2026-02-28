@@ -34,6 +34,9 @@ vi.mock("@/lib/db", () => ({
       findMany: mockSettingFindMany,
       findUnique: mockSettingFindUnique,
     },
+    user: {
+      findUnique: vi.fn().mockResolvedValue({ language: "en" }),
+    },
   },
 }));
 
@@ -135,7 +138,7 @@ describe("email-notifications", () => {
       // Second call is admin copy
       const adminCall = mockEmailLogCreate.mock.calls[1][0];
       expect(adminCall.data.type).toBe("quote_requested");
-      expect(adminCall.data.subject).toContain("[New Quote Request]");
+      expect(adminCall.data.subject).toContain("New Quote Request");
     });
 
     it("skips when quote notifications are disabled", async () => {
