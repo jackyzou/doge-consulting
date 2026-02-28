@@ -92,9 +92,16 @@ export async function GET(request: NextRequest) {
     }));
 
     // Merge: registered users first, then leads
-    const customers = [...users, ...leads];
+    const allCustomers = [...users, ...leads];
 
-    return NextResponse.json({ customers });
+    // Pagination (applied after merge)
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "24");
+    const total = allCustomers.length;
+    const skip = (page - 1) * limit;
+    const customers = allCustomers.slice(skip, skip + limit);
+
+    return NextResponse.json({ customers, total, page, pageSize: limit, totalPages: Math.ceil(total / limit) });
   } catch (error) {
     if ((error as Error).message === "Unauthorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if ((error as Error).message === "Forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 });

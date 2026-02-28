@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -15,9 +16,11 @@ import {
 } from "@/components/ui/select";
 import {
   Package, Search, MapPin, Calendar, DollarSign, Eye, Edit,
-  Loader2, FileDown, CreditCard, Clock,
+  Loader2, FileDown, CreditCard, Clock, Download,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
+import { generateCsv, downloadCsv } from "@/lib/utils";
 
 interface OrderItem {
   name: string;
@@ -75,6 +78,11 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState("");
 
   const [showDetail, setShowDetail] = useState<Order | null>(null);
   const [showStatusUpdate, setShowStatusUpdate] = useState<Order | null>(null);
@@ -95,14 +103,22 @@ export default function AdminOrdersPage() {
     const params = new URLSearchParams();
     if (statusFilter !== "all") params.set("status", statusFilter);
     if (search) params.set("search", search);
+    params.set("page", String(page));
+    params.set("limit", "20");
     fetch(`/api/admin/orders?${params}`)
       .then((r) => r.json())
-      .then((data) => setOrders(data.orders || []))
+      .then((data) => {
+        setOrders(data.orders || []);
+        setTotalPages(data.totalPages || 1);
+        setTotal(data.total || 0);
+        setSelectedIds(new Set());
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [statusFilter, search]);
+  }, [statusFilter, search, page]);
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
+  useEffect(() => { setPage(1); }, [statusFilter, search]);
 
   const handleStatusUpdate = async () => {
     if (!showStatusUpdate || !newStatus) return;
@@ -174,6 +190,55 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === orders.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(orders.map((o) => o.id)));
+  };
+
+  const handleBulkAction = async () => {
+    if (selectedIds.size === 0 || !bulkStatus) return;
+    try {
+      const res = await fetch("/api/admin/orders/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds), status: bulkStatus }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      const data = await res.json();
+      toast.success(`Updated ${data.updated} orders`);
+      setBulkStatus("");
+      fetchOrders();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Bulk action failed");
+    }
+  };
+
+  const handleExportCsv = () => {
+    const csv = generateCsv(orders, [
+      { key: "orderNumber", header: "Order #" },
+      { key: "status", header: "Status" },
+      { key: "customerName", header: "Customer" },
+      { key: "customerEmail", header: "Email" },
+      { key: "totalAmount", header: "Total" },
+      { key: "depositAmount", header: "Deposit" },
+      { key: "balanceDue", header: "Balance" },
+      { key: "shippingMethod", header: "Method" },
+      { key: "trackingId", header: "Tracking" },
+      { key: "destinationCity", header: "Destination" },
+      { key: "createdAt", header: "Created" },
+    ]);
+    downloadCsv(csv, `orders-${new Date().toISOString().slice(0, 10)}.csv`);
+    toast.success("CSV exported!");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -200,7 +265,35 @@ export default function AdminOrdersPage() {
             {allStatuses.map((s) => <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Button variant="outline" size="sm" onClick={handleExportCsv} className="gap-1" disabled={orders.length === 0}>
+          <Download className="h-3 w-3" />Export CSV
+        </Button>
       </div>
+
+      {/* Bulk Actions Toolbar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 rounded-lg border border-teal/30 bg-teal/5 px-4 py-2">
+          <span className="text-sm font-medium">{selectedIds.size} selected</span>
+          <Select value={bulkStatus} onValueChange={setBulkStatus}>
+            <SelectTrigger className="w-[160px] h-8"><SelectValue placeholder="Change status..." /></SelectTrigger>
+            <SelectContent>
+              {allStatuses.map((s) => (
+                <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button size="sm" onClick={handleBulkAction} disabled={!bulkStatus} className="bg-teal hover:bg-teal/90">Apply</Button>
+          <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>Clear</Button>
+        </div>
+      )}
+
+      {/* Select All */}
+      {!loading && orders.length > 0 && (
+        <div className="flex items-center gap-2">
+          <Checkbox checked={selectedIds.size === orders.length && orders.length > 0} onCheckedChange={toggleSelectAll} />
+          <span className="text-sm text-muted-foreground">Select all on this page</span>
+        </div>
+      )}
 
       {/* Orders */}
       {loading ? (
@@ -208,9 +301,13 @@ export default function AdminOrdersPage() {
       ) : (
         <div className="space-y-4">
           {orders.map((order) => (
-            <Card key={order.id} className="hover:border-teal/30 transition-colors">
+            <Card key={order.id} className={`hover:border-teal/30 transition-colors ${selectedIds.has(order.id) ? "border-teal/50 bg-teal/5" : ""}`}>
               <CardContent className="pt-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex gap-3">
+                  <div className="pt-1">
+                    <Checkbox checked={selectedIds.has(order.id)} onCheckedChange={() => toggleSelect(order.id)} />
+                  </div>
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between flex-1">
                   <div className="space-y-2 flex-1">
                     <div className="flex items-center gap-3 flex-wrap">
                       <span className="text-lg font-bold text-teal">{order.orderNumber}</span>
@@ -244,11 +341,24 @@ export default function AdminOrdersPage() {
                       <Button variant="outline" size="sm" className="gap-1" onClick={() => handleGenerateDoc(order.id, "invoice")}><FileDown className="h-3 w-3" />Invoice</Button>
                     </div>
                   </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
           {orders.length === 0 && <p className="py-8 text-center text-muted-foreground">No orders found.</p>}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t pt-4">
+              <p className="text-sm text-muted-foreground">Showing {(page - 1) * 20 + 1}–{Math.min(page * 20, total)} of {total}</p>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}><ChevronLeft className="h-4 w-4" /></Button>
+                <span className="text-sm">Page {page} of {totalPages}</span>
+                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}><ChevronRight className="h-4 w-4" /></Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

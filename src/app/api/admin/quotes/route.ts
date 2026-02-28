@@ -21,13 +21,22 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const quotes = await prisma.quote.findMany({
-      where,
-      include: { items: true, paymentLink: true },
-      orderBy: { createdAt: "desc" },
-    });
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const skip = (page - 1) * limit;
 
-    return NextResponse.json({ quotes });
+    const [quotes, total] = await Promise.all([
+      prisma.quote.findMany({
+        where,
+        include: { items: true, paymentLink: true },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.quote.count({ where }),
+    ]);
+
+    return NextResponse.json({ quotes, total, page, pageSize: limit, totalPages: Math.ceil(total / limit) });
   } catch (error) {
     if ((error as Error).message === "Unauthorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if ((error as Error).message === "Forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 });

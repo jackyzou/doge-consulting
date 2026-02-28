@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DollarSign, Package, FileText, TrendingUp, ArrowUpRight,
-  Ship, Loader2, Users, ShoppingCart, ClipboardList,
+  Ship, Loader2, Users, ShoppingCart, ClipboardList, CalendarDays,
 } from "lucide-react";
 
 interface DashboardData {
@@ -46,8 +48,18 @@ export default function AdminDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Date range for revenue chart
+  const defaultFrom = new Date(new Date().setMonth(new Date().getMonth() - 6)).toISOString().slice(0, 10);
+  const defaultTo = new Date().toISOString().slice(0, 10);
+  const [dateFrom, setDateFrom] = useState(defaultFrom);
+  const [dateTo, setDateTo] = useState(defaultTo);
+
   useEffect(() => {
-    fetch("/api/admin/dashboard")
+    const params = new URLSearchParams();
+    if (dateFrom) params.set("from", dateFrom);
+    if (dateTo) params.set("to", dateTo);
+    setLoading(true);
+    fetch(`/api/admin/dashboard?${params}`)
       .then((r) => r.json())
       .then((raw) => {
         const ordersByStatus: Record<string, number> = {};
@@ -83,7 +95,7 @@ export default function AdminDashboard() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [dateFrom, dateTo]);
 
   if (loading || !data) {
     return (
@@ -176,8 +188,15 @@ export default function AdminDashboard() {
 
       {/* Revenue Chart */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex-row items-center justify-between flex-wrap gap-3">
           <CardTitle className="flex items-center gap-2"><TrendingUp className="h-5 w-5 text-teal" />Monthly Revenue</CardTitle>
+          <div className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-8 w-36 text-xs" />
+            <span className="text-muted-foreground text-xs">to</span>
+            <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-8 w-36 text-xs" />
+            <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => { setDateFrom(defaultFrom); setDateTo(defaultTo); }}>Reset</Button>
+          </div>
         </CardHeader>
         <CardContent>
           {data.monthlyRevenue.length === 0 ? (

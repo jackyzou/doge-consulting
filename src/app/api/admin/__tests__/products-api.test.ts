@@ -18,6 +18,7 @@ const { mockRequireAdmin, mockProducts, mockPrisma } = vi.hoisted(() => {
     mockPrisma: {
       product: {
         findMany: vi.fn().mockResolvedValue(mockProducts),
+        count: vi.fn().mockResolvedValue(2),
         create: vi.fn().mockResolvedValue({ id: "p3", name: "Chair", sku: "CHAIR-001" }),
       },
     },
@@ -49,6 +50,12 @@ describe("GET /api/admin/products", () => {
     expect(data).toHaveProperty("products");
     expect(Array.isArray(data.products)).toBe(true);
     expect(data.products).toHaveLength(2);
+
+    // Pagination fields
+    expect(data).toHaveProperty("total", 2);
+    expect(data).toHaveProperty("page", 1);
+    expect(data).toHaveProperty("pageSize", 30);
+    expect(data).toHaveProperty("totalPages", 1);
   });
 
   it("returns 401 when not authenticated", async () => {

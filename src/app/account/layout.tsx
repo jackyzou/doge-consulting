@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, FileText, Package, Truck, FileDown,
-  LogOut, Loader2, Menu, X, ArrowLeft,
+  LogOut, Loader2, Menu, X, ArrowLeft, User, Settings,
 } from "lucide-react";
 import { DogeLogo } from "@/components/ui/doge-logo";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,8 @@ const navItems = [
   { href: "/account/orders", label: "My Orders", icon: Package },
   { href: "/account/tracking", label: "Track Shipments", icon: Truck },
   { href: "/account/documents", label: "Documents", icon: FileDown },
+  { href: "/account/profile", label: "Profile", icon: User },
+  { href: "/account/settings", label: "Settings", icon: Settings },
 ];
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {

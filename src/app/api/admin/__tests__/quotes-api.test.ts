@@ -25,6 +25,7 @@ const { mockRequireAdmin, mockPrisma } = vi.hoisted(() => {
     mockPrisma: {
       quote: {
         findMany: vi.fn().mockResolvedValue(mockQuotes),
+        count: vi.fn().mockResolvedValue(1),
         create: vi.fn().mockResolvedValue({
           id: "q2",
           quoteNumber: "QT-2026-0001",
@@ -67,6 +68,12 @@ describe("GET /api/admin/quotes", () => {
     expect(Array.isArray(data.quotes)).toBe(true);
     expect(data.quotes).toHaveLength(1);
     expect(data.quotes[0].quoteNumber).toBe("QT-2026-0001");
+
+    // Pagination fields
+    expect(data).toHaveProperty("total", 1);
+    expect(data).toHaveProperty("page", 1);
+    expect(data).toHaveProperty("pageSize", 20);
+    expect(data).toHaveProperty("totalPages", 1);
   });
 
   it("returns 401 when not authenticated", async () => {

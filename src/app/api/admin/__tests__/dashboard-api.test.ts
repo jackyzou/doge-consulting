@@ -6,6 +6,7 @@
  * "monthlyRevenue.map is not a function".
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { NextRequest } from "next/server";
 
 const { mockRequireAdmin, mockPrisma } = vi.hoisted(() => ({
   mockRequireAdmin: vi.fn(),
@@ -13,7 +14,7 @@ const { mockRequireAdmin, mockPrisma } = vi.hoisted(() => ({
     order: {
       count: vi.fn().mockResolvedValue(25),
       findMany: vi.fn().mockResolvedValue([
-        { id: "o1", orderNumber: "ORD-2026-0001", items: [], payments: [] },
+        { id: "o1", orderNumber: "ORD-2026-0001", totalAmount: 1500, createdAt: new Date(), items: [], payments: [] },
       ]),
       groupBy: vi.fn().mockResolvedValue([
         { status: "confirmed", _count: 10 },
@@ -24,6 +25,10 @@ const { mockRequireAdmin, mockPrisma } = vi.hoisted(() => ({
       count: vi.fn().mockResolvedValue(15),
       findMany: vi.fn().mockResolvedValue([
         { id: "q1", quoteNumber: "QT-2026-0001", items: [] },
+      ]),
+      groupBy: vi.fn().mockResolvedValue([
+        { status: "draft", _count: 5 },
+        { status: "sent", _count: 10 },
       ]),
     },
     user: {
@@ -65,8 +70,9 @@ describe("GET /api/admin/dashboard", () => {
       { amount: 1000, currency: "USD" },
       { amount: 2000, currency: "USD" },
     ]);
+    // order.findMany is called twice: once for revenue aggregation, once for recent orders
     mockPrisma.order.findMany.mockResolvedValue([
-      { id: "o1", orderNumber: "ORD-2026-0001", items: [], payments: [] },
+      { id: "o1", orderNumber: "ORD-2026-0001", totalAmount: 1500, createdAt: new Date(), items: [], payments: [] },
     ]);
     mockPrisma.quote.findMany.mockResolvedValue([
       { id: "q1", quoteNumber: "QT-2026-0001", items: [] },
@@ -75,26 +81,30 @@ describe("GET /api/admin/dashboard", () => {
       { status: "confirmed", _count: 10 },
       { status: "delivered", _count: 5 },
     ]);
+    mockPrisma.quote.groupBy.mockResolvedValue([
+      { status: "draft", _count: 5 },
+      { status: "sent", _count: 10 },
+    ]);
   });
 
   it("returns correct top-level shape with stats, statusCounts, monthlyRevenue, recentOrders, recentQuotes", async () => {
-    const response = await GET();
+    const response = await GET(new NextRequest("http://localhost:3000/api/admin/dashboard"));
     const data = await response.json();
 
     expect(data).toHaveProperty("stats");
-    expect(data).toHaveProperty("statusCounts");
+    expect(data).toHaveProperty("orderStatusCounts");
+    expect(data).toHaveProperty("quoteStatusCounts");
     expect(data).toHaveProperty("monthlyRevenue");
     expect(data).toHaveProperty("recentOrders");
     expect(data).toHaveProperty("recentQuotes");
   });
 
   it("stats contains all required aggregation fields", async () => {
-    const response = await GET();
+    const response = await GET(new NextRequest("http://localhost:3000/api/admin/dashboard"));
     const data = await response.json();
     const { stats } = data;
 
     expect(stats).toHaveProperty("totalRevenue");
-    expect(stats).toHaveProperty("totalPaid");
     expect(stats).toHaveProperty("totalOrders");
     expect(stats).toHaveProperty("activeOrders");
     expect(stats).toHaveProperty("totalQuotes");
@@ -107,42 +117,46 @@ describe("GET /api/admin/dashboard", () => {
     // The dashboard page previously crashed calling .map() on monthlyRevenue
     // because it expected an array but got an object. This contract test ensures
     // the API returns the correct shape (an object) so the page handles it properly.
-    const response = await GET();
+    const response = await GET(new NextRequest("http://localhost:3000/api/admin/dashboard"));
     const data = await response.json();
 
     expect(typeof data.monthlyRevenue).toBe("object");
     expect(Array.isArray(data.monthlyRevenue)).toBe(false);
   });
 
-  it("statusCounts is an array of { status, count }", async () => {
-    const response = await GET();
+  it("orderStatusCounts is an array of { status, count }", async () => {
+    const response = await GET(new NextRequest("http://localhost:3000/api/admin/dashboard"));
     const data = await response.json();
 
-    expect(Array.isArray(data.statusCounts)).toBe(true);
-    for (const sc of data.statusCounts) {
+    expect(Array.isArray(data.orderStatusCounts)).toBe(true);
+    for (const sc of data.orderStatusCounts) {
+      expect(sc).toHaveProperty("status");
+      expect(sc).toHaveProperty("count");
+    }
+    expect(Array.isArray(data.quoteStatusCounts)).toBe(true);
+    for (const sc of data.quoteStatusCounts) {
       expect(sc).toHaveProperty("status");
       expect(sc).toHaveProperty("count");
     }
   });
 
-  it("totalRevenue sums all completed payment amounts", async () => {
-    const response = await GET();
+  it("totalRevenue sums all non-cancelled order amounts", async () => {
+    const response = await GET(new NextRequest("http://localhost:3000/api/admin/dashboard"));
     const data = await response.json();
 
-    // 1000 + 2000 = 3000
-    expect(data.stats.totalRevenue).toBe(3000);
-    expect(data.stats.totalPaid).toBe(2); // 2 payments
+    // order.findMany returns one order with totalAmount 1500 (called twice; revenue uses first call)
+    expect(data.stats.totalRevenue).toBe(1500);
   });
 
   it("returns 401 when not authenticated", async () => {
     mockRequireAdmin.mockRejectedValue(new Error("Unauthorized"));
-    const response = await GET();
+    const response = await GET(new NextRequest("http://localhost:3000/api/admin/dashboard"));
     expect(response.status).toBe(401);
   });
 
   it("returns 403 for non-admin users", async () => {
     mockRequireAdmin.mockRejectedValue(new Error("Forbidden"));
-    const response = await GET();
+    const response = await GET(new NextRequest("http://localhost:3000/api/admin/dashboard"));
     expect(response.status).toBe(403);
   });
 });

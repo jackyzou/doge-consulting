@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -14,9 +15,11 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  FileText, Search, Plus, Eye, Send, ArrowRightLeft, Trash2, Loader2, X, Edit, Save,
+  FileText, Search, Plus, Eye, Send, ArrowRightLeft, Trash2, Loader2, X, Edit, Save, Download,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
+import { generateCsv, downloadCsv } from "@/lib/utils";
 
 interface QuoteItem {
   id?: string;
@@ -74,6 +77,11 @@ export default function AdminQuotesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState("");
 
   // Modal state
   const [showCreate, setShowCreate] = useState(false);
@@ -94,14 +102,22 @@ export default function AdminQuotesPage() {
     const params = new URLSearchParams();
     if (filter !== "all") params.set("status", filter);
     if (search) params.set("search", search);
+    params.set("page", String(page));
+    params.set("limit", "20");
     fetch(`/api/admin/quotes?${params}`)
       .then((r) => r.json())
-      .then((data) => setQuotes(data.quotes || []))
+      .then((data) => {
+        setQuotes(data.quotes || []);
+        setTotalPages(data.totalPages || 1);
+        setTotal(data.total || 0);
+        setSelectedIds(new Set());
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [filter, search]);
+  }, [filter, search, page]);
 
   useEffect(() => { fetchQuotes(); }, [fetchQuotes]);
+  useEffect(() => { setPage(1); }, [filter, search]);
   useEffect(() => {
     fetch("/api/admin/products").then((r) => r.json()).then((d) => setProducts(d.products || []));
   }, []);
@@ -126,6 +142,54 @@ export default function AdminQuotesPage() {
   };
 
   const subtotal = items.reduce((s, it) => s + it.totalPrice, 0);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === quotes.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(quotes.map((q) => q.id)));
+  };
+
+  const handleBulkAction = async () => {
+    if (selectedIds.size === 0 || !bulkStatus) return;
+    try {
+      const res = await fetch("/api/admin/quotes/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds), status: bulkStatus }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      const data = await res.json();
+      toast.success(`Updated ${data.updated} quotes`);
+      setBulkStatus("");
+      fetchQuotes();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Bulk action failed");
+    }
+  };
+
+  const handleExportCsv = () => {
+    const csv = generateCsv(quotes, [
+      { key: "quoteNumber", header: "Quote #" },
+      { key: "status", header: "Status" },
+      { key: "customerName", header: "Customer" },
+      { key: "customerEmail", header: "Email" },
+      { key: "customerCompany", header: "Company" },
+      { key: "subtotal", header: "Subtotal" },
+      { key: "shippingCost", header: "Shipping" },
+      { key: "totalAmount", header: "Total" },
+      { key: "shippingMethod", header: "Method" },
+      { key: "createdAt", header: "Created" },
+    ]);
+    downloadCsv(csv, `quotes-${new Date().toISOString().slice(0, 10)}.csv`);
+    toast.success("CSV exported!");
+  };
 
   const handleCreate = async () => {
     if (!form.customerName || !form.customerEmail || items.length === 0 || !items[0].name) {
@@ -263,7 +327,27 @@ export default function AdminQuotesPage() {
             </Button>
           ))}
         </div>
+        <Button variant="outline" size="sm" onClick={handleExportCsv} className="gap-1" disabled={quotes.length === 0}>
+          <Download className="h-3 w-3" />Export CSV
+        </Button>
       </div>
+
+      {/* Bulk Actions Toolbar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 rounded-lg border border-teal/30 bg-teal/5 px-4 py-2">
+          <span className="text-sm font-medium">{selectedIds.size} selected</span>
+          <Select value={bulkStatus} onValueChange={setBulkStatus}>
+            <SelectTrigger className="w-[160px] h-8"><SelectValue placeholder="Change status..." /></SelectTrigger>
+            <SelectContent>
+              {["draft", "sent", "accepted", "rejected", "expired"].map((s) => (
+                <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button size="sm" onClick={handleBulkAction} disabled={!bulkStatus} className="bg-teal hover:bg-teal/90">Apply</Button>
+          <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>Clear</Button>
+        </div>
+      )}
 
       {/* Quotes Table */}
       <Card>
@@ -275,6 +359,7 @@ export default function AdminQuotesPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-left text-muted-foreground">
+                    <th className="pb-3 font-medium w-8"><Checkbox checked={selectedIds.size === quotes.length && quotes.length > 0} onCheckedChange={toggleSelectAll} /></th>
                     <th className="pb-3 font-medium">Quote #</th>
                     <th className="pb-3 font-medium">Customer</th>
                     <th className="pb-3 font-medium hidden md:table-cell">Items</th>
@@ -286,7 +371,8 @@ export default function AdminQuotesPage() {
                 </thead>
                 <tbody className="divide-y">
                   {filtered.map((q) => (
-                    <tr key={q.id} className="hover:bg-muted/50 transition-colors">
+                    <tr key={q.id} className={`hover:bg-muted/50 transition-colors ${selectedIds.has(q.id) ? "bg-teal/5" : ""}`}>
+                      <td className="py-3"><Checkbox checked={selectedIds.has(q.id)} onCheckedChange={() => toggleSelect(q.id)} /></td>
                       <td className="py-3 font-medium text-teal">{q.quoteNumber}</td>
                       <td className="py-3">
                         <p className="font-medium">{q.customerName}</p>
@@ -320,6 +406,18 @@ export default function AdminQuotesPage() {
                 </tbody>
               </table>
               {filtered.length === 0 && <p className="py-8 text-center text-muted-foreground">No quotes found.</p>}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between border-t pt-4 mt-4">
+                  <p className="text-sm text-muted-foreground">Showing {(page - 1) * 20 + 1}–{Math.min(page * 20, total)} of {total}</p>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}><ChevronLeft className="h-4 w-4" /></Button>
+                    <span className="text-sm">Page {page} of {totalPages}</span>
+                    <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}><ChevronRight className="h-4 w-4" /></Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

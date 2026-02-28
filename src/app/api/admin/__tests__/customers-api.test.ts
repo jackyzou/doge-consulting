@@ -26,6 +26,10 @@ const { mockRequireAdmin, mockPrisma } = vi.hoisted(() => {
       user: {
         findMany: vi.fn().mockResolvedValue(mockCustomers),
       },
+      quote: {
+        findMany: vi.fn().mockResolvedValue([]),
+        groupBy: vi.fn().mockResolvedValue([]),
+      },
     },
   };
 });
@@ -56,6 +60,12 @@ describe("GET /api/admin/customers", () => {
     expect(Array.isArray(data.customers)).toBe(true);
     expect(data.customers).toHaveLength(1);
     expect(data.customers[0].name).toBe("John Doe");
+
+    // Pagination fields
+    expect(data).toHaveProperty("total");
+    expect(data).toHaveProperty("page", 1);
+    expect(data).toHaveProperty("pageSize", 24);
+    expect(data).toHaveProperty("totalPages");
   });
 
   it("includes _count with orders, quotes, and payments", async () => {

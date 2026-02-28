@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,9 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { ShoppingCart, Search, Plus, Edit, Trash2, Loader2, Package } from "lucide-react";
+import { ShoppingCart, Search, Plus, Edit, Trash2, Loader2, Package, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import { generateCsv, downloadCsv } from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -42,6 +43,13 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+
+  // Inline editing state
+  const [inlineEdit, setInlineEdit] = useState<{ id: string; field: string; value: string } | null>(null);
+  const inlineRef = useRef<HTMLInputElement>(null);
 
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
@@ -57,14 +65,21 @@ export default function AdminProductsPage() {
     const params = new URLSearchParams();
     if (catFilter !== "all") params.set("category", catFilter);
     if (search) params.set("search", search);
+    params.set("page", String(page));
+    params.set("limit", "30");
     fetch(`/api/admin/products?${params}`)
       .then((r) => r.json())
-      .then((data) => setProducts(data.products || []))
+      .then((data) => {
+        setProducts(data.products || []);
+        setTotalPages(data.totalPages || 1);
+        setTotal(data.total || 0);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [catFilter, search]);
+  }, [catFilter, search, page]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
+  useEffect(() => { setPage(1); }, [catFilter, search]);
 
   const resetForm = () => {
     setForm({ name: "", description: "", category: "furniture", sku: "", unitPrice: 0, unit: "piece", lengthCm: 0, widthCm: 0, heightCm: 0, weightKg: 0, imageUrl: "", linkUrl: "", isActive: true, isCatalog: false });
@@ -120,6 +135,53 @@ export default function AdminProductsPage() {
     return "—";
   };
 
+  const startInlineEdit = (id: string, field: string, value: string) => {
+    setInlineEdit({ id, field, value });
+    setTimeout(() => inlineRef.current?.focus(), 50);
+  };
+
+  const saveInlineEdit = async () => {
+    if (!inlineEdit) return;
+    const { id, field, value } = inlineEdit;
+    // Find original to compare
+    const orig = products.find((p) => p.id === id);
+    if (!orig) return;
+    const origVal = String((orig as Record<string, unknown>)[field] ?? "");
+    if (value === origVal) { setInlineEdit(null); return; }
+    try {
+      const body: Record<string, unknown> = {};
+      body[field] = field === "unitPrice" ? Number(value) : value;
+      const res = await fetch(`/api/admin/products/${id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      toast.success(`${field} updated`);
+      // Update locally without full refetch
+      setProducts((prev) => prev.map((p) => p.id === id ? { ...p, [field]: body[field] } : p));
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Update failed");
+    }
+    setInlineEdit(null);
+  };
+
+  const handleExportCsv = () => {
+    const csv = generateCsv(products, [
+      { key: "name", header: "Name" },
+      { key: "sku", header: "SKU" },
+      { key: "category", header: "Category" },
+      { key: "unitPrice", header: "Price" },
+      { key: "unit", header: "Unit" },
+      { key: "isActive", header: "Active" },
+      { key: "isCatalog", header: "Catalog" },
+      { key: "lengthCm", header: "Length (cm)" },
+      { key: "widthCm", header: "Width (cm)" },
+      { key: "heightCm", header: "Height (cm)" },
+      { key: "weightKg", header: "Weight (kg)" },
+    ]);
+    downloadCsv(csv, `products-${new Date().toISOString().slice(0, 10)}.csv`);
+    toast.success("CSV exported!");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -145,6 +207,9 @@ export default function AdminProductsPage() {
             {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Button variant="outline" size="sm" onClick={handleExportCsv} className="gap-1" disabled={products.length === 0}>
+          <Download className="h-3 w-3" />Export CSV
+        </Button>
       </div>
 
       {/* Products Table */}
@@ -177,18 +242,28 @@ export default function AdminProductsPage() {
                             <Package className="h-4 w-4 text-muted-foreground" />
                           )}
                           <div>
-                            <p className="font-medium">
-                              {p.linkUrl ? (
-                                <a href={p.linkUrl} target="_blank" rel="noopener noreferrer" className="text-teal hover:underline">{p.name}</a>
-                              ) : p.name}
-                            </p>
+                            {inlineEdit?.id === p.id && inlineEdit?.field === "name" ? (
+                              <Input ref={inlineRef} className="h-7 text-sm w-40" value={inlineEdit.value} onChange={(e) => setInlineEdit({ ...inlineEdit, value: e.target.value })} onBlur={saveInlineEdit} onKeyDown={(e) => { if (e.key === "Enter") saveInlineEdit(); if (e.key === "Escape") setInlineEdit(null); }} />
+                            ) : (
+                              <p className="font-medium cursor-pointer hover:text-teal" onDoubleClick={() => startInlineEdit(p.id, "name", p.name)}>
+                                {p.linkUrl ? (
+                                  <a href={p.linkUrl} target="_blank" rel="noopener noreferrer" className="text-teal hover:underline">{p.name}</a>
+                                ) : p.name}
+                              </p>
+                            )}
                             {p.description && <p className="text-xs text-muted-foreground line-clamp-1">{p.description}</p>}
                           </div>
                         </div>
                       </td>
                       <td className="py-3 hidden sm:table-cell font-mono text-xs">{p.sku}</td>
                       <td className="py-3 hidden md:table-cell"><Badge variant="outline">{p.category}</Badge></td>
-                      <td className="py-3 text-right font-medium">${p.unitPrice.toLocaleString()}/{p.unit}</td>
+                      <td className="py-3 text-right font-medium">
+                        {inlineEdit?.id === p.id && inlineEdit?.field === "unitPrice" ? (
+                          <Input ref={inlineRef} type="number" className="h-7 text-sm w-24 ml-auto" value={inlineEdit.value} onChange={(e) => setInlineEdit({ ...inlineEdit, value: e.target.value })} onBlur={saveInlineEdit} onKeyDown={(e) => { if (e.key === "Enter") saveInlineEdit(); if (e.key === "Escape") setInlineEdit(null); }} />
+                        ) : (
+                          <span className="cursor-pointer hover:text-teal" onDoubleClick={() => startInlineEdit(p.id, "unitPrice", String(p.unitPrice))}>${p.unitPrice.toLocaleString()}/{p.unit}</span>
+                        )}
+                      </td>
                       <td className="py-3 hidden lg:table-cell text-right">{cbm(p)} m³</td>
                       <td className="py-3">
                         <div className="flex gap-1">
@@ -207,6 +282,18 @@ export default function AdminProductsPage() {
                 </tbody>
               </table>
               {products.length === 0 && <p className="py-8 text-center text-muted-foreground">No products found. Add your first product!</p>}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between border-t pt-4 mt-4">
+                  <p className="text-sm text-muted-foreground">Showing {(page - 1) * 30 + 1}–{Math.min(page * 30, total)} of {total}</p>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}><ChevronLeft className="h-4 w-4" /></Button>
+                    <span className="text-sm">Page {page} of {totalPages}</span>
+                    <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}><ChevronRight className="h-4 w-4" /></Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

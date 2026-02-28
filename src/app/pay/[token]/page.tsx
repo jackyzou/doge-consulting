@@ -5,11 +5,6 @@ import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import { DogeLogo } from "@/components/ui/doge-logo";
 import {
   Loader2, CreditCard, CheckCircle2, XCircle, Shield, Lock,
@@ -40,12 +35,6 @@ export default function PaymentPage() {
   const [processing, setProcessing] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const [method, setMethod] = useState("credit_card");
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiry, setExpiry] = useState("");
-  const [cvv, setCvv] = useState("");
-  const [name, setName] = useState("");
-
   useEffect(() => {
     fetch(`/api/pay/${token}`)
       .then(async (r) => {
@@ -59,24 +48,29 @@ export default function PaymentPage() {
 
   const handlePay = async () => {
     setProcessing(true);
+    setError("");
     try {
       const res = await fetch(`/api/pay/${token}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ method }),
+        body: JSON.stringify({
+          email: data?.quote?.customerEmail || "",
+          name: data?.quote?.customerName || "",
+        }),
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error);
 
       if (result.redirectUrl) {
+        // Redirect to Airwallex Hosted Payment Page (or demo success)
         window.location.href = result.redirectUrl;
       } else {
         setSuccess(true);
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Payment failed");
+      setProcessing(false);
     }
-    setProcessing(false);
   };
 
   if (loading) {
@@ -174,7 +168,7 @@ export default function PaymentPage() {
           </Card>
         )}
 
-        {/* Payment Form */}
+        {/* Payment Card */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -190,58 +184,17 @@ export default function PaymentPage() {
               <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">{error}</div>
             )}
 
-            <div>
-              <Label>Payment Method</Label>
-              <Select value={method} onValueChange={setMethod}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="credit_card">Credit Card</SelectItem>
-                  <SelectItem value="debit_card">Debit Card</SelectItem>
-                  <SelectItem value="ach">ACH Bank Transfer</SelectItem>
-                  <SelectItem value="wire">Wire Transfer</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 text-sm text-blue-700 space-y-2">
+              <p className="font-medium">You will be redirected to our secure payment partner</p>
+              <p>Airwallex accepts credit cards, debit cards, and other payment methods. Your card details are entered directly on their PCI-compliant checkout page.</p>
             </div>
 
-            {(method === "credit_card" || method === "debit_card") && (
-              <>
-                <div>
-                  <Label>Card Number</Label>
-                  <Input
-                    placeholder="4242 4242 4242 4242"
-                    value={cardNumber}
-                    onChange={(e) => setCardNumber(e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Expiry</Label>
-                    <Input placeholder="MM/YY" value={expiry} onChange={(e) => setExpiry(e.target.value)} className="mt-1" />
-                  </div>
-                  <div>
-                    <Label>CVV</Label>
-                    <Input placeholder="123" value={cvv} onChange={(e) => setCvv(e.target.value)} className="mt-1" />
-                  </div>
-                </div>
-                <div>
-                  <Label>Cardholder Name</Label>
-                  <Input placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} className="mt-1" />
-                </div>
-              </>
-            )}
-
-            {method === "ach" && (
-              <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm text-blue-700">
-                You will be redirected to complete the ACH transfer securely.
-              </div>
-            )}
-
-            {method === "wire" && (
-              <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-700">
-                Wire transfer instructions will be sent to your email after confirmation.
-              </div>
-            )}
+            <div className="flex flex-wrap gap-2 justify-center">
+              <Badge variant="outline" className="text-xs">Visa</Badge>
+              <Badge variant="outline" className="text-xs">Mastercard</Badge>
+              <Badge variant="outline" className="text-xs">Amex</Badge>
+              <Badge variant="outline" className="text-xs">UnionPay</Badge>
+            </div>
 
             <Button
               onClick={handlePay}
@@ -249,7 +202,7 @@ export default function PaymentPage() {
               className="w-full bg-teal hover:bg-teal/90 gap-2 h-12 text-base"
             >
               {processing ? (
-                <><Loader2 className="h-5 w-5 animate-spin" />Processing…</>
+                <><Loader2 className="h-5 w-5 animate-spin" />Redirecting to Airwallex…</>
               ) : (
                 <><Lock className="h-5 w-5" />Pay ${data?.amount.toLocaleString()}</>
               )}

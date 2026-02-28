@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createPaymentIntent } from "@/lib/airwallex";
+import { createPaymentIntent, buildCheckoutUrl, isLiveMode } from "@/lib/airwallex";
 import { z } from "zod/v4";
 
 // ── Validation schema ──────────────────────────────────────────────
@@ -42,24 +42,14 @@ export async function POST(request: NextRequest) {
       returnUrl,
     });
 
-    // Build checkout URL
-    // In production: use Airwallex's hosted checkout page
-    // In demo: return a simulated URL that redirects to our success page
-    const isDemo = !process.env.AIRWALLEX_API_KEY;
-    const airwallexEnv = process.env.NEXT_PUBLIC_AIRWALLEX_ENV === "production" ? "checkout" : "checkout-demo";
-
     let checkoutUrl: string;
 
-    if (isDemo) {
+    if (!isLiveMode()) {
       // Demo mode — skip Airwallex, redirect straight to success
       checkoutUrl = `${origin}/payment/success?orderId=${encodeURIComponent(orderId)}&amount=${amount}&currency=${currency}&demo=1`;
     } else {
       // Real Airwallex Hosted Payment Page
-      checkoutUrl = `https://${airwallexEnv}.airwallex.com/#/standalone/checkout`
-        + `?intent_id=${paymentIntent.id}`
-        + `&client_secret=${encodeURIComponent((paymentIntent as unknown as Record<string, string>).client_secret || "")}`
-        + `&currency=${currency}`
-        + `&mode=payment`;
+      checkoutUrl = buildCheckoutUrl(paymentIntent.id, paymentIntent.client_secret, currency);
     }
 
     console.log(`💳 Payment intent created: ${paymentIntent.id} for ${currency} ${amount} (order ${orderId})`);
@@ -68,7 +58,7 @@ export async function POST(request: NextRequest) {
       success: true,
       paymentIntentId: paymentIntent.id,
       checkoutUrl,
-      isDemo,
+      isDemo: !isLiveMode(),
     });
   } catch (error) {
     console.error("Payment intent creation error:", error);

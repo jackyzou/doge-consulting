@@ -1,11 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 
 // GET /api/admin/dashboard — aggregated stats
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await requireAdmin();
+    const { searchParams } = new URL(request.url);
+    const fromParam = searchParams.get("from");
+    const toParam = searchParams.get("to");
 
     const [
       totalOrders,
@@ -54,12 +57,12 @@ export async function GET() {
     // Total revenue from all non-cancelled orders
     const totalRevenue = revenueOrders.reduce((sum, o) => sum + o.totalAmount, 0);
 
-    // Monthly revenue from orders (last 6 months)
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    // Monthly revenue from orders (date range or last 6 months)
+    const rangeStart = fromParam ? new Date(fromParam) : new Date(new Date().setMonth(new Date().getMonth() - 6));
+    const rangeEnd = toParam ? new Date(toParam + "T23:59:59") : new Date();
     const monthlyRevenue: Record<string, number> = {};
     for (const o of revenueOrders) {
-      if (o.createdAt && o.createdAt >= sixMonthsAgo) {
+      if (o.createdAt && o.createdAt >= rangeStart && o.createdAt <= rangeEnd) {
         const key = `${o.createdAt.getFullYear()}-${String(o.createdAt.getMonth() + 1).padStart(2, "0")}`;
         monthlyRevenue[key] = (monthlyRevenue[key] || 0) + o.totalAmount;
       }

@@ -28,6 +28,7 @@ const { mockRequireAdmin, mockPrisma } = vi.hoisted(() => {
     mockPrisma: {
       order: {
         findMany: vi.fn().mockResolvedValue(mockOrders),
+        count: vi.fn().mockResolvedValue(1),
         findUnique: vi.fn().mockResolvedValue(mockOrders[0]),
         update: vi.fn().mockResolvedValue(mockOrders[0]),
       },
@@ -68,6 +69,12 @@ describe("GET /api/admin/orders", () => {
     expect(Array.isArray(data.orders)).toBe(true);
     expect(data.orders).toHaveLength(1);
     expect(data.orders[0].orderNumber).toBe("ORD-2026-0001");
+
+    // Pagination fields
+    expect(data).toHaveProperty("total", 1);
+    expect(data).toHaveProperty("page", 1);
+    expect(data).toHaveProperty("pageSize", 20);
+    expect(data).toHaveProperty("totalPages", 1);
   });
 
   it("returns 401 when not authenticated", async () => {

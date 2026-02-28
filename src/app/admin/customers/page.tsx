@@ -4,8 +4,11 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, Search, Mail, Phone, Building, Loader2, ShoppingCart, FileText, DollarSign, Sparkles } from "lucide-react";
+import { Users, Search, Mail, Phone, Building, Loader2, ShoppingCart, FileText, DollarSign, Sparkles, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { generateCsv, downloadCsv } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface Customer {
   id: string;
@@ -23,17 +26,44 @@ export default function AdminCustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
+    params.set("page", String(page));
+    params.set("limit", "24");
     setLoading(true);
     fetch(`/api/admin/customers?${params}`)
       .then((r) => r.json())
-      .then((data) => setCustomers(data.customers || []))
+      .then((data) => {
+        setCustomers(data.customers || []);
+        setTotalPages(data.totalPages || 1);
+        setTotal(data.total || 0);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [search]);
+  }, [search, page]);
+
+  useEffect(() => { setPage(1); }, [search]);
+
+  const handleExportCsv = () => {
+    const csv = generateCsv(customers, [
+      { key: "name", header: "Name" },
+      { key: "email", header: "Email" },
+      { key: "phone", header: "Phone" },
+      { key: "company", header: "Company" },
+      { key: "role", header: "Type" },
+      { key: "_count.orders" as keyof Customer, header: "Orders" },
+      { key: "_count.quotes" as keyof Customer, header: "Quotes" },
+      { key: "_count.payments" as keyof Customer, header: "Payments" },
+      { key: "createdAt", header: "Joined" },
+    ]);
+    downloadCsv(csv, `customers-${new Date().toISOString().slice(0, 10)}.csv`);
+    toast.success("CSV exported!");
+  };
 
   return (
     <div className="space-y-6">
@@ -44,20 +74,26 @@ export default function AdminCustomersPage() {
         </div>
         <Badge variant="secondary" className="gap-1">
           <Users className="h-3 w-3" />
-          {customers.length} customers
+          {total} customers
         </Badge>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Search customers..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+      {/* Search + Export */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="Search customers..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+        </div>
+        <Button variant="outline" size="sm" onClick={handleExportCsv} className="gap-1" disabled={customers.length === 0}>
+          <Download className="h-3 w-3" />Export CSV
+        </Button>
       </div>
 
       {/* Customer Cards */}
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-teal" /></div>
       ) : (
+        <>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {customers.map((c) => (
             <Card key={c.id} className="hover:border-teal/30 transition-colors">
@@ -110,6 +146,19 @@ export default function AdminCustomersPage() {
             <div className="col-span-full py-8 text-center text-muted-foreground">No customers found.</div>
           )}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t pt-4">
+            <p className="text-sm text-muted-foreground">Showing {(page - 1) * 24 + 1}–{Math.min(page * 24, total)} of {total}</p>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}><ChevronLeft className="h-4 w-4" /></Button>
+              <span className="text-sm">Page {page} of {totalPages}</span>
+              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}><ChevronRight className="h-4 w-4" /></Button>
+            </div>
+          </div>
+        )}
+        </>
       )}
     </div>
   );

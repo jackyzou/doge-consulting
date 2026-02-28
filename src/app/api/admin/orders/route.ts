@@ -21,18 +21,27 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const orders = await prisma.order.findMany({
-      where,
-      include: {
-        items: true,
-        payments: true,
-        statusHistory: { orderBy: { createdAt: "desc" } },
-        documents: true,
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const skip = (page - 1) * limit;
 
-    return NextResponse.json({ orders });
+    const [orders, total] = await Promise.all([
+      prisma.order.findMany({
+        where,
+        include: {
+          items: true,
+          payments: true,
+          statusHistory: { orderBy: { createdAt: "desc" } },
+          documents: true,
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.order.count({ where }),
+    ]);
+
+    return NextResponse.json({ orders, total, page, pageSize: limit, totalPages: Math.ceil(total / limit) });
   } catch (error) {
     if ((error as Error).message === "Unauthorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if ((error as Error).message === "Forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
