@@ -49,6 +49,7 @@ vi.mock("@/lib/db", () => ({
 
 vi.mock("@/lib/email-notifications", () => ({
   sendOrderClosedEmail: vi.fn().mockResolvedValue(true),
+  sendOrderStatusEmail: vi.fn().mockResolvedValue(true),
 }));
 
 import { GET } from "@/app/api/admin/orders/route";

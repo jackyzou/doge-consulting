@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { generateSequenceNumber } from "@/lib/sequence";
+import { sendQuoteRequestedEmail } from "@/lib/email-notifications";
 
 // Rate limiting: simple in-memory store
 const rateLimit = new Map<string, { count: number; resetAt: number }>();
@@ -70,6 +71,7 @@ export async function POST(request: NextRequest) {
         customerName: body.customerName,
         customerEmail: body.customerEmail,
         customerPhone: body.customerPhone || null,
+        customerId: body.userId || null,
         subtotal: 0,
         shippingCost,
         totalAmount,
@@ -85,6 +87,17 @@ export async function POST(request: NextRequest) {
       },
       include: { items: true },
     });
+
+    // Send confirmation email to customer
+    await sendQuoteRequestedEmail({
+      quoteNumber: quote.quoteNumber,
+      customerName: body.customerName,
+      customerEmail: body.customerEmail,
+      shippingEstimateUSD: shippingCost,
+      items: body.items.map((i: { name: string; quantity: number }) => ({ name: i.name, quantity: i.quantity || 1 })),
+      deliveryType: quote.shippingMethod || "Door-to-Door",
+      destination: quote.destinationCity || "Seattle, WA",
+    }).catch((err: unknown) => console.error("Failed to send quote request email:", err));
 
     return NextResponse.json({
       ok: true,

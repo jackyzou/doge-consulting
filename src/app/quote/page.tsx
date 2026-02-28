@@ -48,6 +48,9 @@ export default function QuotePage() {
   const [items, setItems] = useState<ProductItem[]>([]);
   const [customItem, setCustomItem] = useState({ name: "", lengthCm: "", widthCm: "", heightCm: "", weightKG: "" });
 
+  // Signed-in user session
+  const [sessionUser, setSessionUser] = useState<{ id: string; name: string; email: string; phone?: string } | null>(null);
+
   // Catalog products fetched from admin-configured catalog
   const [catalogProducts, setCatalogProducts] = useState<{ id: string; name: string; category: string; unitPrice: number; imageUrl?: string; lengthCm?: number; widthCm?: number; heightCm?: number; weightKg?: number }[]>([]);
 
@@ -58,6 +61,21 @@ export default function QuotePage() {
         if (Array.isArray(data)) setCatalogProducts(data);
       })
       .catch(console.error);
+
+    // Check if user is signed in and auto-fill contact info
+    fetch("/api/auth/me")
+      .then((r) => { if (r.ok) return r.json(); throw new Error("not signed in"); })
+      .then((data) => {
+        if (data.user) {
+          setSessionUser(data.user);
+          setContact((prev) => ({
+            name: data.user.name || prev.name,
+            email: data.user.email || prev.email,
+            phone: data.user.phone || prev.phone || "",
+          }));
+        }
+      })
+      .catch(() => { /* not signed in — that's fine */ });
   }, []);
 
   // Delivery & destination
@@ -148,6 +166,7 @@ export default function QuotePage() {
           customerName: contact.name,
           customerEmail: contact.email,
           customerPhone: contact.phone,
+          userId: sessionUser?.id || undefined,
           items: items.map((i) => ({
             name: i.name,
             quantity: i.quantity,
@@ -490,20 +509,41 @@ export default function QuotePage() {
                       </Card>
                     )}
 
-                    {/* Contact Form */}
-                    <Card>
-                      <CardHeader><CardTitle className="flex items-center gap-2"><User className="h-5 w-5 text-teal" /> {t("quotePage.contactInfo")}</CardTitle></CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          <div><Label htmlFor="q-name">{t("quotePage.fullName")}</Label><Input id="q-name" value={contact.name} onChange={(e) => setContact({ ...contact, name: e.target.value })} placeholder={t("quotePage.yourName")} className="mt-1" /></div>
-                          <div><Label htmlFor="q-email">{t("quotePage.email")}</Label><Input id="q-email" type="email" value={contact.email} onChange={(e) => setContact({ ...contact, email: e.target.value })} placeholder={t("quotePage.yourEmail")} className="mt-1" /></div>
-                        </div>
-                        <div><Label htmlFor="q-phone">{t("quotePage.phone")}</Label><Input id="q-phone" value={contact.phone} onChange={(e) => setContact({ ...contact, phone: e.target.value })} placeholder={t("quotePage.yourPhone")} className="mt-1" /></div>
-                        <Button onClick={handleSubmit} className="w-full bg-teal text-white hover:bg-teal/90" size="lg">
-                          {t("quotePage.submitQuote")} <ArrowRight className="ml-2 h-5 w-5" />
-                        </Button>
-                      </CardContent>
-                    </Card>
+                    {/* Contact Form — hidden for signed-in users */}
+                    {sessionUser ? (
+                      <Card className="border-teal/30">
+                        <CardContent className="pt-6 space-y-4">
+                          <div className="flex items-center gap-3 rounded-lg bg-teal/5 p-4">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-teal/10">
+                              <User className="h-5 w-5 text-teal" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">{sessionUser.name}</p>
+                              <p className="text-xs text-muted-foreground">{sessionUser.email}</p>
+                            </div>
+                            <Badge className="ml-auto bg-teal/20 text-teal border-teal/30">Signed In</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">Quote confirmation will be sent to your account email.</p>
+                          <Button onClick={handleSubmit} className="w-full bg-teal text-white hover:bg-teal/90" size="lg">
+                            {t("quotePage.submitQuote")} <ArrowRight className="ml-2 h-5 w-5" />
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <Card>
+                        <CardHeader><CardTitle className="flex items-center gap-2"><User className="h-5 w-5 text-teal" /> {t("quotePage.contactInfo")}</CardTitle></CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <div><Label htmlFor="q-name">{t("quotePage.fullName")}</Label><Input id="q-name" value={contact.name} onChange={(e) => setContact({ ...contact, name: e.target.value })} placeholder={t("quotePage.yourName")} className="mt-1" /></div>
+                            <div><Label htmlFor="q-email">{t("quotePage.email")}</Label><Input id="q-email" type="email" value={contact.email} onChange={(e) => setContact({ ...contact, email: e.target.value })} placeholder={t("quotePage.yourEmail")} className="mt-1" /></div>
+                          </div>
+                          <div><Label htmlFor="q-phone">{t("quotePage.phone")}</Label><Input id="q-phone" value={contact.phone} onChange={(e) => setContact({ ...contact, phone: e.target.value })} placeholder={t("quotePage.yourPhone")} className="mt-1" /></div>
+                          <Button onClick={handleSubmit} className="w-full bg-teal text-white hover:bg-teal/90" size="lg">
+                            {t("quotePage.submitQuote")} <ArrowRight className="ml-2 h-5 w-5" />
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    )}
                   </>
                 ) : (
                   <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-12 space-y-4">

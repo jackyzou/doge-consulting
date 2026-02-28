@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import nodemailer from "nodemailer";
 import { z } from "zod/v4";
+import { getTransporter } from "@/lib/email-notifications";
+import { prisma } from "@/lib/db";
 
 // ── Validation schema ──────────────────────────────────────────────
 const contactSchema = z.object({
@@ -27,23 +28,13 @@ function isRateLimited(ip: string): boolean {
   return entry.count > RATE_LIMIT;
 }
 
-// ── Nodemailer transporter (created once, reused) ──────────────────
-function createTransporter() {
-  const host = process.env.SMTP_HOST;
-  const port = Number(process.env.SMTP_PORT ?? 587);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-
-  if (!host || !user || !pass) {
-    return null; // SMTP not configured – will fall back to logging
-  }
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  });
+// ── Receiver email (from DB settings or env) ──────────────────────
+async function getReceiverEmail(): Promise<string> {
+  try {
+    const s = await prisma.setting.findUnique({ where: { key: "admin_email" } });
+    if (s?.value) return s.value;
+  } catch { /* fallback */ }
+  return process.env.CONTACT_RECEIVER_EMAIL ?? "dogetech77@gmail.com";
 }
 
 // ── POST handler ───────────────────────────────────────────────────
@@ -73,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { name, email, phone, subject, message } = result.data;
-    const receiverEmail = process.env.CONTACT_RECEIVER_EMAIL ?? "dogetech77@gmail.com";
+    const receiverEmail = await getReceiverEmail();
 
     // Build the notification email
     const htmlBody = `
@@ -109,12 +100,13 @@ export async function POST(request: NextRequest) {
       </div>
     `;
 
-    const transporter = createTransporter();
+    const transporter = await getTransporter();
 
     if (transporter) {
       // ── Send the email via SMTP ──
+      const fromUser = process.env.SMTP_USER || "noreply@dogeconsulting.com";
       await transporter.sendMail({
-        from: `"Doge Consulting Website" <${process.env.SMTP_USER}>`,
+        from: `"Doge Consulting Website" <${fromUser}>`,
         replyTo: `"${name}" <${email}>`,
         to: receiverEmail,
         subject: `[Contact Form] ${subject}`,

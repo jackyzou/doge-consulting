@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { generateSequenceNumber } from "@/lib/sequence";
-import { sendQuoteSentEmail } from "@/lib/email-notifications";
+import { sendQuoteSentEmail, sendOrderConfirmedEmail } from "@/lib/email-notifications";
 
 // GET /api/admin/quotes/[id]
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -114,6 +114,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       await prisma.quote.update({
         where: { id },
         data: { status: "converted" },
+      });
+
+      // Send order confirmation email
+      await sendOrderConfirmedEmail({
+        orderNumber,
+        customerName: quote.customerName,
+        customerEmail: quote.customerEmail,
+        totalAmount: quote.totalAmount,
+        depositAmount,
+        currency: quote.currency,
       });
 
       return NextResponse.json({ ok: true, order });

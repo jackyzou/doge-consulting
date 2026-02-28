@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
-import { sendOrderClosedEmail } from "@/lib/email-notifications";
+import { sendOrderClosedEmail, sendOrderStatusEmail } from "@/lib/email-notifications";
 
 // GET /api/admin/orders/[id]
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -72,6 +72,18 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           currency: order.currency,
         });
       }
+
+      // Send status change notification for ALL transitions
+      await sendOrderStatusEmail({
+        orderNumber: order.orderNumber,
+        customerName: order.customerName,
+        customerEmail: order.customerEmail,
+        status: body.status,
+        trackingId: body.trackingId || order.trackingId,
+        vessel: body.vessel || order.vessel,
+        estimatedDelivery: body.estimatedDelivery || order.estimatedDelivery?.toISOString() || null,
+        note: body.statusNote || body.note || null,
+      });
     }
 
     const updated = await prisma.order.update({
