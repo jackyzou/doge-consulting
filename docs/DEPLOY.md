@@ -6,6 +6,162 @@
 
 ---
 
+## Deployment Methods
+
+| Method | Best for | Prerequisites |
+|--------|----------|---------------|
+| **Docker** (recommended) | Target laptop, clean deploys | Docker Desktop |
+| **Bare Metal** | Development, debugging | Node.js 20+, Git |
+
+---
+
+# Method A — Docker Deployment (Recommended)
+
+## A.0. Pre-flight Checks
+
+```powershell
+# Docker Desktop must be installed and running
+docker --version      # expected: Docker version 24+ or 27+
+docker compose version  # expected: v2.x
+
+# Git must be installed
+git --version
+```
+
+**If Docker Desktop is missing**, install it:
+- Download from https://www.docker.com/products/docker-desktop/
+- Or: `winget install Docker.DockerDesktop --accept-package-agreements --accept-source-agreements`
+- Restart the machine after installation
+
+## A.1. Clone the Repository
+
+```powershell
+git clone https://github.com/jackyzou/doge-consulting.git C:\doge-consulting
+cd C:\doge-consulting
+```
+
+## A.2. Create Environment File
+
+```powershell
+# Generate a random JWT secret
+$jwtSecret = node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+# If Node.js is not installed, use PowerShell:
+# $jwtSecret = -join ((1..64) | ForEach-Object { '{0:x2}' -f (Get-Random -Max 256) })
+
+@"
+JWT_SECRET=$jwtSecret
+"@ | Set-Content -Path "C:\doge-consulting\.env" -Encoding UTF8
+```
+
+> **Optional**: Add SMTP and Airwallex vars to `.env` if you need
+> email notifications or payment processing.
+
+## A.3. Create Data Directories
+
+```powershell
+New-Item -ItemType Directory -Path "C:\doge-consulting\data"    -Force
+New-Item -ItemType Directory -Path "C:\doge-consulting\data\backups" -Force
+New-Item -ItemType Directory -Path "C:\doge-consulting\logs"    -Force
+```
+
+## A.4. Build & Start
+
+```powershell
+cd C:\doge-consulting
+docker compose up -d --build
+```
+
+This will:
+1. Build the Next.js app in a multi-stage Docker image
+2. Run Prisma migrations automatically
+3. Seed the database if empty (admin user, products, sample data)
+4. Start the app on port 3000
+5. Start a Cloudflare quick tunnel (prints the public URL)
+
+**View the tunnel URL:**
+```powershell
+docker compose logs tunnel
+# Look for the line: "Your quick Tunnel has been created! Visit it at https://..."
+```
+
+## A.5. Verify
+
+```powershell
+# Health check
+Invoke-RestMethod http://localhost:3000/api/health
+# Expected: { "status": "ok", ... }
+
+# Homepage
+(Invoke-WebRequest http://localhost:3000 -UseBasicParsing).StatusCode
+# Expected: 200
+```
+
+**Seeded credentials:**
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | `admin@dogeconsulting.com` | `admin123` |
+| Customer | `sarah@example.com` | `user123` |
+
+> ⚠️ **Change the admin password** after first login.
+
+## A.6. Named Tunnel (Custom Domain)
+
+To use a permanent domain instead of a random quick tunnel URL:
+
+1. Create a Cloudflare tunnel in the dashboard and get a tunnel token
+2. Update `.env`:
+   ```
+   CLOUDFLARE_TUNNEL_TOKEN=eyJ...your-token...
+   ```
+3. Edit `docker-compose.yml` — in the `tunnel` service, replace:
+   ```yaml
+   command: tunnel --no-autoupdate --url http://app:3000
+   ```
+   with:
+   ```yaml
+   command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+   ```
+4. Restart: `docker compose up -d`
+
+## A.7. Useful Docker Commands
+
+```powershell
+docker compose logs -f app       # tail app logs
+docker compose logs -f tunnel    # tail tunnel logs
+docker compose restart app       # restart app only
+docker compose down              # stop everything
+docker compose up -d --build     # rebuild and restart
+docker compose ps                # check container status
+```
+
+## A.8. Database Backup
+
+```powershell
+# Manual backup
+Copy-Item C:\doge-consulting\data\production.db `
+  C:\doge-consulting\data\backups\production-$(Get-Date -Format 'yyyyMMdd-HHmmss').db
+
+# Schedule daily backup (run as Administrator)
+schtasks /create /tn "DogeConsulting-Backup" `
+  /tr "powershell -Command Copy-Item C:\doge-consulting\data\production.db C:\doge-consulting\data\backups\production-`$(Get-Date -Format 'yyyyMMdd').db" `
+  /sc daily /st 02:00 /ru SYSTEM /f
+```
+
+## A.9. CI/CD with Docker
+
+To enable auto-deploy on git push:
+
+1. Set repository variable `DEPLOY_MODE` = `docker` in GitHub → Settings → Variables → Actions
+2. Install a self-hosted GitHub Actions runner (see Method B, Step 11)
+3. On push to `master`, the workflow will: test → `docker compose build` → `docker compose up -d` → health check
+
+---
+
+# Method B — Bare Metal Deployment
+
+---
+
 ## 0. Pre-flight Checks
 
 Verify the target machine meets requirements before proceeding.

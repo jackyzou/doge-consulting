@@ -1,0 +1,47 @@
+# Doge Consulting — Docker Compose
+# Usage:
+#   docker compose up -d          # start app + tunnel
+#   docker compose logs -f app    # tail app logs
+#   docker compose down            # stop everything
+
+services:
+  app:
+    build: .
+    container_name: doge-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data          # SQLite database persistence
+      - ./logs:/app/logs          # Application logs
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_PATH=/app/data/production.db
+      - DATABASE_URL=file:/app/data/production.db
+      - JWT_SECRET=${JWT_SECRET}
+      # Optional — uncomment if needed:
+      # - SMTP_HOST=${SMTP_HOST}
+      # - SMTP_PORT=${SMTP_PORT}
+      # - SMTP_USER=${SMTP_USER}
+      # - SMTP_PASS=${SMTP_PASS}
+      # - SMTP_FROM=${SMTP_FROM}
+      # - AIRWALLEX_CLIENT_ID=${AIRWALLEX_CLIENT_ID}
+      # - AIRWALLEX_API_KEY=${AIRWALLEX_API_KEY}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: doge-tunnel
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    command: tunnel --no-autoupdate --url http://app:3000
+    # For a named tunnel with a custom domain, replace the command above with:
+    #   command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}

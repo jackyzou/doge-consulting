@@ -41,7 +41,52 @@ jobs:
         run: npx vitest run
 
       # ── Deploy to production ──────────────────────────────────
-      - name: Deploy
+      - name: Deploy (Docker)
+        if: vars.DEPLOY_MODE == 'docker'
+        shell: powershell
+        env:
+          DOGE_SERVICE_PATH: ${{ vars.DOGE_SERVICE_PATH || 'C:\doge-consulting' }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $ServiceDir = $env:DOGE_SERVICE_PATH
+
+          Write-Host "=== Docker Deploy to $ServiceDir ===" -ForegroundColor Cyan
+
+          Push-Location $ServiceDir
+
+          # 1. Pull latest code
+          Write-Host "Pulling latest code..." -ForegroundColor Yellow
+          git pull origin master
+
+          # 2. Rebuild and restart containers
+          Write-Host "Rebuilding Docker containers..." -ForegroundColor Yellow
+          docker compose build --no-cache
+          docker compose up -d
+
+          Pop-Location
+
+          # 3. Health check (wait for container to be healthy)
+          Write-Host "Health check..." -ForegroundColor Yellow
+          $retries = 0
+          $healthy = $false
+          while ($retries -lt 20 -and -not $healthy) {
+            Start-Sleep -Seconds 5
+            try {
+              $resp = Invoke-RestMethod -Uri "http://localhost:3000/api/health" -TimeoutSec 5
+              if ($resp.status -eq "ok") { $healthy = $true }
+            } catch { $retries++ }
+          }
+
+          if ($healthy) {
+            Write-Host "=== Docker deploy successful! ===" -ForegroundColor Green
+          } else {
+            Write-Host "=== Health check failed after 100s ===" -ForegroundColor Red
+            docker compose logs app --tail 50
+            exit 1
+          }
+
+      - name: Deploy (Bare Metal)
+        if: vars.DEPLOY_MODE != 'docker'
         shell: powershell
         env:
           DOGE_SERVICE_PATH: ${{ vars.DOGE_SERVICE_PATH || 'C:\doge-consulting' }}

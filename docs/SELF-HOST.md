@@ -5,6 +5,19 @@ CI/CD, and zero monthly hosting costs.
 
 ## Architecture Overview
 
+### Docker (Recommended)
+```
+Internet → Cloudflare Tunnel (HTTPS) → Docker: Next.js (port 3000)
+                                                 ↓
+                              Volume: ./data/production.db (SQLite)
+```
+
+```powershell
+# One-command deploy:
+docker compose up -d --build
+```
+
+### Bare Metal
 ```
 Internet → Cloudflare Tunnel (HTTPS) → localhost:3000 → Next.js (NSSM service)
                                                           ↓
