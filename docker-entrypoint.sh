@@ -9,12 +9,15 @@ mkdir -p "$DB_DIR"
 export DATABASE_URL="file:${DB_PATH}"
 export DATABASE_PATH="$DB_PATH"
 
+PRISMA_CLI="node ./node_modules/prisma/build/index.js"
+
 # Run migrations
 echo "Running Prisma migrations..."
-npx prisma migrate deploy --schema ./prisma/schema.prisma
+$PRISMA_CLI migrate deploy --schema ./prisma/schema.prisma
 
-# Seed if the DB is freshly created (no admin user)
-if [ ! -s "$DB_PATH" ] || [ "$(stat -c%s "$DB_PATH" 2>/dev/null || echo 0)" -lt 8192 ]; then
+# Seed if no users exist yet (fresh DB after migrations)
+USER_COUNT=$(node -e "const D=require('better-sqlite3');const db=new D('$DB_PATH');const r=db.prepare('SELECT COUNT(*) as c FROM User').get();console.log(r.c);" 2>/dev/null || echo "0")
+if [ "$USER_COUNT" = "0" ]; then
   echo "Seeding database..."
   node prisma/seed.mjs
 fi

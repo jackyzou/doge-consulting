@@ -41,33 +41,28 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
-# Copy standalone server + static assets
+# Copy ALL node_modules first (ensures Prisma CLI + all transitive deps are available)
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy standalone server on top (merges traced/optimized modules over full node_modules)
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-# Copy Prisma schema + migrations for runtime migrate
+# Copy Prisma schema, migrations, generated client, and config
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/better-sqlite3 ./node_modules/better-sqlite3
-COPY --from=builder /app/node_modules/bindings ./node_modules/bindings
-COPY --from=builder /app/node_modules/file-uri-to-path ./node_modules/file-uri-to-path
-COPY --from=builder /app/node_modules/prebuild-install ./node_modules/prebuild-install
-
-# Copy generated Prisma client
 COPY --from=builder /app/src/generated ./src/generated
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
-# Copy seed script and its deps
+# Copy seed script
 COPY --from=builder /app/prisma/seed.mjs ./prisma/seed.mjs
-COPY --from=builder /app/node_modules/bcryptjs ./node_modules/bcryptjs
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data
 
-# Entrypoint script
+# Entrypoint script (fix Windows CRLF → LF)
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint.sh
+RUN sed -i 's/\r$//' /app/docker-entrypoint.sh && chmod +x /app/docker-entrypoint.sh
 
 EXPOSE 3000
 
