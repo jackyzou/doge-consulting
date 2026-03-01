@@ -56,9 +56,9 @@ export default function AdminCustomersPage() {
       { key: "phone", header: "Phone" },
       { key: "company", header: "Company" },
       { key: "role", header: "Type" },
-      { key: "_count.orders" as keyof Customer, header: "Orders" },
-      { key: "_count.quotes" as keyof Customer, header: "Quotes" },
-      { key: "_count.payments" as keyof Customer, header: "Payments" },
+      { key: "_count.orders", header: "Orders" },
+      { key: "_count.quotes", header: "Quotes" },
+      { key: "_count.payments", header: "Payments" },
       { key: "createdAt", header: "Joined" },
     ]);
     downloadCsv(csv, `customers-${new Date().toISOString().slice(0, 10)}.csv`);

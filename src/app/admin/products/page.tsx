@@ -146,7 +146,7 @@ export default function AdminProductsPage() {
     // Find original to compare
     const orig = products.find((p) => p.id === id);
     if (!orig) return;
-    const origVal = String((orig as Record<string, unknown>)[field] ?? "");
+    const origVal = String((orig as unknown as Record<string, unknown>)[field] ?? "");
     if (value === origVal) { setInlineEdit(null); return; }
     try {
       const body: Record<string, unknown> = {};

@@ -11,7 +11,7 @@ export function cn(...inputs: ClassValue[]) {
  * @param columns Array of { key, header } defining which fields to include
  * @returns CSV string with headers
  */
-export function generateCsv<T extends Record<string, unknown>>(
+export function generateCsv<T extends object>(
   rows: T[],
   columns: { key: string; header: string }[]
 ): string {
@@ -26,7 +26,7 @@ export function generateCsv<T extends Record<string, unknown>>(
   const header = columns.map((c) => escape(c.header)).join(",");
   const body = rows
     .map((row) =>
-      columns.map((c) => escape(c.key.includes(".") ? c.key.split(".").reduce((o: unknown, k) => (o as Record<string, unknown>)?.[k], row) : row[c.key])).join(",")
+      columns.map((c) => escape(c.key.includes(".") ? c.key.split(".").reduce((o: unknown, k) => (o as Record<string, unknown>)?.[k], row) : (row as Record<string, unknown>)[c.key])).join(",")
     )
     .join("\n");
 
