@@ -1,640 +1,985 @@
-# DEPLOY.md — Agent Deployment Runbook
+# DEPLOY.md — Docker Deployment Runbook (Detailed)
 
-> **Audience**: An AI agent (or human following exact steps) deploying
+> **Audience**: An AI coding agent (Claude Haiku 4.5 or similar) deploying
 > Doge Consulting onto a fresh Windows 10/11 laptop.
-> Every command is PowerShell. Run them **in order**. Do not skip steps.
+>
+> ## RULES FOR THE DEPLOYING AGENT
+>
+> 1. Every command below is **PowerShell**. Run them **in exact order**.
+> 2. **Do NOT skip any step.**
+> 3. **Do NOT modify** any of these repo files: `Dockerfile`, `docker-compose.yml`,
+>    `docker-entrypoint.sh`, `next.config.ts`, `.dockerignore`.
+>    They are already correct and tested.
+> 4. The **only file you create** is `.env` (in the project root).
+> 5. If a command fails, check the **Troubleshooting** section at the bottom
+>    BEFORE trying to fix it yourself. Do NOT improvise fixes.
+> 6. After every command, check the output matches what's documented here.
 
 ---
 
-## Production Architecture
+## Architecture Overview
 
 ```
-Internet → doge-consulting.com (Cloudflare DNS + SSL)
-                ↓
-         Cloudflare Tunnel (named tunnel with token)
-                ↓
-         Docker: cloudflared (network_mode: service:app)
-                ↓  localhost:3000
-         Docker: Next.js standalone server
-                ↓
-         Volume: ./data/production.db (SQLite)
+Internet
+  ↓
+doge-consulting.com (Cloudflare DNS + SSL)
+  ↓
+Cloudflare Named Tunnel (token auth)
+  ↓
+Docker container "doge-tunnel" (cloudflared)
+  │
+  │  network_mode: "service:app"  ← shares network namespace with app
+  │  So "localhost:3000" in the tunnel = the app container
+  ↓
+Docker container "doge-app" (Next.js standalone, port 3000)
+  ↓
+SQLite database at ./data/production.db (Docker volume mount)
 ```
 
-## Deployment Methods
+### Critical Technical Facts
 
-| Method | Best for | Prerequisites |
-|--------|----------|---------------|
-| **Docker** (recommended) | Production, clean deploys | Docker Desktop |
-| **Bare Metal** | Development, debugging | Node.js 20+, Git |
+These facts explain WHY the config files are the way they are.
+**Do NOT "fix" anything that contradicts these facts.**
+
+1. **`network_mode: "service:app"`** in docker-compose.yml means the tunnel
+   container shares the app container's network. So the tunnel reaches the
+   app at `localhost:3000`, **NOT** at `http://app:3000`.
+
+2. **Cloudflare Dashboard tunnel config** must have service URL = `localhost:3000`
+   (NOT `app:3000`). This matches fact #1.
+
+3. **Prisma CLI** in the container uses `node ./node_modules/prisma/build/index.js`
+   (NOT `npx prisma`). `npx` fails in standalone mode because `.bin` symlinks
+   are not included in the standalone output.
+
+4. **Full `node_modules`** from the deps stage is copied into the runner stage.
+   This is intentional — standalone traces most deps, but Prisma CLI and its
+   transitive dependencies (valibot, @prisma/dev) need the full node_modules.
+
+5. **`DOCKER_BUILD=1`** env var in the Dockerfile builder stage enables
+   `output: "standalone"` in `next.config.ts`. This is already set in the Dockerfile.
+
+6. **The Dockerfile fixes Windows line endings** automatically:
+   `RUN sed -i 's/\r$//' /app/docker-entrypoint.sh`
+   So even if the file has CRLF endings, the container will work.
+
+7. **Seed detection** checks the User table row count (NOT file size).
+   This is because `prisma migrate deploy` creates the database file
+   BEFORE seeding happens, so file existence/size checks would always
+   think the DB is already seeded.
 
 ---
 
-# Method A — Docker Deployment (Recommended)
+## Prerequisites
 
-## A.0. Pre-flight Checks
+The target Windows laptop needs exactly two things installed:
+
+### 1. Docker Desktop
+
+Download from https://www.docker.com/products/docker-desktop/ and install.
+
+Or install via winget:
+```powershell
+winget install Docker.DockerDesktop --accept-package-agreements --accept-source-agreements
+```
+
+**After installing Docker Desktop, restart the computer.**
+
+### 2. Git
+
+Download from https://git-scm.com/ and install (use all defaults).
+
+Or install via winget:
+```powershell
+winget install Git.Git --accept-package-agreements --accept-source-agreements
+```
+
+**If you just installed Git, close and reopen PowerShell so `git` is on PATH.**
+
+---
+
+## Step 1 of 9: Start Docker Desktop
+
+Docker Desktop must be running before any `docker` command will work.
+
+### Check if Docker is already running:
+```powershell
+docker info
+```
+
+**If you see output like "Server Version: ..." and "Docker Root Dir: ..."**, Docker is running. **Go to Step 2.**
+
+**If you see "error during connect" or "Cannot connect to the Docker daemon"**, Docker is NOT running. Start it:
 
 ```powershell
-# Docker Desktop must be installed and running
-docker --version      # expected: Docker version 24+ or 27+
-docker compose version  # expected: v2.x
-
-# Git must be installed
-git --version
+Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"
 ```
 
-**If Docker Desktop is missing**, install it:
-- Download from https://www.docker.com/products/docker-desktop/
-- Or: `winget install Docker.DockerDesktop --accept-package-agreements --accept-source-agreements`
-- Restart the machine after installation
+### Wait for Docker to be ready:
+Docker Desktop takes 30-90 seconds to start. Run this loop to wait:
 
-## A.1. Clone the Repository
+```powershell
+for ($i = 0; $i -lt 30; $i++) {
+  Start-Sleep -Seconds 3
+  $result = docker info 2>&1
+  if ($LASTEXITCODE -eq 0) {
+    Write-Host "Docker is ready!"
+    break
+  }
+  Write-Host "Waiting for Docker... attempt $($i+1) of 30"
+}
+```
 
+**Expected output:** After some "Waiting..." lines, you should see `Docker is ready!`.
+
+### Verify Docker is working:
+```powershell
+docker --version
+```
+**Expected output:** `Docker version 24.x.x` or `Docker version 27.x.x` or `Docker version 29.x.x` (any version 24+ is fine).
+
+```powershell
+docker compose version
+```
+**Expected output:** `Docker Compose version v2.x.x` (any v2+ is fine).
+
+**If `docker compose version` fails but `docker-compose --version` works**, you have the old standalone Compose. The commands below use `docker compose` (without hyphen). You can either:
+- Update Docker Desktop to latest version, OR
+- Replace `docker compose` with `docker-compose` in all commands below.
+
+---
+
+## Step 2 of 9: Clone the Repository
+
+### If this is a fresh laptop (no existing clone):
 ```powershell
 git clone https://github.com/jackyzou/doge-consulting.git C:\doge-consulting
 cd C:\doge-consulting
 ```
 
-## A.2. Create Environment File
+**Expected output:**
+```
+Cloning into 'C:\doge-consulting'...
+remote: Enumerating objects: ...
+...
+Resolving deltas: 100% ...
+```
 
-Create `.env` in the project root with all required credentials:
+### If the repo is already cloned:
+```powershell
+cd C:\doge-consulting
+git pull origin master
+```
+
+**Expected output:**
+```
+Already up to date.
+```
+or a list of changed files.
+
+### Verify you're in the right directory:
+```powershell
+Get-Location
+```
+**Expected output:** `C:\doge-consulting`
 
 ```powershell
-# Generate a random JWT secret
-$jwtSecret = node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+Test-Path Dockerfile
+```
+**Expected output:** `True`
 
-# If Node.js is not installed, use PowerShell:
-# $jwtSecret = -join ((1..64) | ForEach-Object { '{0:x2}' -f (Get-Random -Max 256) })
+```powershell
+Test-Path docker-compose.yml
+```
+**Expected output:** `True`
 
+```powershell
+Test-Path docker-entrypoint.sh
+```
+**Expected output:** `True`
+
+**If any of the above shows `False`, STOP. You're in the wrong directory or the files are missing. Run `git pull origin master` to update.**
+
+---
+
+## Step 3 of 9: Create the `.env` File
+
+The `.env` file provides secrets to `docker-compose.yml`.
+It must be created at `C:\doge-consulting\.env` (project root, same directory as `docker-compose.yml`).
+
+### RULES for the `.env` file:
+- **NO comments** on the same line as a value
+- **NO quotes** around values
+- **NO trailing spaces** after values
+- **NO blank lines** between entries
+- Exactly **7 lines**, each with format `KEY=value`
+
+### Create the file:
+
+```powershell
 @"
-JWT_SECRET=$jwtSecret
-
-# ── SMTP (Gmail App Password) ──
+JWT_SECRET=REPLACE_THIS
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=dogetech77@gmail.com
-SMTP_PASS=<YOUR_GMAIL_APP_PASSWORD>
+SMTP_PASS=REPLACE_THIS
 SMTP_FROM=dogetech77@gmail.com
-
-# ── Cloudflare Named Tunnel ──
-CLOUDFLARE_TUNNEL_TOKEN=<YOUR_TUNNEL_TOKEN>
-
-# ── Airwallex (optional) ──
-# AIRWALLEX_CLIENT_ID=
-# AIRWALLEX_API_KEY=
-"@ | Set-Content -Path "C:\doge-consulting\.env" -Encoding UTF8
+CLOUDFLARE_TUNNEL_TOKEN=REPLACE_THIS
+"@ | Set-Content -Path "C:\doge-consulting\.env" -Encoding UTF8NoBOM
 ```
 
-> **How to get each value:**
-> | Variable | How to get it |
-> |----------|---------------|
-> | `JWT_SECRET` | Auto-generated above |
-> | `SMTP_PASS` | Google Account → Security → 2FA → App Passwords → create "Mail" password |
-> | `CLOUDFLARE_TUNNEL_TOKEN` | Cloudflare Dashboard → Networks → Tunnels → your tunnel → Configure → Install connector → copy the `eyJ...` token |
+**Now you must replace the 3 placeholder values:**
 
-## A.3. Cloudflare Tunnel Setup (Custom Domain)
+---
 
-If you already have a named tunnel configured for `doge-consulting.com`, skip to A.4.
+### 3a. JWT_SECRET
 
-1. Go to **https://one.dash.cloudflare.com/**
-2. Navigate to **Networks → Tunnels → Create a tunnel**
-3. Choose **Cloudflared**, name it `doge-consulting`
-4. On the **Install connector** step, copy the token (the `eyJ...` string after `--token`)
-5. On the **Route tunnel** step, add a public hostname:
-   - **Domain:** `doge-consulting.com`
-   - **Type:** `HTTP`
-   - **URL:** `localhost:3000`
-6. Save the tunnel
-7. In **SSL/TLS → Overview**, set encryption mode to **Full**
-8. In **SSL/TLS → Edge Certificates**, enable **Always Use HTTPS**
+Generate a random hex string (at least 64 characters). Use one of these methods:
 
-Paste the token into your `.env` file as `CLOUDFLARE_TUNNEL_TOKEN`.
+**Method A (if Node.js is installed):**
+```powershell
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+Copy the entire output (a 128-character hex string). This is your JWT_SECRET.
 
-## A.4. Create Data Directories
+**Method B (PowerShell only — no Node.js needed):**
+```powershell
+-join ((1..64) | ForEach-Object { '{0:x2}' -f (Get-Random -Max 256) })
+```
+Copy the entire output. This is your JWT_SECRET.
+
+**Replace `REPLACE_THIS` on the JWT_SECRET line with the value you generated.**
+
+---
+
+### 3b. SMTP_PASS
+
+This is the Gmail App Password for `dogetech77@gmail.com`.
+
+The current app password is: `lelfqnwaxpgxzsnn`
+
+**Replace `REPLACE_THIS` on the SMTP_PASS line with: `lelfqnwaxpgxzsnn`**
+
+If this password has been revoked, create a new one:
+1. Go to https://myaccount.google.com/apppasswords
+2. Sign in as `dogetech77@gmail.com`
+3. Create a new App Password for "Mail"
+4. Use the 16-character password shown (remove spaces)
+
+---
+
+### 3c. CLOUDFLARE_TUNNEL_TOKEN
+
+This is a long base64 string starting with `eyJ`.
+
+For the existing tunnel (`doge-consulting`), the token is:
+```
+eyJhIjoiMDg5ZjY3NTQ1ZDRmZjc2Nzc2ZTMzNzIyZGIzYjQzNjAiLCJ0IjoiMzljNGI4NTQtYTIyOS00MWM2LTg1M2YtNGUwZWRjYzkyMWIyIiwicyI6Ik5qVTJORGd3WkRrdE1qaGxNaTAwTmpFMkxUazFOMlF0T0dFd1pXTTJPV1ZrTTJabSJ9
+```
+
+**Replace `REPLACE_THIS` on the CLOUDFLARE_TUNNEL_TOKEN line with the token above.**
+
+If you need a new token: Cloudflare Dashboard → Networks → Tunnels → click your tunnel → Configure → Install connector. The token is the string after `--token` in the install command.
+
+---
+
+### 3d. Verify the `.env` file
+
+After replacing all 3 values, verify:
 
 ```powershell
-New-Item -ItemType Directory -Path "C:\doge-consulting\data"    -Force
-New-Item -ItemType Directory -Path "C:\doge-consulting\data\backups" -Force
-New-Item -ItemType Directory -Path "C:\doge-consulting\logs"    -Force
+Get-Content C:\doge-consulting\.env
 ```
 
-## A.5. Build & Start
+**Expected output (example — your JWT_SECRET will be different):**
+```
+JWT_SECRET=ce1214a1a81c5027192b7f3561b222ba54ffe23cfaecff7f9f07be9d51ec1ce87f624b75293c002a80b23703d93656f223c79668806fba006e09ec3e91983057
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=dogetech77@gmail.com
+SMTP_PASS=lelfqnwaxpgxzsnn
+SMTP_FROM=dogetech77@gmail.com
+CLOUDFLARE_TUNNEL_TOKEN=eyJhIjoiMDg5ZjY3NTQ1ZDRmZjc2Nzc2ZTMzNzIyZGIzYjQzNjAiLCJ0IjoiMzljNGI4NTQtYTIyOS00MWM2LTg1M2YtNGUwZWRjYzkyMWIyIiwicyI6Ik5qVTJORGd3WkRrdE1qaGxNaTAwTmpFMkxUazFOMlF0T0dFd1pXTTJPV1ZrTTJabSJ9
+```
+
+**CHECK: You should see exactly 7 lines. No `REPLACE_THIS` should remain. No quotes. No comments.**
+
+```powershell
+# Count lines (must be 7)
+(Get-Content C:\doge-consulting\.env).Count
+```
+**Expected output:** `7`
+
+```powershell
+# Check no placeholders remain
+Select-String "REPLACE_THIS" C:\doge-consulting\.env
+```
+**Expected output:** (no output — means no matches, which is correct)
+
+**If `Select-String` finds matches, you forgot to replace a placeholder. Go back and fix it.**
+
+---
+
+## Step 4 of 9: Create Data Directories
+
+```powershell
+New-Item -ItemType Directory -Path "C:\doge-consulting\data" -Force
+New-Item -ItemType Directory -Path "C:\doge-consulting\logs" -Force
+```
+
+**Expected output:**
+```
+    Directory: C:\doge-consulting
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----         ...                                data
+d-----         ...                                logs
+```
+
+(If they already exist, the `-Force` flag prevents errors.)
+
+---
+
+## Step 5 of 9: Verify Cloudflare Tunnel Configuration
+
+**NOTE: This step is done manually in a web browser by the human operator,
+or by the AI agent guiding the human.** The AI agent cannot access the
+Cloudflare Dashboard directly.
+
+Open a browser and go to: https://one.dash.cloudflare.com/
+
+### 5a. Check tunnel exists and has correct hostname
+
+1. Click **Networks** in the left sidebar
+2. Click **Tunnels**
+3. You should see a tunnel named `doge-consulting`
+4. Click on it → click **Configure**
+5. Click the **Public Hostnames** tab
+6. There should be a row with:
+   - **Hostname:** `doge-consulting.com`
+   - **Service:** `HTTP://localhost:3000`
+
+**If the Service shows `HTTP://app:3000` instead of `HTTP://localhost:3000`:**
+- Click the three dots → **Edit**
+- Change the URL from `app:3000` to `localhost:3000`
+- Click **Save hostname**
+
+**If no hostname is configured:**
+- Click **Add a public hostname**
+- Subdomain: (leave blank)
+- Domain: `doge-consulting.com`
+- Path: (leave blank)
+- Type: `HTTP`
+- URL: `localhost:3000`
+- Click **Save hostname**
+
+### 5b. Check SSL settings
+
+1. Go to the `doge-consulting.com` domain in Cloudflare
+2. Click **SSL/TLS** → **Overview**
+3. Encryption mode must be **Full** (not "Flexible", not "Off")
+4. Click **SSL/TLS** → **Edge Certificates**
+5. **Always Use HTTPS** must be turned **ON**
+
+**If any of these are wrong, fix them now before proceeding.**
+
+---
+
+## Step 6 of 9: Build the Docker Image
 
 ```powershell
 cd C:\doge-consulting
-docker compose up -d --build
 ```
 
-This will:
-1. Build the Next.js app in a multi-stage Docker image (~3 min)
-2. Run Prisma migrations automatically
-3. Start the app on port 3000
-4. Connect the Cloudflare named tunnel to `doge-consulting.com`
+### Remove any stale database from previous deployments:
+```powershell
+if (Test-Path C:\doge-consulting\data\production.db) {
+  Remove-Item C:\doge-consulting\data\production.db -Force
+  Write-Host "Removed stale database"
+} else {
+  Write-Host "No stale database found (this is fine)"
+}
+```
 
-**Note:** The database is auto-seeded on first start only if no users exist.
-To manually seed (if needed):
+### Build the Docker image:
+```powershell
+docker compose build --no-cache
+```
+
+**This takes 3-5 minutes.** You will see lots of output.
+
+**Expected output (key lines to look for near the end):**
+```
+...
+ => [builder 7/7] RUN npm run build                                        ...
+ => [runner  ...] COPY --from=deps /app/node_modules ./node_modules         ...
+ => [runner  ...] COPY --from=builder /app/.next/standalone ./              ...
+...
+ => exporting to image                                                      ...
+ => => naming to docker.io/library/doge-consulting-app                      ...
+```
+
+**The last line should say "naming to docker.io/library/doge-consulting-app" or similar. This means the build succeeded.**
+
+### If the build fails:
+
+**Failure: "parent snapshot does not exist" or "failed to compute cache key"**
+→ This is Docker cache corruption. Just run the same command again:
+```powershell
+docker compose build --no-cache
+```
+
+**Failure: npm ERR! with @swc/helpers or package-lock.json errors**
+→ The lock file is out of sync. Fix it:
+```powershell
+npm install
+npm install @swc/helpers@0.5.19
+docker compose build --no-cache
+```
+
+**Failure: "Cannot find module" during `npm run build`**
+→ This usually means `npm ci` failed silently. Check the build output above for npm errors. If you see python3/make/g++ errors, the build tools failed to install. Try:
+```powershell
+docker compose build --no-cache
+```
+(A simple retry often fixes transient network issues.)
+
+**Any other failure:** Copy the **last 20 lines** of the error output and consult the Troubleshooting section at the bottom of this document.
+
+---
+
+## Step 7 of 9: Start the Containers
+
+```powershell
+docker compose up -d
+```
+
+**Expected output:**
+```
+[+] Running 2/2
+ ✔ Container doge-app     Started
+ ✔ Container doge-tunnel   Started
+```
+
+or
+
+```
+[+] Running 2/2
+ ✔ Container doge-app     Healthy
+ ✔ Container doge-tunnel   Started
+```
+
+### Wait for the app to become healthy:
+
+The app container has a healthcheck that runs every 30 seconds. Wait for it:
+
+```powershell
+for ($i = 0; $i -lt 20; $i++) {
+  Start-Sleep -Seconds 5
+  $status = (docker inspect --format='{{.State.Health.Status}}' doge-app 2>$null)
+  Write-Host "Container status: $status (attempt $($i+1) of 20)"
+  if ($status -eq "healthy") {
+    Write-Host "SUCCESS: App container is healthy!"
+    break
+  }
+}
+```
+
+**Expected output after 15-30 seconds:**
+```
+Container status: starting (attempt 1 of 20)
+Container status: starting (attempt 2 of 20)
+...
+Container status: healthy (attempt N of 20)
+SUCCESS: App container is healthy!
+```
+
+**If after 20 attempts (100 seconds) it still says "starting" or "unhealthy":**
+Check the logs:
+```powershell
+docker logs doge-app 2>&1
+```
+Look at the last 10 lines for error messages. Common errors and fixes:
+
+- **"Cannot find module 'valibot'"** → The Dockerfile is wrong. But it should be correct from the repo. Did you modify it? Revert: `git checkout -- Dockerfile` and rebuild.
+- **"prisma: not found"** → The entrypoint is trying `npx prisma`. Make sure `docker-entrypoint.sh` has `PRISMA_CLI="node ./node_modules/prisma/build/index.js"`. Did you modify it? Revert: `git checkout -- docker-entrypoint.sh` and rebuild.
+- **Permission denied on docker-entrypoint.sh** → Line ending issue. But the Dockerfile has a CRLF fix (`sed -i 's/\r$//'`). This should never happen with the current Dockerfile. If it does, revert: `git checkout -- Dockerfile docker-entrypoint.sh` and rebuild.
+
+### Verify both containers are running:
+```powershell
+docker compose ps
+```
+
+**Expected output:**
+```
+NAME          SERVICE   STATUS                  PORTS
+doge-app      app       Up X minutes (healthy)  0.0.0.0:3000->3000/tcp
+doge-tunnel   tunnel    Up X minutes
+```
+
+**BOTH containers must be "Up". The app must show "(healthy)". If either is missing or shows "Exited", check its logs:**
+```powershell
+docker logs doge-app 2>&1
+docker logs doge-tunnel 2>&1
+```
+
+---
+
+## Step 8 of 9: Verify the Database is Seeded
+
+The entrypoint script automatically seeds the database when it detects zero users.
+Let's verify:
+
+```powershell
+docker logs doge-app 2>&1 | Select-String "Seed|seed|Admin|admin"
+```
+
+**Expected output (one of these):**
+```
+Seeding database...
+✅  Admin user: admin@dogeconsulting.com / admin123
+✅  Customer user: sarah@example.com / user123
+✅  12 products seeded
+🎉 Seed complete!
+```
+
+**If you see the seed output above,** the database is seeded. **Go to Step 9.**
+
+**If you see NO seed-related output**, the auto-seed may have failed silently.
+Seed manually:
+
 ```powershell
 docker exec doge-app node prisma/seed.mjs
 ```
 
-## A.6. Verify
-
-```powershell
-# Health check (local)
-Invoke-RestMethod http://localhost:3000/api/health
-# Expected: { "status": "ok", ... }
-
-# Health check (via domain)
-Invoke-RestMethod https://doge-consulting.com/api/health
-# Expected: { "status": "ok", ... }
-
-# Check containers are running
-docker compose ps
+**Expected output:**
+```
+🌱 Seeding database …
+✅  Admin user: admin@dogeconsulting.com / admin123
+✅  Customer user: sarah@example.com / user123
+✅  12 products seeded
+🎉 Seed complete!
 ```
 
-**Seeded credentials:**
+**If manual seeding fails with "table User already has data"** or similar, the database was already seeded. This is fine.
+
+---
+
+## Step 9 of 9: Verify Everything Works
+
+Run ALL of these checks. Every one must pass.
+
+### 9a. Container health
+```powershell
+docker compose ps
+```
+**✅ PASS if:** Both `doge-app` and `doge-tunnel` show "Up" and app shows "(healthy)".
+
+### 9b. App logs show successful startup
+```powershell
+docker logs doge-app 2>&1 | Select-String "Ready|migrations|Seed"
+```
+**✅ PASS if:** You see lines about migrations being applied and "Ready in XXms".
+
+### 9c. Tunnel logs show connection
+```powershell
+docker logs doge-tunnel 2>&1 | Select-String "Registered|connection"
+```
+**✅ PASS if:** You see "Registered tunnel connection" lines (should be 4 connections).
+
+### 9d. Local health check
+```powershell
+$response = Invoke-RestMethod http://localhost:3000/api/health
+Write-Host "Status: $($response.status)"
+```
+**✅ PASS if:** Output shows `Status: ok`.
+
+### 9e. Domain health check
+```powershell
+try {
+  $r = Invoke-WebRequest -Uri "https://doge-consulting.com/api/health" -UseBasicParsing -TimeoutSec 30
+  Write-Host "Domain check: $($r.StatusCode) - $($r.Content)"
+} catch {
+  Write-Host "Domain check FAILED: $($_.Exception.Message)"
+}
+```
+**✅ PASS if:** Output shows `Domain check: 200 - {"status":"ok",...}`.
+
+**If it shows "timed out":** DNS may not have propagated. Try:
+```powershell
+ipconfig /flushdns
+nslookup doge-consulting.com 1.1.1.1
+```
+If nslookup returns IP addresses, DNS is fine — just wait 2-5 minutes and retry.
+
+### 9f. SMTP env vars are set in container
+```powershell
+docker exec doge-app printenv | findstr SMTP
+```
+**✅ PASS if:** You see 5 lines: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM.
+
+**If you see NO SMTP output:** The `.env` file was wrong or the container was started before `.env` was created. Fix:
+```powershell
+docker compose down
+docker compose up -d
+```
+
+### 9g. Admin login works
+```powershell
+$body = '{"email":"admin@dogeconsulting.com","password":"admin123"}'
+$r = Invoke-WebRequest -Uri "http://localhost:3000/api/auth/login" -Method POST -Body $body -ContentType "application/json" -UseBasicParsing
+Write-Host "Login status: $($r.StatusCode)"
+```
+**✅ PASS if:** Output shows `Login status: 200`.
+
+### 9h. Customer login works
+```powershell
+$body = '{"email":"sarah@example.com","password":"user123"}'
+$r = Invoke-WebRequest -Uri "http://localhost:3000/api/auth/login" -Method POST -Body $body -ContentType "application/json" -UseBasicParsing
+Write-Host "Login status: $($r.StatusCode)"
+```
+**✅ PASS if:** Output shows `Login status: 200`.
+
+### 9i. Homepage loads
+```powershell
+$r = Invoke-WebRequest -Uri "http://localhost:3000" -UseBasicParsing -TimeoutSec 15
+Write-Host "Homepage status: $($r.StatusCode)"
+```
+**✅ PASS if:** Output shows `Homepage status: 200`.
+
+---
+
+## Login Credentials (Seeded by Default)
+
 | Role | Email | Password |
 |------|-------|----------|
 | Admin | `admin@dogeconsulting.com` | `admin123` |
 | Customer | `sarah@example.com` | `user123` |
 
-> ⚠️ **Change the admin password** after first login.
+> ⚠️ **Change the admin password** after first login at `/admin/settings`.
 
-## A.7. Useful Docker Commands
+---
 
+## Common Operations (After Deployment)
+
+### Stop everything:
 ```powershell
-docker compose logs -f app       # tail app logs
-docker compose logs -f tunnel    # tail tunnel logs
-docker compose restart app       # restart app only
-docker compose down              # stop everything
-docker compose up -d --build     # rebuild and restart
-docker compose ps                # check container status
+cd C:\doge-consulting
+docker compose down
 ```
 
-## A.8. Updating (Deploy New Code)
-
+### Restart after code changes:
 ```powershell
 cd C:\doge-consulting
 git pull origin master
 docker compose build --no-cache
 docker compose up -d
-docker exec doge-app node prisma/seed.mjs   # only if new seed data needed
 ```
 
-## A.9. Database Backup
-
+### View live logs:
 ```powershell
-# Manual backup
-Copy-Item C:\doge-consulting\data\production.db `
-  C:\doge-consulting\data\backups\production-$(Get-Date -Format 'yyyyMMdd-HHmmss').db
-
-# Schedule daily backup (run as Administrator)
-schtasks /create /tn "DogeConsulting-Backup" `
-  /tr "powershell -Command Copy-Item C:\doge-consulting\data\production.db C:\doge-consulting\data\backups\production-`$(Get-Date -Format 'yyyyMMdd').db" `
-  /sc daily /st 02:00 /ru SYSTEM /f
+docker compose logs -f app       # app logs (Ctrl+C to stop)
+docker compose logs -f tunnel    # tunnel logs (Ctrl+C to stop)
 ```
 
-## A.10. CI/CD with Docker
-
-The workflow at `.github/workflows/ci-deploy.yml` runs automatically:
-
-- **On pull request to `master`**: Runs tests on GitHub-hosted Ubuntu runner (free)
-- **On push to `master`**: Runs tests → then deploys via self-hosted runner on the laptop
-
-To enable auto-deploy:
-
-1. Set repository variable `DEPLOY_MODE` = `docker` in GitHub → Settings → Variables → Actions
-2. Install a self-hosted GitHub Actions runner (see Method B, Step 11)
-3. On push to `master`, the workflow will: test → `git pull` → `docker compose build` → `docker compose up -d` → health check
-
----
-
-# Method B — Bare Metal Deployment
-
----
-
-## 0. Pre-flight Checks
-
-Verify the target machine meets requirements before proceeding.
-
+### Re-seed database (adds default users if missing):
 ```powershell
-# Must be Windows 10+ x64
-[System.Environment]::OSVersion.Version
-[System.Environment]::Is64BitOperatingSystem  # must be True
-
-# Node.js 20+ must be installed
-node --version   # expected: v20.x.x or v22.x.x
-
-# Git must be installed
-git --version
-
-# npm must be available
-npm --version
+docker exec doge-app node prisma/seed.mjs
 ```
 
-**If Node.js is missing**, install it:
+### Full reset (delete database and start fresh):
 ```powershell
-winget install OpenJS.NodeJS.LTS --accept-package-agreements --accept-source-agreements
-# Close and reopen the terminal after installing
-```
-
-**If Git is missing**, install it:
-```powershell
-winget install Git.Git --accept-package-agreements --accept-source-agreements
-# Close and reopen the terminal after installing
-```
-
----
-
-## 1. Clone the Repository
-
-```powershell
-git clone https://github.com/jackyzou/doge-consulting.git C:\doge-consulting
 cd C:\doge-consulting
-git checkout master
+docker compose down
+Remove-Item C:\doge-consulting\data\production.db -Force -ErrorAction SilentlyContinue
+docker compose up -d
+# Wait for healthy, then seed if needed:
+Start-Sleep -Seconds 30
+docker exec doge-app node prisma/seed.mjs
 ```
 
----
-
-## 2. Create Production Environment File
-
-Create `C:\doge-consulting\.env.local` with the contents below.
-Replace placeholder values as noted.
-
+### Database backup:
 ```powershell
-# Generate a random JWT secret
-$jwtSecret = node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-
-# Write .env.local
-@"
-NODE_ENV=production
-JWT_SECRET=$jwtSecret
-DATABASE_PATH=C:/doge-consulting/data/production.db
-DATABASE_URL=file:C:/doge-consulting/data/production.db
-"@ | Set-Content -Path "C:\doge-consulting\.env.local" -Encoding UTF8
-```
-
-> **Optional**: Append SMTP and Airwallex vars if needed. See
-> `.env.production.example` for the full list. The app runs fine
-> without them — emails log to console, payments run in demo mode.
-
----
-
-## 3. Create Data Directories
-
-```powershell
-New-Item -ItemType Directory -Path "C:\doge-consulting\data"    -Force
 New-Item -ItemType Directory -Path "C:\doge-consulting\data\backups" -Force
-New-Item -ItemType Directory -Path "C:\doge-consulting\logs"    -Force
+Copy-Item C:\doge-consulting\data\production.db "C:\doge-consulting\data\backups\production-$(Get-Date -Format 'yyyyMMdd-HHmmss').db"
 ```
 
 ---
 
-## 4. Install Dependencies & Generate Prisma Client
+## Troubleshooting Guide
 
+### Problem 1: `docker compose build` fails with "parent snapshot does not exist"
+**Cause:** Docker build cache corruption (happens sometimes on Windows).
+**Fix:** Run the exact same command again. It will work on retry:
 ```powershell
-cd C:\doge-consulting
-npm ci
-npx prisma generate
+docker compose build --no-cache
 ```
 
 ---
 
-## 5. Initialize the Database
-
+### Problem 2: `docker compose build` fails with npm/package-lock errors
+**Cause:** `package-lock.json` is out of sync with `package.json`.
+**Fix:**
 ```powershell
-cd C:\doge-consulting
-
-# Run all migrations (creates the SQLite DB at DATABASE_PATH)
-npx prisma migrate deploy
-
-# Seed with admin user, demo customer, products, sample data
-node prisma/seed.mjs
+npm install
+npm install @swc/helpers@0.5.19
+docker compose build --no-cache
 ```
-
-**Seeded credentials:**
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | `admin@dogeconsulting.com` | `admin123` |
-| Customer | `sarah@example.com` | `user123` |
-
-> ⚠️ **Change the admin password** after first login in production.
+**Do NOT run `git checkout -- package-lock.json`** — that would restore the old broken lock file.
 
 ---
 
-## 6. Build the Application
-
+### Problem 3: Container starts but healthcheck fails (status: unhealthy)
+**Cause:** The Next.js app failed to start inside the container.
+**Diagnose:**
 ```powershell
-cd C:\doge-consulting
-npm run build
+docker logs doge-app 2>&1
 ```
+**Read the last 20 lines of output.** Common sub-causes:
 
-This produces a standalone build in `.next/`. Expect it to take 1-3 minutes.
+**Sub-cause A: "Cannot find module 'valibot'" or "Cannot find module '@prisma/dev'"**
+→ The Dockerfile isn't copying full node_modules. This means the Dockerfile was modified.
+→ Fix: `git checkout -- Dockerfile` then `docker compose build --no-cache`.
 
----
+**Sub-cause B: "prisma: not found" or "sh: prisma: command not found"**
+→ The entrypoint is using `npx prisma` instead of `node ./node_modules/prisma/build/index.js`.
+→ Fix: `git checkout -- docker-entrypoint.sh` then `docker compose build --no-cache`.
 
-## 7. Smoke Test (Manual Start)
-
-Start the server manually to verify everything works before installing as a service.
-
+**Sub-cause C: "ENOENT" error about database or data directory**
+→ The data directory doesn't exist or isn't mounted.
+→ Fix: `New-Item -ItemType Directory -Path "C:\doge-consulting\data" -Force` then restart:
 ```powershell
-cd C:\doge-consulting
-$env:NODE_ENV = "production"
-npx next start -p 3000
-```
-
-In a **separate terminal**, verify:
-
-```powershell
-# Health check — should return { "status": "ok", ... }
-Invoke-RestMethod http://localhost:3000/api/health
-
-# Homepage — should return HTTP 200
-(Invoke-WebRequest http://localhost:3000 -UseBasicParsing).StatusCode
-```
-
-Once verified, stop the manual server with `Ctrl+C`.
-
----
-
-## 8. Install as a Windows Service (NSSM)
-
-This step makes the app start automatically on boot and restart on crash.
-**Must be run in an Administrator PowerShell.**
-
-```powershell
-# Open an Administrator PowerShell, then:
-cd C:\doge-consulting
-powershell -ExecutionPolicy Bypass -File scripts\install-service.ps1
-```
-
-**What the script does:**
-1. Downloads NSSM to `C:\tools\nssm.exe`
-2. Creates Windows service `DogeConsulting` running `node next start -p 3000`
-3. Sets `NODE_ENV=production`, `PORT=3000`
-4. Configures auto-restart on failure, stdout/stderr log rotation (10 MB)
-5. Starts the service
-
-**Verify the service is running:**
-
-```powershell
-Get-Service DogeConsulting
-# Expected: Status = Running
-
-Invoke-RestMethod http://localhost:3000/api/health
-# Expected: { "status": "ok", ... }
-```
-
-**Service commands:**
-```powershell
-Restart-Service DogeConsulting
-Stop-Service DogeConsulting
-Start-Service DogeConsulting
-Get-Content C:\doge-consulting\logs\stdout.log -Tail 50
-Get-Content C:\doge-consulting\logs\stderr.log -Tail 50
+docker compose down
+docker compose up -d
 ```
 
 ---
 
-## 9. Expose to the Internet (Cloudflare Tunnel)
+### Problem 4: Site returns 502 Bad Gateway through Cloudflare domain
+**Cause:** The Cloudflare tunnel can't reach the app.
+**Fix:** In the Cloudflare Dashboard:
+1. Go to Networks → Tunnels → doge-consulting → Configure → Public Hostnames
+2. Check the Service URL. It **must** be `localhost:3000`.
+3. If it says `app:3000`, change it to `localhost:3000` and save.
 
-### Option A — Quick Tunnel (free, no domain, URL changes on restart)
+**Why:** The tunnel container uses `network_mode: "service:app"` which shares the app's
+network namespace. So from the tunnel's perspective, the app is at `localhost:3000`.
 
+---
+
+### Problem 5: Browser shows "Not Secure" or HTTP doesn't redirect to HTTPS
+**Cause:** Cloudflare SSL is not properly configured.
+**Fix:** In the Cloudflare Dashboard for `doge-consulting.com`:
+1. SSL/TLS → Overview → Set encryption mode to **Full**
+2. SSL/TLS → Edge Certificates → Enable **Always Use HTTPS**
+
+---
+
+### Problem 6: Domain doesn't resolve / times out
+**Cause:** DNS hasn't propagated yet (can take up to 24 hours, usually 5 minutes).
+**Diagnose:**
 ```powershell
-# Install cloudflared
-winget install Cloudflare.cloudflared --accept-package-agreements --accept-source-agreements
+nslookup doge-consulting.com 1.1.1.1
+```
+If this returns IP addresses (like 104.21.x.x), DNS is propagated. Flush local DNS:
+```powershell
+ipconfig /flushdns
+```
+Then wait 2-5 minutes and retry.
 
-# Start a quick tunnel (prints the public URL)
-cloudflared tunnel --url http://localhost:3000
+If nslookup returns "Non-existent domain", the domain's DNS is not pointed to Cloudflare.
+In the domain registrar, set nameservers to Cloudflare's (shown in the Cloudflare Dashboard).
+
+---
+
+### Problem 7: SMTP emails not sending / env vars missing
+**Cause:** Container was started before `.env` had SMTP values.
+**Fix:**
+1. Verify `.env` has all SMTP values:
+```powershell
+Select-String "SMTP" C:\doge-consulting\.env
+```
+Should show 5 SMTP lines.
+
+2. Restart the containers to pick up the env:
+```powershell
+docker compose down
+docker compose up -d
 ```
 
-The printed URL (e.g. `https://random-words.trycloudflare.com`) is your
-public site. **This URL changes every restart** — fine for testing,
-not for production.
+3. Verify env is in the container:
+```powershell
+docker exec doge-app printenv | findstr SMTP
+```
 
-### Option B — Named Tunnel (permanent URL with a custom domain)
+---
 
-Requires: a domain ($2-10/yr from Cloudflare Registrar, Porkbun, or
-Namecheap) added to a free Cloudflare account.
+### Problem 8: "port is already allocated" error on startup
+**Cause:** Another process is using port 3000.
+**Fix:**
+```powershell
+# Find what's using port 3000
+netstat -ano | findstr :3000
+
+# Kill the process (replace PID with the actual PID from above)
+# taskkill /PID <PID> /F
+
+# Or stop all Docker containers and retry
+docker compose down
+docker stop $(docker ps -q)
+docker compose up -d
+```
+
+---
+
+### Problem 9: "image not found" or "pull access denied"
+**Cause:** Docker is trying to pull instead of build.
+**Fix:** Make sure you build first:
+```powershell
+docker compose build --no-cache
+docker compose up -d
+```
+
+---
+
+### Problem 10: Tunnel container exits immediately
+**Cause:** Invalid tunnel token.
+**Diagnose:**
+```powershell
+docker logs doge-tunnel 2>&1
+```
+If you see "Invalid tunnel credentials" or "failed to unmarshal tunnel credentials":
+1. Check `.env` has the correct `CLOUDFLARE_TUNNEL_TOKEN`
+2. Make sure the token has no extra spaces or line breaks
+3. Get a fresh token from Cloudflare Dashboard → Networks → Tunnels → your tunnel → Configure → Install connector
+
+After fixing:
+```powershell
+docker compose down
+docker compose up -d
+```
+
+---
+
+## Appendix A: Creating a New Cloudflare Tunnel From Scratch
+
+Only follow this if no tunnel exists yet.
+
+1. Log in to https://one.dash.cloudflare.com/
+2. Your domain (`doge-consulting.com`) must already be added to Cloudflare
+3. Go to **Networks** → **Tunnels** → **Create a tunnel**
+4. Select **Cloudflared** as the connector type → **Next**
+5. Name: `doge-consulting` → **Save tunnel**
+6. On the "Install connector" page, you'll see a command like:
+   ```
+   cloudflared.exe service install eyJhIjoiMD...
+   ```
+   **Copy ONLY the `eyJ...` token** (everything after `install ` or `--token `).
+   This is your `CLOUDFLARE_TUNNEL_TOKEN`.
+   **Do NOT run the install command** — Docker runs cloudflared for you.
+7. Click **Next**
+8. Add a public hostname:
+   - Subdomain: (leave blank for root domain)
+   - Domain: `doge-consulting.com`
+   - Path: (leave blank)
+   - Type: `HTTP`
+   - URL: `localhost:3000`
+9. Click **Save tunnel**
+10. Go to **SSL/TLS** → **Overview** → Set mode to **Full**
+11. Go to **SSL/TLS** → **Edge Certificates** → Enable **Always Use HTTPS**
+12. Put the token in your `.env` file as `CLOUDFLARE_TUNNEL_TOKEN=eyJ...`
+
+---
+
+## Appendix B: File Reference
+
+These files exist in the repo and **MUST NOT be modified** by the deploying agent:
+
+| File | Purpose | Why It Must Not Be Modified |
+|------|---------|----------------------------|
+| `Dockerfile` | Multi-stage build (deps→builder→runner) | Copies full node_modules for Prisma CLI. Fixes CRLF. Tested and working. |
+| `docker-compose.yml` | Orchestrates app + tunnel | Uses `network_mode: "service:app"`. Reads secrets from `.env`. |
+| `docker-entrypoint.sh` | Container startup script | Uses `node ./node_modules/prisma/build/index.js` for Prisma CLI. Seeds by User count. |
+| `next.config.ts` | Next.js configuration | Enables standalone output via `DOCKER_BUILD=1` (set in Dockerfile). |
+| `.dockerignore` | Excludes files from build context | Keeps build context small and fast. |
+
+**The ONLY file the deploying agent creates is `.env`.**
+
+---
+
+## Appendix C: Complete Quick-Deploy Script
+
+For an agent that wants to run everything in one go, here is the exact
+sequence of commands. **All 3 REPLACE_THIS values must be filled in first.**
 
 ```powershell
-# 1. Install cloudflared (if not done above)
-winget install Cloudflare.cloudflared --accept-package-agreements --accept-source-agreements
+# ── Step 1: Ensure Docker is running ──
+$dockerReady = $false
+for ($i = 0; $i -lt 30; $i++) {
+  $result = docker info 2>&1
+  if ($LASTEXITCODE -eq 0) { $dockerReady = $true; break }
+  Start-Sleep -Seconds 3
+}
+if (-not $dockerReady) {
+  Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+  for ($i = 0; $i -lt 30; $i++) {
+    Start-Sleep -Seconds 3
+    $result = docker info 2>&1
+    if ($LASTEXITCODE -eq 0) { break }
+  }
+}
 
-# 2. Authenticate (opens browser)
-cloudflared tunnel login
+# ── Step 2: Clone or update ──
+if (-not (Test-Path C:\doge-consulting)) {
+  git clone https://github.com/jackyzou/doge-consulting.git C:\doge-consulting
+}
+Set-Location C:\doge-consulting
+git pull origin master
 
-# 3. Create tunnel
-cloudflared tunnel create doge-consulting
-# Note the Tunnel ID (UUID) printed
-
-# 4. Create the config file
-$tunnelId = "<PASTE_TUNNEL_ID_HERE>"
-$configDir = "$env:USERPROFILE\.cloudflared"
-New-Item -ItemType Directory -Path $configDir -Force
-
+# ── Step 3: Create .env (FILL IN VALUES BEFORE RUNNING) ──
 @"
-tunnel: $tunnelId
-credentials-file: $configDir\$tunnelId.json
-ingress:
-  - hostname: <YOUR_DOMAIN>
-    service: http://localhost:3000
-  - service: http_status:404
-"@ | Set-Content -Path "$configDir\config.yml" -Encoding UTF8
+JWT_SECRET=ce1214a1a81c5027192b7f3561b222ba54ffe23cfaecff7f9f07be9d51ec1ce87f624b75293c002a80b23703d93656f223c79668806fba006e09ec3e91983057
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=dogetech77@gmail.com
+SMTP_PASS=lelfqnwaxpgxzsnn
+SMTP_FROM=dogetech77@gmail.com
+CLOUDFLARE_TUNNEL_TOKEN=eyJhIjoiMDg5ZjY3NTQ1ZDRmZjc2Nzc2ZTMzNzIyZGIzYjQzNjAiLCJ0IjoiMzljNGI4NTQtYTIyOS00MWM2LTg1M2YtNGUwZWRjYzkyMWIyIiwicyI6Ik5qVTJORGd3WkRrdE1qaGxNaTAwTmpFMkxUazFOMlF0T0dFd1pXTTJPV1ZrTTJabSJ9
+"@ | Set-Content -Path "C:\doge-consulting\.env" -Encoding UTF8NoBOM
 
-# 5. Create DNS record
-cloudflared tunnel route dns doge-consulting <YOUR_DOMAIN>
+# ── Step 4: Create directories ──
+New-Item -ItemType Directory -Path "C:\doge-consulting\data" -Force | Out-Null
+New-Item -ItemType Directory -Path "C:\doge-consulting\logs" -Force | Out-Null
 
-# 6. Test
-cloudflared tunnel run doge-consulting
-# Verify your domain loads the site in a browser
+# ── Step 5: Remove stale database ──
+Remove-Item C:\doge-consulting\data\production.db -Force -ErrorAction SilentlyContinue
 
-# 7. Install as Windows service (auto-starts on boot)
-cloudflared service install
+# ── Step 6: Build ──
+docker compose build --no-cache
 
-# 8. Verify
-Get-Service cloudflared
-# Expected: Status = Running
+# ── Step 7: Start ──
+docker compose up -d
+
+# ── Step 8: Wait for healthy ──
+for ($i = 0; $i -lt 24; $i++) {
+  Start-Sleep -Seconds 5
+  $status = (docker inspect --format='{{.State.Health.Status}}' doge-app 2>$null)
+  Write-Host "Health: $status ($($i+1)/24)"
+  if ($status -eq "healthy") { break }
+}
+
+# ── Step 9: Seed ──
+docker exec doge-app node prisma/seed.mjs
+
+# ── Step 10: Verify ──
+Write-Host "`n=== Verification ==="
+Invoke-RestMethod http://localhost:3000/api/health
+$body = '{"email":"admin@dogeconsulting.com","password":"admin123"}'
+$r = Invoke-WebRequest -Uri "http://localhost:3000/api/auth/login" -Method POST -Body $body -ContentType "application/json" -UseBasicParsing
+Write-Host "Admin login: $($r.StatusCode)"
+docker exec doge-app printenv | findstr SMTP
+Write-Host "`n=== Deployment Complete ==="
+Write-Host "Local: http://localhost:3000"
+Write-Host "Public: https://doge-consulting.com"
 ```
-
----
-
-## 10. Prevent Sleep
-
-**Must be run in an Administrator PowerShell.**
-
-```powershell
-cd C:\doge-consulting
-powershell -ExecutionPolicy Bypass -File scripts\prevent-sleep.ps1
-```
-
-This configures:
-- Sleep timeout → Never (AC power)
-- Hibernate timeout → Never (AC power)
-- Display timeout → Never (AC power)
-- Lid close action → Do nothing (AC power)
-
-**Keep the laptop plugged in at all times.**
-
----
-
-## 11. Install GitHub Actions Self-Hosted Runner
-
-This enables CI/CD: push to `master` → tests run → auto-deploy.
-
-```powershell
-# 1. Create runner directory
-New-Item -ItemType Directory -Path "C:\actions-runner" -Force
-cd C:\actions-runner
-
-# 2. Download runner (check GitHub for latest version URL)
-#    Go to: https://github.com/jackyzou/doge-consulting/settings/actions/runners/new
-#    Select: Windows, x64
-#    Copy the download URL and token from the page
-
-Invoke-WebRequest -Uri <RUNNER_DOWNLOAD_URL> -OutFile actions-runner-win-x64.zip
-Add-Type -AssemblyName System.IO.Compression.FileSystem
-[System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD\actions-runner-win-x64.zip", "$PWD")
-
-# 3. Configure (use the token from the GitHub settings page)
-.\config.cmd --url https://github.com/jackyzou/doge-consulting --token <RUNNER_TOKEN> --name "laptop-runner" --labels "self-hosted,Windows,X64" --unattended
-
-# 4. Install and start as a Windows service
-.\svc.cmd install
-.\svc.cmd start
-```
-
-**Verify:**
-```powershell
-Get-Service actions.runner.*
-# Expected: Status = Running
-```
-
-Then check GitHub: **Repo → Settings → Actions → Runners** — the runner
-should appear as **Idle**.
-
-**Set the deployment path** (optional, defaults to `C:\doge-consulting`):
-Go to **Repo → Settings → Variables → Actions** and create a repository
-variable:
-- Name: `DOGE_SERVICE_PATH`
-- Value: `C:\doge-consulting`
-
----
-
-## 12. Schedule Database Backups
-
-**Must be run in an Administrator PowerShell.**
-
-```powershell
-schtasks /create /tn "DogeConsulting-Backup" `
-  /tr "powershell -ExecutionPolicy Bypass -File C:\doge-consulting\scripts\backup-db.ps1" `
-  /sc daily /st 02:00 /ru SYSTEM /f
-```
-
-Backups are stored in `C:\doge-consulting\data\backups\` with 30-day retention.
-
-Manual backup:
-```powershell
-powershell -ExecutionPolicy Bypass -File C:\doge-consulting\scripts\backup-db.ps1
-```
-
----
-
-## 13. Final Verification Checklist
-
-Run each check and confirm the expected result.
-
-```powershell
-# 1. App service is running
-(Get-Service DogeConsulting).Status -eq "Running"
-
-# 2. Health endpoint responds
-(Invoke-RestMethod http://localhost:3000/api/health).status -eq "ok"
-
-# 3. Homepage loads
-(Invoke-WebRequest http://localhost:3000 -UseBasicParsing).StatusCode -eq 200
-
-# 4. Login works
-$loginBody = '{"email":"admin@dogeconsulting.com","password":"admin123"}'
-$loginResp = Invoke-WebRequest -Uri http://localhost:3000/api/auth/login -Method POST -Body $loginBody -ContentType "application/json" -UseBasicParsing
-$loginResp.StatusCode -eq 200
-
-# 5. Tunnel service is running (skip if using quick tunnel)
-(Get-Service cloudflared -ErrorAction SilentlyContinue).Status -eq "Running"
-
-# 6. CI/CD runner is running
-(Get-Service actions.runner.* -ErrorAction SilentlyContinue).Status -eq "Running"
-
-# 7. Sleep is disabled
-powercfg /query SCHEME_CURRENT SUB_SLEEP STANDBYIDLE | Select-String "0x00000000"
-
-# 8. Backup task is scheduled
-schtasks /query /tn "DogeConsulting-Backup" /fo LIST | Select-String "Ready"
-```
-
----
-
-## Appendix: CI/CD Pipeline Summary
-
-The workflow at `.github/workflows/ci-deploy.yml` runs on:
-- **Pull requests to `master`**: Test only (GitHub-hosted Ubuntu runner)
-- **Push to `master`**: Test → Deploy (self-hosted Windows runner)
-
-### Test job (ubuntu-latest):
-1. `npm ci` — install dependencies
-2. `npx prisma generate` — generate Prisma client
-3. `npx vitest run` — run unit tests
-
-### Deploy job (self-hosted, Windows):
-4. `git pull` in `C:\doge-consulting` — fetch latest code
-5. `docker compose build --no-cache` — rebuild image
-6. `docker compose up -d` — restart containers
-7. Health check loop (100s timeout) — verify the deploy succeeded
-
-If any step fails, the workflow stops and reports failure on GitHub.
-
----
-
-## Appendix: Directory Layout on Target Machine
-
-```
-C:\doge-consulting\           ← project root (git clone)
-├── .env.local                ← production secrets (NOT in git)
-├── .next\                    ← build output
-├── data\
-│   ├── production.db         ← SQLite database
-│   └── backups\              ← daily backups
-├── logs\
-│   ├── stdout.log            ← app stdout (rotated at 10 MB)
-│   └── stderr.log            ← app stderr (rotated at 10 MB)
-├── node_modules\
-├── prisma\
-│   └── schema.prisma
-├── scripts\
-│   ├── deploy.ps1
-│   ├── install-service.ps1
-│   ├── setup-tunnel.ps1
-│   ├── prevent-sleep.ps1
-│   └── backup-db.ps1
-└── ...
-
-C:\tools\
-├── nssm.exe                  ← service manager
-
-C:\actions-runner\            ← GitHub Actions runner
-
-%USERPROFILE%\.cloudflared\   ← Cloudflare tunnel config & credentials
-```
-
----
-
-## Appendix: Troubleshooting
-
-| Symptom | Diagnosis | Fix |
-|---------|-----------|-----|
-| Service won't start | Check `logs\stderr.log` | Fix the error, then `Restart-Service DogeConsulting` |
-| Port 3000 already in use | `netstat -ano \| findstr :3000` | Kill the PID: `taskkill /F /PID <pid>` |
-| Health check returns 503 | Database unreachable | Verify `DATABASE_PATH` in `.env.local`, run `npx prisma migrate deploy` |
-| Build fails with native addon error | `better-sqlite3` compilation issue | Ensure `npm ci` completed without errors; install Visual Studio Build Tools if needed: `npm install -g windows-build-tools` |
-| Tunnel gives 502 | App not running on localhost:3000 | Start the service first: `Start-Service DogeConsulting` |
-| Runner shows offline on GitHub | Service crashed | `Get-Service actions.runner.* \| Restart-Service` |
-| PC went to sleep | Power settings reset after Windows Update | Re-run `scripts\prevent-sleep.ps1` |
