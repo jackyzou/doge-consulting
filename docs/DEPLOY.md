@@ -6,11 +6,25 @@
 
 ---
 
+## Production Architecture
+
+```
+Internet → doge-consulting.com (Cloudflare DNS + SSL)
+                ↓
+         Cloudflare Tunnel (named tunnel with token)
+                ↓
+         Docker: cloudflared (network_mode: service:app)
+                ↓  localhost:3000
+         Docker: Next.js standalone server
+                ↓
+         Volume: ./data/production.db (SQLite)
+```
+
 ## Deployment Methods
 
 | Method | Best for | Prerequisites |
 |--------|----------|---------------|
-| **Docker** (recommended) | Target laptop, clean deploys | Docker Desktop |
+| **Docker** (recommended) | Production, clean deploys | Docker Desktop |
 | **Bare Metal** | Development, debugging | Node.js 20+, Git |
 
 ---
@@ -42,6 +56,8 @@ cd C:\doge-consulting
 
 ## A.2. Create Environment File
 
+Create `.env` in the project root with all required credentials:
+
 ```powershell
 # Generate a random JWT secret
 $jwtSecret = node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
@@ -51,13 +67,49 @@ $jwtSecret = node -e "console.log(require('crypto').randomBytes(64).toString('he
 
 @"
 JWT_SECRET=$jwtSecret
+
+# ── SMTP (Gmail App Password) ──
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=dogetech77@gmail.com
+SMTP_PASS=<YOUR_GMAIL_APP_PASSWORD>
+SMTP_FROM=dogetech77@gmail.com
+
+# ── Cloudflare Named Tunnel ──
+CLOUDFLARE_TUNNEL_TOKEN=<YOUR_TUNNEL_TOKEN>
+
+# ── Airwallex (optional) ──
+# AIRWALLEX_CLIENT_ID=
+# AIRWALLEX_API_KEY=
 "@ | Set-Content -Path "C:\doge-consulting\.env" -Encoding UTF8
 ```
 
-> **Optional**: Add SMTP and Airwallex vars to `.env` if you need
-> email notifications or payment processing.
+> **How to get each value:**
+> | Variable | How to get it |
+> |----------|---------------|
+> | `JWT_SECRET` | Auto-generated above |
+> | `SMTP_PASS` | Google Account → Security → 2FA → App Passwords → create "Mail" password |
+> | `CLOUDFLARE_TUNNEL_TOKEN` | Cloudflare Dashboard → Networks → Tunnels → your tunnel → Configure → Install connector → copy the `eyJ...` token |
 
-## A.3. Create Data Directories
+## A.3. Cloudflare Tunnel Setup (Custom Domain)
+
+If you already have a named tunnel configured for `doge-consulting.com`, skip to A.4.
+
+1. Go to **https://one.dash.cloudflare.com/**
+2. Navigate to **Networks → Tunnels → Create a tunnel**
+3. Choose **Cloudflared**, name it `doge-consulting`
+4. On the **Install connector** step, copy the token (the `eyJ...` string after `--token`)
+5. On the **Route tunnel** step, add a public hostname:
+   - **Domain:** `doge-consulting.com`
+   - **Type:** `HTTP`
+   - **URL:** `localhost:3000`
+6. Save the tunnel
+7. In **SSL/TLS → Overview**, set encryption mode to **Full**
+8. In **SSL/TLS → Edge Certificates**, enable **Always Use HTTPS**
+
+Paste the token into your `.env` file as `CLOUDFLARE_TUNNEL_TOKEN`.
+
+## A.4. Create Data Directories
 
 ```powershell
 New-Item -ItemType Directory -Path "C:\doge-consulting\data"    -Force
@@ -65,7 +117,7 @@ New-Item -ItemType Directory -Path "C:\doge-consulting\data\backups" -Force
 New-Item -ItemType Directory -Path "C:\doge-consulting\logs"    -Force
 ```
 
-## A.4. Build & Start
+## A.5. Build & Start
 
 ```powershell
 cd C:\doge-consulting
@@ -73,28 +125,30 @@ docker compose up -d --build
 ```
 
 This will:
-1. Build the Next.js app in a multi-stage Docker image
+1. Build the Next.js app in a multi-stage Docker image (~3 min)
 2. Run Prisma migrations automatically
-3. Seed the database if empty (admin user, products, sample data)
-4. Start the app on port 3000
-5. Start a Cloudflare quick tunnel (prints the public URL)
+3. Start the app on port 3000
+4. Connect the Cloudflare named tunnel to `doge-consulting.com`
 
-**View the tunnel URL:**
+**Note:** The database is auto-seeded on first start only if no users exist.
+To manually seed (if needed):
 ```powershell
-docker compose logs tunnel
-# Look for the line: "Your quick Tunnel has been created! Visit it at https://..."
+docker exec doge-app node prisma/seed.mjs
 ```
 
-## A.5. Verify
+## A.6. Verify
 
 ```powershell
-# Health check
+# Health check (local)
 Invoke-RestMethod http://localhost:3000/api/health
 # Expected: { "status": "ok", ... }
 
-# Homepage
-(Invoke-WebRequest http://localhost:3000 -UseBasicParsing).StatusCode
-# Expected: 200
+# Health check (via domain)
+Invoke-RestMethod https://doge-consulting.com/api/health
+# Expected: { "status": "ok", ... }
+
+# Check containers are running
+docker compose ps
 ```
 
 **Seeded credentials:**
@@ -104,25 +158,6 @@ Invoke-RestMethod http://localhost:3000/api/health
 | Customer | `sarah@example.com` | `user123` |
 
 > ⚠️ **Change the admin password** after first login.
-
-## A.6. Named Tunnel (Custom Domain)
-
-To use a permanent domain instead of a random quick tunnel URL:
-
-1. Create a Cloudflare tunnel in the dashboard and get a tunnel token
-2. Update `.env`:
-   ```
-   CLOUDFLARE_TUNNEL_TOKEN=eyJ...your-token...
-   ```
-3. Edit `docker-compose.yml` — in the `tunnel` service, replace:
-   ```yaml
-   command: tunnel --no-autoupdate --url http://app:3000
-   ```
-   with:
-   ```yaml
-   command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
-   ```
-4. Restart: `docker compose up -d`
 
 ## A.7. Useful Docker Commands
 
@@ -135,7 +170,17 @@ docker compose up -d --build     # rebuild and restart
 docker compose ps                # check container status
 ```
 
-## A.8. Database Backup
+## A.8. Updating (Deploy New Code)
+
+```powershell
+cd C:\doge-consulting
+git pull origin master
+docker compose build --no-cache
+docker compose up -d
+docker exec doge-app node prisma/seed.mjs   # only if new seed data needed
+```
+
+## A.9. Database Backup
 
 ```powershell
 # Manual backup
@@ -148,13 +193,18 @@ schtasks /create /tn "DogeConsulting-Backup" `
   /sc daily /st 02:00 /ru SYSTEM /f
 ```
 
-## A.9. CI/CD with Docker
+## A.10. CI/CD with Docker
 
-To enable auto-deploy on git push:
+The workflow at `.github/workflows/ci-deploy.yml` runs automatically:
+
+- **On pull request to `master`**: Runs tests on GitHub-hosted Ubuntu runner (free)
+- **On push to `master`**: Runs tests → then deploys via self-hosted runner on the laptop
+
+To enable auto-deploy:
 
 1. Set repository variable `DEPLOY_MODE` = `docker` in GitHub → Settings → Variables → Actions
 2. Install a self-hosted GitHub Actions runner (see Method B, Step 11)
-3. On push to `master`, the workflow will: test → `docker compose build` → `docker compose up -d` → health check
+3. On push to `master`, the workflow will: test → `git pull` → `docker compose build` → `docker compose up -d` → health check
 
 ---
 
@@ -525,17 +575,20 @@ schtasks /query /tn "DogeConsulting-Backup" /fo LIST | Select-String "Ready"
 
 ## Appendix: CI/CD Pipeline Summary
 
-The workflow at `.github/workflows/ci-deploy.yml` triggers on every push
-to `master`. It runs on the self-hosted runner and performs:
+The workflow at `.github/workflows/ci-deploy.yml` runs on:
+- **Pull requests to `master`**: Test only (GitHub-hosted Ubuntu runner)
+- **Push to `master`**: Test → Deploy (self-hosted Windows runner)
 
+### Test job (ubuntu-latest):
 1. `npm ci` — install dependencies
 2. `npx prisma generate` — generate Prisma client
-3. `npx vitest run` — run all 163 unit tests
+3. `npx vitest run` — run unit tests
+
+### Deploy job (self-hosted, Windows):
 4. `git pull` in `C:\doge-consulting` — fetch latest code
-5. `npm ci` + `npx prisma generate` + `npx prisma migrate deploy` — update deps & DB
-6. `npm run build` — production build
-7. `Restart-Service DogeConsulting` — restart the app
-8. Health check loop (30s timeout) — verify the deploy succeeded
+5. `docker compose build --no-cache` — rebuild image
+6. `docker compose up -d` — restart containers
+7. Health check loop (100s timeout) — verify the deploy succeeded
 
 If any step fails, the workflow stops and reports failure on GitHub.
 

@@ -20,12 +20,11 @@ services:
       - DATABASE_PATH=/app/data/production.db
       - DATABASE_URL=file:/app/data/production.db
       - JWT_SECRET=${JWT_SECRET}
-      # Optional — uncomment if needed:
-      # - SMTP_HOST=${SMTP_HOST}
-      # - SMTP_PORT=${SMTP_PORT}
-      # - SMTP_USER=${SMTP_USER}
-      # - SMTP_PASS=${SMTP_PASS}
-      # - SMTP_FROM=${SMTP_FROM}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM}
       # - AIRWALLEX_CLIENT_ID=${AIRWALLEX_CLIENT_ID}
       # - AIRWALLEX_API_KEY=${AIRWALLEX_API_KEY}
     healthcheck:
@@ -39,9 +38,8 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: doge-tunnel
     restart: unless-stopped
+    network_mode: "service:app"
     depends_on:
       app:
         condition: service_healthy
-    command: tunnel --no-autoupdate --url http://app:3000
-    # For a named tunnel with a custom domain, replace the command above with:
-    #   command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}

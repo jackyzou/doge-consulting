@@ -15,7 +15,7 @@ export type Locale = "en" | "zh-CN" | "zh-TW" | "es" | "fr";
 export const LOCALES: { code: Locale; name: string; flag: string }[] = [
   { code: "en", name: "English", flag: "🇺🇸" },
   { code: "zh-CN", name: "简体中文", flag: "🇨🇳" },
-  { code: "zh-TW", name: "繁體中文", flag: "🇹🇼" },
+  { code: "zh-TW", name: "繁體中文", flag: "�🇰" },
   { code: "es", name: "Español", flag: "🇪🇸" },
   { code: "fr", name: "Français", flag: "🇫🇷" },
 ];

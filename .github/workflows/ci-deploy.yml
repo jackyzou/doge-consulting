@@ -3,6 +3,8 @@ name: CI/CD — Test & Deploy
 on:
   push:
     branches: [master]
+  pull_request:
+    branches: [master]
 
 # Cancel any in-progress runs for the same branch
 concurrency:
@@ -10,16 +12,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test-and-deploy:
-    name: Test → Build → Deploy
-    runs-on: [self-hosted, Windows, X64]
-    timeout-minutes: 15
-
-    env:
-      NODE_ENV: test
+  test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
-      # ── Checkout & setup ──────────────────────────────────────
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -29,17 +27,26 @@ jobs:
           node-version: 20
           cache: npm
 
-      # ── Install & generate ────────────────────────────────────
       - name: Install dependencies
         run: npm ci
 
       - name: Generate Prisma client
         run: npx prisma generate
 
-      # ── Test ──────────────────────────────────────────────────
       - name: Run unit tests
         run: npx vitest run
 
+  deploy:
+    name: Build → Deploy
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 15
+
+    env:
+      NODE_ENV: production
+
+    steps:
       # ── Deploy to production ──────────────────────────────────
       - name: Deploy (Docker)
         if: vars.DEPLOY_MODE == 'docker'
