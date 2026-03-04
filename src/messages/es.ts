@@ -435,6 +435,9 @@ const messages = {
     networkError: "Error de red. Inténtalo de nuevo.",
     signingIn: "Iniciando sesión…",
     creatingAccount: "Creando cuenta…",
+    continueWithGoogle: "Continuar con Google",
+    orContinueWith: "o continuar con correo",
+    googleError: "Error al iniciar sesión con Google. Inténtalo de nuevo.",
   },
   header: {
     adminPanel: "Panel de admin",

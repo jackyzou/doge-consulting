@@ -435,6 +435,9 @@ const messages = {
     networkError: "Network error. Please try again.",
     signingIn: "Signing in…",
     creatingAccount: "Creating account…",
+    continueWithGoogle: "Continue with Google",
+    orContinueWith: "or continue with email",
+    googleError: "Google sign-in failed. Please try again.",
   },
   header: {
     adminPanel: "Admin Panel",

@@ -435,6 +435,9 @@ const messages = {
     networkError: "網路錯誤，請重試。",
     signingIn: "正在登入…",
     creatingAccount: "正在建立帳戶…",
+    continueWithGoogle: "使用 Google 繼續",
+    orContinueWith: "或使用電郵繼續",
+    googleError: "Google 登入失敗，請重試。",
   },
   header: {
     adminPanel: "管理面板",

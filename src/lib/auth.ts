@@ -62,6 +62,9 @@ export async function login(email: string, password: string): Promise<{ user: Se
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) return null;
 
+  // Google-only users have no password — can't login with password
+  if (!user.passwordHash) return null;
+
   const valid = await verifyPassword(password, user.passwordHash);
   if (!valid) return null;
 
@@ -107,3 +110,125 @@ export const COOKIE_OPTIONS = {
   path: "/",
   maxAge: 60 * 60 * 24 * 7, // 7 days
 };
+
+// ─── Google OAuth 2.0 ────────────────────────────────────────
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
+
+export function getGoogleAuthUrl(redirectUri: string, state?: string): string {
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: redirectUri,
+    response_type: "code",
+    scope: "openid email profile",
+    access_type: "offline",
+    prompt: "select_account",
+    ...(state ? { state } : {}),
+  });
+  return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+}
+
+interface GoogleTokenResponse {
+  access_token: string;
+  id_token: string;
+  token_type: string;
+}
+
+interface GoogleUserInfo {
+  sub: string;       // Google unique ID
+  email: string;
+  name: string;
+  picture?: string;
+  email_verified: boolean;
+}
+
+export async function exchangeGoogleCode(code: string, redirectUri: string): Promise<GoogleUserInfo> {
+  // Exchange authorization code for tokens
+  const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      code,
+      client_id: GOOGLE_CLIENT_ID,
+      client_secret: GOOGLE_CLIENT_SECRET,
+      redirect_uri: redirectUri,
+      grant_type: "authorization_code",
+    }),
+  });
+
+  if (!tokenRes.ok) {
+    const err = await tokenRes.text();
+    throw new Error(`Google token exchange failed: ${err}`);
+  }
+
+  const tokens: GoogleTokenResponse = await tokenRes.json();
+
+  // Get user info from Google
+  const userRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+    headers: { Authorization: `Bearer ${tokens.access_token}` },
+  });
+
+  if (!userRes.ok) {
+    throw new Error("Failed to fetch Google user info");
+  }
+
+  return userRes.json();
+}
+
+export async function loginOrCreateGoogleUser(googleUser: GoogleUserInfo): Promise<{ user: SessionUser; token: string }> {
+  // 1. Try to find by googleId
+  let user = await prisma.user.findUnique({ where: { googleId: googleUser.sub } });
+
+  if (!user) {
+    // 2. Try to find by email (existing password-based user linking their Google account)
+    user = await prisma.user.findUnique({ where: { email: googleUser.email } });
+
+    if (user) {
+      // Link Google to existing account
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          googleId: googleUser.sub,
+          avatarUrl: googleUser.picture || user.avatarUrl,
+        },
+      });
+    } else {
+      // 3. Create new user from Google profile
+      user = await prisma.user.create({
+        data: {
+          email: googleUser.email,
+          name: googleUser.name,
+          googleId: googleUser.sub,
+          avatarUrl: googleUser.picture,
+          passwordHash: "", // no password for Google-only users
+          role: "user",
+          language: "en",
+        },
+      });
+
+      // Link any existing quotes / orders submitted under this email
+      await prisma.quote.updateMany({
+        where: { customerEmail: googleUser.email, customerId: null },
+        data: { customerId: user.id },
+      });
+      await prisma.order.updateMany({
+        where: { customerEmail: googleUser.email, customerId: null },
+        data: { customerId: user.id },
+      });
+    }
+  }
+
+  const sessionUser: SessionUser = {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role as "admin" | "user",
+  };
+
+  const token = createToken(sessionUser);
+  return { user: sessionUser, token };
+}
+
+export function isGoogleOAuthConfigured(): boolean {
+  return !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET);
+}

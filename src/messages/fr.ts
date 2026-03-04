@@ -435,6 +435,9 @@ const messages = {
     networkError: "Erreur réseau. Veuillez réessayer.",
     signingIn: "Connexion en cours…",
     creatingAccount: "Création du compte…",
+    continueWithGoogle: "Continuer avec Google",
+    orContinueWith: "ou continuer avec email",
+    googleError: "Échec de la connexion Google. Veuillez réessayer.",
   },
   header: {
     adminPanel: "Panneau d'admin",
