@@ -908,7 +908,220 @@ These files exist in the repo and **MUST NOT be modified** by the deploying agen
 
 ---
 
-## Appendix C: Complete Quick-Deploy Script
+## Appendix C: CI/CD Setup (GitHub Actions Self-Hosted Runner)
+
+### How CI/CD Works
+
+```
+Developer laptop                 GitHub                    Target laptop (production)
+      │                            │                              │
+      │  git push master           │                              │
+      ├───────────────────────────>│                              │
+      │                            │  CI: test job (ubuntu)       │
+      │                            │  npm ci → prisma generate    │
+      │                            │  → vitest run                │
+      │                            │                              │
+      │                            │  if tests pass:              │
+      │                            │  CD: deploy job ────────────>│
+      │                            │  (runs ON target laptop)     │
+      │                            │                              │  git pull
+      │                            │                              │  docker compose build
+      │                            │                              │  docker compose up -d
+      │                            │                              │  health check
+      │                            │                              │
+```
+
+- **CI (Continuous Integration)**: Runs on GitHub's free `ubuntu-latest` runners.
+  Triggers on every push to `master` and every pull request. Runs `vitest` tests.
+- **CD (Continuous Deployment)**: Runs on the **target laptop** via a self-hosted runner.
+  Only triggers after CI passes AND only on push to `master` (not PRs).
+
+### Prerequisites
+
+The target laptop must already have:
+1. ✅ Docker Desktop running (from Steps 1-9 above)
+2. ✅ The site live at `https://doge-consulting.com` (from Steps 1-9 above)
+3. ✅ The repo cloned at `C:\doge-consulting`
+4. ❓ A GitHub Actions self-hosted runner (set up below)
+
+### C.1: Install the Self-Hosted Runner on the Target Laptop
+
+**These steps are performed ON THE TARGET LAPTOP (the production machine).**
+
+#### C.1.1: Get the runner token from GitHub
+
+1. Open a browser on the target laptop
+2. Go to: `https://github.com/jackyzou/doge-consulting/settings/actions/runners/new`
+3. If prompted, log in to GitHub with write access to the repo
+4. You should see a page titled **"Add new self-hosted runner"**
+5. Select:
+   - Runner image: **Windows**
+   - Architecture: **x64**
+6. The page shows a **Download** section and a **Configure** section with commands.
+   Follow the commands below (they match what the page shows):
+
+#### C.1.2: Download and extract the runner
+
+Open **PowerShell as Administrator** on the target laptop and run:
+
+```powershell
+# Create runner directory
+New-Item -ItemType Directory -Path "C:\actions-runner" -Force
+Set-Location C:\actions-runner
+
+# Download the latest runner (check the GitHub page for the exact URL — it changes with versions)
+# As of 2025, the URL looks like this (replace VERSION with what the page shows):
+Invoke-WebRequest -Uri "https://github.com/actions/runner/releases/download/v2.322.0/actions-runner-win-x64-2.322.0.zip" -OutFile "actions-runner-win-x64.zip"
+
+# Extract
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+[System.IO.Compression.ZipFile]::ExtractToDirectory("$PWD\actions-runner-win-x64.zip", "$PWD")
+```
+
+**NOTE:** The exact download URL and version number are shown on the GitHub page from step C.1.1.
+Use the URL from that page — it will be the latest version.
+
+#### C.1.3: Configure the runner
+
+Still in `C:\actions-runner`:
+
+```powershell
+.\config.cmd --url https://github.com/jackyzou/doge-consulting --token YOUR_TOKEN_FROM_GITHUB_PAGE
+```
+
+**Replace `YOUR_TOKEN_FROM_GITHUB_PAGE`** with the token shown on the GitHub runner setup page
+(it's in the "Configure" section, after `--token`). The token is a short alphanumeric string.
+
+When prompted:
+- **Runner group:** press Enter (use default)
+- **Runner name:** press Enter (use default, usually the computer name)
+- **Additional labels:** type `Windows,X64` then press Enter
+- **Work folder:** press Enter (use default `_work`)
+
+**Expected output:**
+```
+√ Connected to GitHub
+√ Runner successfully added
+√ Runner settings saved
+```
+
+#### C.1.4: Install as a Windows service (so it starts automatically)
+
+```powershell
+.\svc.cmd install
+.\svc.cmd start
+```
+
+**Expected output:**
+```
+Service actions.runner.jackyzou-doge-consulting.COMPUTER-NAME was successfully installed
+Service actions.runner.jackyzou-doge-consulting.COMPUTER-NAME successfully started
+```
+
+The runner is now running as a Windows service. It will:
+- Start automatically when Windows boots
+- Listen for deploy jobs from GitHub Actions
+- Run the deploy steps inside `C:\doge-consulting`
+
+#### C.1.5: Verify the runner is online
+
+1. Go to: `https://github.com/jackyzou/doge-consulting/settings/actions/runners`
+2. You should see your runner listed with a **green "Idle"** status
+
+If it shows "Offline":
+```powershell
+# Check service status
+Get-Service actions.runner.* | Format-List Name, Status
+# If stopped, start it:
+.\svc.cmd start
+```
+
+### C.2: GitHub Repository Variable (Already Set)
+
+The repo needs a variable `DEPLOY_MODE` set to `docker`. This tells the workflow
+to use the Docker deploy path.
+
+**This is already configured.** To verify:
+- Go to `https://github.com/jackyzou/doge-consulting/settings/variables/actions`
+- You should see `DEPLOY_MODE` = `docker`
+
+If it's missing, create it:
+- Click "New repository variable"
+- Name: `DEPLOY_MODE`
+- Value: `docker`
+- Click "Add variable"
+
+### C.3: Test the CI/CD Pipeline
+
+On the **developer laptop** (not the target laptop):
+
+```powershell
+cd C:\Users\jiaqizou\doge-consulting
+
+# Make a small change (e.g., add a comment to any file)
+echo "# CI/CD test" >> README.md
+git add README.md
+git commit -m "test: verify CI/CD pipeline"
+git push origin master
+```
+
+Then watch the pipeline:
+1. Go to `https://github.com/jackyzou/doge-consulting/actions`
+2. You should see a new workflow run
+3. The **test** job should run first (on ubuntu, 1-2 minutes)
+4. If tests pass, the **deploy** job runs (on the target laptop, 3-5 minutes)
+5. The deploy job will: `git pull` → `docker compose build --no-cache` → `docker compose up -d` → health check
+
+**Expected final status:** Both jobs show ✅ green checkmarks.
+
+### C.4: How Ongoing Development Works
+
+After setup, the workflow is:
+
+1. **Developer** writes code on the dev laptop
+2. **Developer** pushes to `master` (or merges a PR)
+3. **GitHub Actions CI** runs tests automatically on ubuntu
+4. **If tests pass**, GitHub Actions CD runs on the target laptop:
+   - Pulls latest code
+   - Rebuilds Docker image
+   - Restarts containers
+   - Verifies health check
+5. **Site is updated** at `https://doge-consulting.com` within ~5 minutes of push
+
+No manual intervention needed on the target laptop after initial setup.
+
+### C.5: Troubleshooting CI/CD
+
+**Deploy job shows "Waiting for a runner":**
+→ The self-hosted runner on the target laptop is offline.
+→ On the target laptop, run:
+```powershell
+Set-Location C:\actions-runner
+.\svc.cmd status
+# If stopped:
+.\svc.cmd start
+```
+
+**Deploy job fails with "docker: command not found":**
+→ Docker Desktop is not running on the target laptop.
+→ On the target laptop, start Docker Desktop and ensure it's running.
+
+**Deploy job fails at "git pull" with auth error:**
+→ The target laptop needs Git credentials configured.
+→ On the target laptop:
+```powershell
+cd C:\doge-consulting
+git config credential.helper manager
+git pull origin master
+# Enter GitHub credentials when prompted — they'll be saved
+```
+
+**Deploy job fails at "docker compose build":**
+→ Same as build troubleshooting in the main guide above. Usually retry works.
+
+---
+
+## Appendix D: Complete Quick-Deploy Script
 
 For an agent that wants to run everything in one go, here is the exact
 sequence of commands. **All 3 REPLACE_THIS values must be filled in first.**
