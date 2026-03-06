@@ -54,8 +54,9 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/src/generated ./src/generated
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
-# Copy seed script
+# Copy seed scripts
 COPY --from=builder /app/prisma/seed.mjs ./prisma/seed.mjs
+COPY --from=builder /app/prisma/seed-blog.mjs ./prisma/seed-blog.mjs
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data
