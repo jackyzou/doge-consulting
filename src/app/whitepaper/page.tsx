@@ -44,6 +44,13 @@ export default function WhitepaperPage() {
         body: JSON.stringify({ email }),
       });
 
+      // Send whitepaper email
+      await fetch("/api/whitepaper", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, name }),
+      });
+
       // Try to create account if name provided
       if (name) {
         const signupRes = await fetch("/api/auth/signup", {
@@ -94,7 +101,7 @@ export default function WhitepaperPage() {
                       <CheckCircle className="h-16 w-16 text-teal mx-auto mb-4" />
                       <h3 className="text-xl font-bold mb-2">Guide Unlocked! 🎉</h3>
                       <p className="text-muted-foreground mb-6">Your comprehensive China Sourcing Playbook is ready.</p>
-                      <a href="/china-sourcing-playbook.pdf" download>
+                      <a href="/api/whitepaper/download">
                         <Button size="lg" className="w-full bg-teal hover:bg-teal/90 gap-2">
                           <Download className="h-5 w-5" /> Download PDF Guide
                         </Button>
