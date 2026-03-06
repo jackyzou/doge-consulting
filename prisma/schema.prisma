@@ -303,3 +303,21 @@ model Subscriber {
   email     String   @unique
   createdAt DateTime @default(now())
 }
+
+// ──────────────────────────────────────────
+// Blog Posts (admin-managed CMS)
+// ──────────────────────────────────────────
+model BlogPost {
+  id         String   @id @default(cuid())
+  slug       String   @unique
+  title      String
+  excerpt    String
+  content    String   // markdown
+  category   String
+  emoji      String   @default("📦")
+  published  Boolean  @default(false)
+  authorName String   @default("Doge Consulting Team")
+  readTime   String   @default("5 min")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}

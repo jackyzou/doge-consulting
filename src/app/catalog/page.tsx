@@ -208,6 +208,51 @@ export default function CatalogPage() {
           </div>
         )}
 
+        {/* Free Consultation Section */}
+        <div className="mt-16 grid md:grid-cols-2 gap-8">
+          <div className="p-8 rounded-2xl bg-gradient-to-br from-teal/5 to-teal/10 border border-teal/20">
+            <div className="text-3xl mb-4">📞</div>
+            <h2 className="text-xl font-bold mb-2">Free Sourcing Consultation</h2>
+            <p className="text-muted-foreground mb-4 text-sm">
+              Not sure what to import or how to start? Book a free 30-minute consultation with our sourcing experts.
+              We&apos;ll help you identify profitable products, estimate costs, and plan your import strategy.
+            </p>
+            <ul className="text-sm space-y-2 mb-6">
+              <li className="flex items-center gap-2">✅ Product selection guidance</li>
+              <li className="flex items-center gap-2">✅ Factory price estimates</li>
+              <li className="flex items-center gap-2">✅ Shipping cost breakdown</li>
+              <li className="flex items-center gap-2">✅ Customs duty calculation</li>
+              <li className="flex items-center gap-2">✅ No commitment required</li>
+            </ul>
+            <Link href="/contact">
+              <Button className="bg-teal hover:bg-teal/90 w-full">
+                Book Free Consultation <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+
+          <div className="p-8 rounded-2xl bg-gradient-to-br from-gold/5 to-gold/10 border border-gold/20">
+            <div className="text-3xl mb-4">📘</div>
+            <h2 className="text-xl font-bold mb-2">Free China Sourcing Playbook</h2>
+            <p className="text-muted-foreground mb-4 text-sm">
+              Download our comprehensive 50+ page guide on importing from China. Learn how products are manufactured,
+              shipped, and delivered — plus business models that generate $10K-$100K/month.
+            </p>
+            <ul className="text-sm space-y-2 mb-6">
+              <li className="flex items-center gap-2">📊 Factory prices vs retail (15 categories)</li>
+              <li className="flex items-center gap-2">🏭 Manufacturing city guide (12 cities)</li>
+              <li className="flex items-center gap-2">🚢 Complete logistics walkthrough</li>
+              <li className="flex items-center gap-2">💰 3 proven business models</li>
+              <li className="flex items-center gap-2">🛂 Customs & tariff breakdown</li>
+            </ul>
+            <Link href="/whitepaper">
+              <Button variant="outline" className="w-full border-gold text-gold hover:bg-gold/10">
+                Download Free Guide <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+
         {/* Bottom CTA */}
         <div className="text-center mt-16 p-8 rounded-2xl bg-gradient-to-r from-teal/5 to-gold/5 border">
           <h2 className="text-2xl font-bold mb-3">Don&apos;t See What You Need?</h2>
