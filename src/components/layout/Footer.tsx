@@ -49,6 +49,7 @@ export function Footer() {
               <li><Link href="/faq" className="hover:text-white transition-colors">{t("footer.faqLink")}</Link></li>
               <li><Link href="/contact" className="hover:text-white transition-colors">{t("footer.contactLink")}</Link></li>
               <li><Link href="/quote" className="hover:text-white transition-colors">{t("footer.getQuote")}</Link></li>
+              <li><Link href="/privacy" className="hover:text-white transition-colors">{t("footer.privacyPolicy")}</Link></li>
             </ul>
           </div>
 

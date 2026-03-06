@@ -161,6 +161,7 @@ const messages = {
     faqLink: "常见问题",
     contactLink: "联系我们",
     getQuote: "获取报价",
+    privacyPolicy: "隐私政策",
     contactTitle: "联系方式",
     locationUS: "美国华盛顿州西雅图",
     locationHK: "中国香港特别行政区",

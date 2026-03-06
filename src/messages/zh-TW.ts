@@ -161,6 +161,7 @@ const messages = {
     faqLink: "常見問題",
     contactLink: "聯絡我們",
     getQuote: "取得報價",
+    privacyPolicy: "隱私政策",
     contactTitle: "聯絡方式",
     locationUS: "Seattle, WA, USA",
     locationHK: "Hong Kong SAR",

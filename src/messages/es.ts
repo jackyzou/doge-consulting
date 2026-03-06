@@ -161,6 +161,7 @@ const messages = {
     faqLink: "Preguntas frecuentes",
     contactLink: "Contacto",
     getQuote: "Obtener cotización",
+    privacyPolicy: "Política de Privacidad",
     contactTitle: "Contáctanos",
     locationUS: "Seattle, WA, USA",
     locationHK: "Hong Kong SAR",
