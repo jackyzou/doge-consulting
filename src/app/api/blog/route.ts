@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
         slug: true,
         title: true,
         excerpt: true,
+        content: true,
         category: true,
         emoji: true,
         authorName: true,

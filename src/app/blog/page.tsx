@@ -13,11 +13,17 @@ interface BlogPost {
   slug: string;
   title: string;
   excerpt: string;
+  content: string;
   category: string;
   emoji: string;
   authorName: string;
   readTime: string;
   createdAt: string;
+}
+
+function getCoverImage(content: string): string | null {
+  const match = content?.match(/!\[[^\]]*\]\(([^)]+)\)/);
+  return match ? match[1] : null;
 }
 
 export default function BlogPage() {
@@ -87,7 +93,9 @@ export default function BlogPage() {
                 <Card className="mb-10 overflow-hidden hover:shadow-lg transition-shadow group">
                   <CardContent className="p-0">
                     <div className="grid md:grid-cols-2">
-                      <div className="h-64 md:h-auto bg-gradient-to-br from-teal/10 to-gold/10 flex items-center justify-center text-8xl">{featured.emoji}</div>
+                      <div className="h-64 md:h-auto bg-gradient-to-br from-teal/10 to-gold/10 flex items-center justify-center text-8xl overflow-hidden">
+                        {getCoverImage(featured.content) ? <img src={getCoverImage(featured.content)!} alt={featured.title} className="h-full w-full object-cover" /> : featured.emoji}
+                      </div>
                       <div className="p-8 flex flex-col justify-center">
                         <Badge className="w-fit mb-3">{featured.category}</Badge>
                         <h2 className="text-2xl font-bold mb-3 group-hover:text-teal transition-colors">{featured.title}</h2>
@@ -108,8 +116,10 @@ export default function BlogPage() {
               {rest.map((post, i) => (
                 <motion.div key={post.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
                   <Link href={`/blog/${post.slug}`}>
-                    <Card className="h-full hover:shadow-lg transition-shadow group">
-                      <div className="h-40 bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center text-5xl rounded-t-lg">{post.emoji}</div>
+                    <Card className="h-full hover:shadow-lg transition-shadow group overflow-hidden">
+                      <div className="h-40 bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center text-5xl rounded-t-lg overflow-hidden">
+                        {getCoverImage(post.content) ? <img src={getCoverImage(post.content)!} alt={post.title} className="h-full w-full object-cover" /> : post.emoji}
+                      </div>
                       <CardContent className="p-5">
                         <Badge variant="secondary" className="mb-2 text-xs">{post.category}</Badge>
                         <h3 className="font-semibold mb-2 line-clamp-2 group-hover:text-teal transition-colors">{post.title}</h3>
