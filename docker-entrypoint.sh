@@ -22,12 +22,9 @@ if [ "$USER_COUNT" = "0" ]; then
   node prisma/seed.mjs
 fi
 
-# Seed blog posts if none exist
-BLOG_COUNT=$(node -e "const D=require('better-sqlite3');const db=new D('$DB_PATH');const r=db.prepare('SELECT COUNT(*) as c FROM BlogPost').get();console.log(r.c);" 2>/dev/null || echo "0")
-if [ "$BLOG_COUNT" = "0" ]; then
-  echo "Seeding blog posts..."
-  node prisma/seed-blog.mjs
-fi
+# Seed blog posts (uses INSERT OR IGNORE, safe to run multiple times)
+echo "Syncing blog posts..."
+node prisma/seed-blog.mjs
 
 echo "Starting Next.js server..."
 exec "$@"

@@ -1317,17 +1317,21 @@ const allPosts = [...posts, ...posts2, ...posts3];
 
 console.log("🌱 Seeding blog posts...");
 
-const insert = db.prepare(`
-  INSERT OR IGNORE INTO BlogPost (id, slug, title, excerpt, content, category, emoji, published, authorName, readTime, createdAt, updatedAt)
+const upsert = db.prepare(`
+  INSERT INTO BlogPost (id, slug, title, excerpt, content, category, emoji, published, authorName, readTime, createdAt, updatedAt)
   VALUES (?, ?, ?, ?, ?, ?, ?, 1, 'Doge Consulting Team', ?, datetime('now'), datetime('now'))
+  ON CONFLICT(slug) DO UPDATE SET
+    title=excluded.title, excerpt=excluded.excerpt, content=excluded.content,
+    category=excluded.category, emoji=excluded.emoji, readTime=excluded.readTime,
+    updatedAt=datetime('now')
 `);
 
 const txn = db.transaction(() => {
   for (const p of allPosts) {
-    insert.run(cuid(), p.slug, p.title, p.excerpt, p.content, p.category, p.emoji, p.readTime);
+    upsert.run(cuid(), p.slug, p.title, p.excerpt, p.content, p.category, p.emoji, p.readTime);
   }
 });
 
 txn();
-console.log(`✅ ${allPosts.length} blog posts seeded!`);
+console.log(`✅ ${allPosts.length} blog posts upserted!`);
 db.close();
