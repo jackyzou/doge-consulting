@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,8 +45,26 @@ function formatUSD(val: number) {
 
 export default function QuotePage() {
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
   const [step, setStep] = useState(1);
   const [items, setItems] = useState<ProductItem[]>([]);
+
+  // Check if navigated from CBM calculator with pre-filled items
+  useEffect(() => {
+    if (searchParams.get("from") === "cbm") {
+      try {
+        const stored = sessionStorage.getItem("cbm-quote-items");
+        if (stored) {
+          const parsed = JSON.parse(stored) as ProductItem[];
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setItems(parsed);
+            setStep(2); // Skip to destination step
+            sessionStorage.removeItem("cbm-quote-items");
+          }
+        }
+      } catch { /* ignore parse errors */ }
+    }
+  }, [searchParams]);
   const [customItem, setCustomItem] = useState({ name: "", lengthCm: "", widthCm: "", heightCm: "", weightKG: "" });
 
   // Signed-in user session

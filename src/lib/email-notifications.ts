@@ -291,6 +291,8 @@ export async function sendQuoteRequestedEmail(quote: {
   items: { name: string; quantity: number }[];
   deliveryType: string;
   destination: string;
+  visualizerConfig?: { lengthCm?: number; widthCm?: number; heightCm?: number; weightKg?: number; cbm?: number; totalCbm?: number; totalWeight?: number; items?: number; containerType: string; presetName?: string; packed?: boolean } | null;
+  snapshotDataUrl?: string | null;
 }) {
   const enabled = await isNotificationEnabled("quote");
   if (!enabled) return;
@@ -301,6 +303,25 @@ export async function sendQuoteRequestedEmail(quote: {
   const itemList = quote.items.map((i) =>
     `<li style="padding:4px 0;font-size:14px;">${i.name} &times; ${i.quantity}</li>`
   ).join("");
+
+  // Build visualizer section if present
+  const vizConfig = quote.visualizerConfig;
+  const vizCbm = vizConfig?.cbm ?? vizConfig?.totalCbm ?? 0;
+  const vizSection = vizConfig ? `
+    <div style="background:${COLORS.grayLight};border-radius:8px;padding:16px;margin:20px 0;">
+      <h3 style="color:${COLORS.navy};font-size:14px;margin:0 0 12px;">📦 3D Visualizer Configuration</h3>
+      ${quote.snapshotDataUrl ? `<img src="${quote.snapshotDataUrl}" alt="3D Cargo Visualization" style="width:100%;max-width:500px;border-radius:8px;margin:0 0 12px;border:1px solid ${COLORS.grayBorder};" />` : ""}
+      <table role="presentation" style="width:100%;" cellpadding="0" cellspacing="0">
+        ${vizConfig.lengthCm ? detailRow("Dimensions", `${vizConfig.lengthCm} × ${vizConfig.widthCm} × ${vizConfig.heightCm} cm`) : ""}
+        ${vizConfig.items ? detailRow("Items", `${vizConfig.items} items`) : ""}
+        ${vizConfig.weightKg ? detailRow("Weight", `${vizConfig.weightKg} kg`) : ""}
+        ${vizConfig.totalWeight ? detailRow("Total Weight", `${vizConfig.totalWeight} kg`) : ""}
+        ${detailRow("Volume (CBM)", `${typeof vizCbm === "number" ? vizCbm.toFixed(4) : vizCbm} m³`)}
+        ${detailRow("Container", vizConfig.containerType)}
+        ${vizConfig.presetName ? detailRow("Product", vizConfig.presetName) : ""}
+      </table>
+    </div>
+  ` : "";
 
   // Email to customer (localized)
   await sendEmail({
@@ -314,11 +335,13 @@ export async function sendQuoteRequestedEmail(quote: {
       ${infoBox(`
         <table role="presentation" style="width:100%;" cellpadding="0" cellspacing="0">
           ${detailRow(s.quoteNumber, `<strong>${quote.quoteNumber}</strong>`)}
-          ${detailRow(s.deliveryType, quote.deliveryType === "Door-to-Door" ? "🚛 Door-to-Door" : "🏭 Warehouse Pickup")}
+          ${detailRow(s.deliveryType, quote.deliveryType === "Door-to-Door" ? "🚛 Door-to-Door" : quote.deliveryType === "Visualizer Quote" ? "📦 3D Visualizer" : "🏭 Warehouse Pickup")}
           ${detailRow(s.destination, quote.destination)}
           ${detailRow(s.estimatedCost, `<span style="color:${COLORS.teal};font-weight:700;">${formatMoney(quote.shippingEstimateUSD)}</span>`)}
         </table>
       `)}
+
+      ${vizSection}
 
       <h3 style="color:${COLORS.navy};font-size:15px;margin:20px 0 8px;">${s.itemsInQuote}</h3>
       <ul style="margin:0;padding:0 0 0 20px;color:${COLORS.navy};">${itemList}</ul>
@@ -330,7 +353,7 @@ export async function sendQuoteRequestedEmail(quote: {
         </p>
       </div>
 
-      ${ctaButton(s.viewMyAccount, `${appUrl}/account`)}
+      ${ctaButton("Review Your Quote", `${appUrl}/account/quotes`)}
 
       <p style="color:${COLORS.grayText};font-size:13px;">${s.contactUs}</p>
     `, `${s.quoteRequestReceived} ${quote.quoteNumber}`, s),

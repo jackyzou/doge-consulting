@@ -76,10 +76,10 @@ export async function POST(request: NextRequest) {
         shippingCost,
         totalAmount,
         currency: "USD",
-        shippingMethod: body.deliveryType === "door-to-door" ? "Door-to-Door" : "Warehouse Pickup",
+        shippingMethod: body.deliveryType === "door-to-door" ? "Door-to-Door" : body.deliveryType === "visualizer" ? "Visualizer Quote" : "Warehouse Pickup",
         destinationCity: body.destination || "Seattle, WA",
         estimatedTransit: body.transitDays || null,
-        notes: body.notes || `Public quote request. Total CBM: ${body.totalCBM || "N/A"}, Total Weight: ${body.totalWeight || "N/A"} kg. Estimated shipping: $${shippingCost.toFixed(2)} USD.`,
+        notes: body.notes || `Public quote request. Total CBM: ${body.totalCBM || "N/A"}, Total Weight: ${body.totalWeight || "N/A"} kg. Estimated shipping: $${shippingCost.toFixed(2)} USD.${body.visualizerConfig ? `\n\nVisualizer Config: ${JSON.stringify(body.visualizerConfig)}` : ""}`,
         validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
         items: {
           create: items,
@@ -97,6 +97,8 @@ export async function POST(request: NextRequest) {
       items: body.items.map((i: { name: string; quantity: number }) => ({ name: i.name, quantity: i.quantity || 1 })),
       deliveryType: quote.shippingMethod || "Door-to-Door",
       destination: quote.destinationCity || "Seattle, WA",
+      visualizerConfig: body.visualizerConfig || null,
+      snapshotDataUrl: body.snapshotDataUrl || null,
     }).catch((err: unknown) => console.error("Failed to send quote request email:", err));
 
     return NextResponse.json({

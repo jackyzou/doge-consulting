@@ -91,8 +91,10 @@ export function Header() {
   const resourceLinks = [
     { href: "/blog", label: "Blog", icon: PenLine, desc: "Import guides & insights" },
     { href: "/whitepaper", label: "Free Guide", icon: BookOpen, desc: "China Sourcing Playbook" },
+    { href: "/tools/revenue-calculator", label: "Revenue Calculator", icon: TrendingUp, desc: "Import profit, duty & ROI" },
+    { href: "/tools/cbm-calculator", label: "CBM Calculator", icon: Package, desc: "Freight volume & container fit" },
+    { href: "/tools/3d-visualizer", label: "3D Visualizer", icon: Package, desc: "Visualize cargo in containers" },
     { href: "/tools/duty-calculator", label: "Duty Calculator", icon: Calculator, desc: "Estimate import duties" },
-    { href: "/tools/cbm-calculator", label: "CBM Calculator", icon: Package, desc: "Calculate shipping volume" },
     { href: "/glossary", label: "Glossary", icon: GraduationCap, desc: "Shipping & trade terms" },
     { href: "/case-studies", label: "Case Studies", icon: TrendingUp, desc: "Customer success stories" },
     { href: "/faq", label: t("nav.faq"), icon: MessageSquare, desc: "Common questions" },

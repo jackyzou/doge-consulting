@@ -293,6 +293,10 @@ DATABASE_URL="file:./dev.db"
 
 # Auth (auto-generated fallback in dev)
 JWT_SECRET=your_jwt_secret_here
+WHITEPAPER_TOKEN_SECRET=your_whitepaper_token_secret_here
+
+# Public site URL (used in emailed whitepaper/download links)
+APP_URL=https://doge-consulting.com
 
 # Email notifications (optional — logs to console if unset)
 SMTP_HOST=smtp.gmail.com
