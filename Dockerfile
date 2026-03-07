@@ -25,6 +25,9 @@ COPY . .
 # Enable standalone output for Docker builds
 ENV DOCKER_BUILD=1
 
+# Limit Node memory for low-end machines (1.5GB)
+ENV NODE_OPTIONS="--max-old-space-size=1536"
+
 RUN npx prisma generate
 RUN npm run build
 
@@ -40,6 +43,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
+ENV NODE_OPTIONS="--max-old-space-size=512"
 
 # Copy ALL node_modules first (ensures Prisma CLI + all transitive deps are available)
 COPY --from=deps /app/node_modules ./node_modules
