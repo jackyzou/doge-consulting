@@ -12,7 +12,7 @@ interface DogeLogoProps {
 export function DogeLogo({ className, size = 32 }: DogeLogoProps) {
   return (
     <img
-      src="/doge-logo.svg"
+      src="/doge-logo.png"
       alt="Doge Consulting"
       width={size}
       height={size}
