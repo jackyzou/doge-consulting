@@ -1232,7 +1232,7 @@ Americans spend over **$150 billion annually** on their pets. The pet products m
     title: "LED Lighting from Zhongshan: China's Lighting Capital",
     excerpt: "Zhongshan produces 70% of China's lighting products. Source LED strips, panels, smart bulbs at factory prices.",
     category: "Sourcing", emoji: "💡", readTime: "9 min",
-    content: `![Modern LED lighting display in showroom](https://images.unsplash.com/photo-1565814329452-e1432c1d18bc?w=1200&h=600&fit=crop)
+    content: `![Modern LED lighting display in showroom](https://images.unsplash.com/photo-1507494924047-60b8ee826ca9?w=1200&h=600&fit=crop)
 
 ## Zhongshan: The Lighting Capital
 
@@ -1250,7 +1250,7 @@ Zhongshan's Guzhen district has **over 6,000 lighting manufacturers** producing 
 | Chandeliers | $20-$200 | $100-$1,000 | 3-5x |
 | Outdoor/landscape | $5-$30 | $25-$120 | 3-4x |
 
-![LED strip lights glowing in colorful display](https://images.unsplash.com/photo-1530281700549-e82e7bf110d6?w=1200&h=600&fit=crop)
+![LED strip lights glowing in colorful display](https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=1200&h=600&fit=crop)
 
 ---
 
