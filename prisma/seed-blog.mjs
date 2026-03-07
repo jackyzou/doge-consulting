@@ -15,7 +15,7 @@ const posts = [
     category: "Business",
     emoji: "💰",
     readTime: "18 min",
-    content: `![Shipping containers at a busy international port](https://images.unsplash.com/photo-1494412574643-ff11b0a5eb19?w=1200&h=600&fit=crop)
+    content: `![Shipping containers at a busy international port](https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=1200&h=600&fit=crop)
 
 ## Why Importing from China Is a $308 Billion Opportunity
 
@@ -913,7 +913,7 @@ Yiwu in Zhejiang Province hosts the **Yiwu International Trade Market** — the 
     category: "Sourcing",
     emoji: "👕",
     readTime: "10 min",
-    content: `![Colorful textile rolls in a fabric market](https://images.unsplash.com/photo-1558171813-01342dfc4c44?w=1200&h=600&fit=crop)
+    content: `![Colorful textile rolls in a fabric market](https://images.unsplash.com/photo-1590846406792-0adc7f938f1d?w=1200&h=600&fit=crop)
 
 ## Guangzhou: China's Fashion Capital
 
@@ -928,7 +928,7 @@ Guangzhou is the hub of China's textile and garment industry. The city hosts the
 - **Baima Clothing Market** — Higher-end fashion wholesale (13 floors)
 - **Liuhua Clothing Market** — Export-focused garment center
 
-![Fashion designer working with fabrics](https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=1200&h=600&fit=crop)
+![Fashion designer working with fabrics](https://images.unsplash.com/photo-1558769132-cb1aca458733?w=1200&h=600&fit=crop)
 
 ---
 
@@ -1004,7 +1004,7 @@ Every commercial shipment entering the US must clear customs through **US Custom
 5. **Release** — Goods cleared for domestic transport
 6. **Duty Payment** — Due within 10 working days of release
 
-![Customs inspection area at port facility](https://images.unsplash.com/photo-1494412574643-ff11b0a5eb19?w=1200&h=600&fit=crop)
+![Customs inspection area at port facility](https://images.unsplash.com/photo-1559666126-84f389727b9a?w=1200&h=600&fit=crop)
 
 ---
 
@@ -1232,7 +1232,7 @@ Americans spend over **$150 billion annually** on their pets. The pet products m
     title: "LED Lighting from Zhongshan: China's Lighting Capital",
     excerpt: "Zhongshan produces 70% of China's lighting products. Source LED strips, panels, smart bulbs at factory prices.",
     category: "Sourcing", emoji: "💡", readTime: "9 min",
-    content: `![Modern LED lighting display in showroom](https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=1200&h=600&fit=crop)
+    content: `![Modern LED lighting display in showroom](https://images.unsplash.com/photo-1565814329452-e1432c1d18bc?w=1200&h=600&fit=crop)
 
 ## Zhongshan: The Lighting Capital
 
@@ -1250,7 +1250,7 @@ Zhongshan's Guzhen district has **over 6,000 lighting manufacturers** producing 
 | Chandeliers | $20-$200 | $100-$1,000 | 3-5x |
 | Outdoor/landscape | $5-$30 | $25-$120 | 3-4x |
 
-![LED strip lights glowing in blue and purple](https://images.unsplash.com/photo-1550535424-b498819c7554?w=1200&h=600&fit=crop)
+![LED strip lights glowing in colorful display](https://images.unsplash.com/photo-1530281700549-e82e7bf110d6?w=1200&h=600&fit=crop)
 
 ---
 
