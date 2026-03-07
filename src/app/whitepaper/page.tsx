@@ -22,12 +22,15 @@ const CHAPTERS = [
 export default function WhitepaperPage() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [downloadUrl, setDownloadUrl] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "unlocked" | "error">("idle");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me").then(r => r.json()).then(data => {
-      if (data.user) { setIsLoggedIn(true); setStatus("unlocked"); }
+      if (data.user) {
+        setEmail((currentEmail) => currentEmail || data.user.email || "");
+        setName((currentName) => currentName || data.user.name || "");
+      }
     }).catch(() => {});
   }, []);
 
@@ -37,19 +40,22 @@ export default function WhitepaperPage() {
     setStatus("loading");
 
     try {
-      // Subscribe to newsletter
-      await fetch("/api/newsletter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      // Send whitepaper email
-      await fetch("/api/whitepaper", {
+      const whitepaperRes = await fetch("/api/whitepaper", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, name }),
       });
+
+      if (!whitepaperRes.ok) {
+        throw new Error("Failed to unlock whitepaper");
+      }
+
+      const whitepaperData = await whitepaperRes.json();
+      if (!whitepaperData.downloadUrl) {
+        throw new Error("Missing secure whitepaper link");
+      }
+
+      setDownloadUrl(whitepaperData.downloadUrl);
 
       // Try to create account if name provided
       if (name) {
@@ -65,6 +71,7 @@ export default function WhitepaperPage() {
 
       setStatus("unlocked");
     } catch {
+      setDownloadUrl("");
       setStatus("error");
     }
   };
@@ -100,13 +107,13 @@ export default function WhitepaperPage() {
                     <div className="text-center py-6">
                       <CheckCircle className="h-16 w-16 text-teal mx-auto mb-4" />
                       <h3 className="text-xl font-bold mb-2">Guide Unlocked! 🎉</h3>
-                      <p className="text-muted-foreground mb-6">Your comprehensive China Sourcing Playbook is ready.</p>
-                      <a href="/api/whitepaper/download">
+                      <p className="text-muted-foreground mb-6">Your secure guide link is ready and tied to your subscriber email.</p>
+                      <a href={downloadUrl}>
                         <Button size="lg" className="w-full bg-teal hover:bg-teal/90 gap-2">
                           <Download className="h-5 w-5" /> Download PDF Guide
                         </Button>
                       </a>
-                      <p className="text-xs text-muted-foreground mt-4">We also sent a copy to your email.</p>
+                      <p className="text-xs text-muted-foreground mt-4">We also sent the same secure link to your email.</p>
                     </div>
                   ) : (
                     <>
@@ -115,7 +122,7 @@ export default function WhitepaperPage() {
                         <h3 className="font-bold">Get Instant Access (Free)</h3>
                       </div>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Enter your email to unlock the complete guide. We&apos;ll also create a free account so you can track quotes and orders.
+                        Enter your email to unlock the complete guide. Your download link is secured to that subscriber email, and we&apos;ll also create a free account so you can track quotes and orders.
                       </p>
                       <form onSubmit={handleUnlock} className="space-y-3">
                         <div>
@@ -133,6 +140,9 @@ export default function WhitepaperPage() {
                         <p className="text-[11px] text-muted-foreground text-center">
                           No spam. Unsubscribe anytime. By signing up you agree to our <Link href="/privacy" className="underline">privacy policy</Link>.
                         </p>
+                        {status === "error" ? (
+                          <p className="text-xs text-center text-red-600">We couldn&apos;t generate your secure whitepaper link. Please try again.</p>
+                        ) : null}
                       </form>
                     </>
                   )}
@@ -238,7 +248,7 @@ export default function WhitepaperPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="#top"><Button size="lg" className="bg-gold text-navy hover:bg-gold/90 font-bold">Download Free Playbook <Download className="ml-2 h-5 w-5" /></Button></a>
-            <Link href="/quote"><Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">Get Shipping Quote <ArrowRight className="ml-2 h-5 w-5" /></Button></Link>
+            <Link href="/quote"><Button size="lg" variant="outline" className="border-white/25 bg-white/10 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-sm hover:bg-white/18 hover:border-white/40">Get Shipping Quote <ArrowRight className="ml-2 h-5 w-5" /></Button></Link>
           </div>
         </div>
       </section>

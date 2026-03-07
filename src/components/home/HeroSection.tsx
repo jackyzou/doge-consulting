@@ -61,7 +61,7 @@ export function HeroSection() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-white/30 bg-transparent text-white hover:bg-white/10 text-base"
+                  className="border-white/25 bg-white/10 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-sm hover:bg-white/18 hover:border-white/40 text-base"
                 >
                   {t("hero.cta2")}
                 </Button>

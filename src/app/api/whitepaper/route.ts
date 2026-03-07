@@ -1,14 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTransporter } from "@/lib/email-notifications";
+import { prisma } from "@/lib/db";
+import { resolveAppUrl } from "@/lib/app-url";
+import { createWhitepaperDownloadToken, isValidEmail, normalizeEmail } from "@/lib/whitepaper-access";
 
 // POST /api/whitepaper — subscribe + send whitepaper download link email
 export async function POST(request: NextRequest) {
   try {
     const { email, name } = await request.json();
-    if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
+    if (!email || typeof email !== "string") {
+      return NextResponse.json({ error: "Email required" }, { status: 400 });
+    }
 
-    const origin = request.nextUrl.origin;
-    const downloadUrl = `${origin}/api/whitepaper/download`;
+    const normalizedEmail = normalizeEmail(email);
+    if (!isValidEmail(normalizedEmail)) {
+      return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
+    }
+
+    await prisma.subscriber.upsert({
+      where: { email: normalizedEmail },
+      update: {},
+      create: { email: normalizedEmail },
+    });
+
+    const appUrl = await resolveAppUrl(request);
+    const token = createWhitepaperDownloadToken(normalizedEmail);
+    const downloadUrl = `${appUrl}/api/whitepaper/download?token=${encodeURIComponent(token)}`;
+    const recipientName = typeof name === "string" && name.trim() ? name.trim() : "there";
 
     // Send email with download link
     try {
@@ -17,13 +35,14 @@ export async function POST(request: NextRequest) {
         const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@dogeconsulting.com";
         await transporter.sendMail({
           from: `"Doge Consulting" <${fromEmail}>`,
-          to: email,
+          to: normalizedEmail,
           subject: "Your Free China Sourcing Playbook 📘",
           html: `
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
               <h1 style="color:#0d9488;">Your China Sourcing Playbook is Ready! 🎉</h1>
-              <p>Hi ${name || "there"},</p>
+              <p>Hi ${recipientName},</p>
               <p>Thank you for your interest in importing from China. Your comprehensive guide is ready for download.</p>
+              <p>This access link is tied to ${normalizedEmail} and only works while that email remains subscribed.</p>
               <p style="margin:30px 0;">
                 <a href="${downloadUrl}" style="background:#0d9488;color:white;padding:14px 28px;text-decoration:none;border-radius:8px;font-weight:bold;">
                   📘 Download Your Free Guide
@@ -38,7 +57,7 @@ export async function POST(request: NextRequest) {
                 <li>Customs duties, tariffs, and compliance simplified</li>
                 <li>12+ manufacturing hub city guides</li>
               </ul>
-              <p>Need help getting started? <a href="${origin}/quote" style="color:#0d9488;">Get a free quote</a> or <a href="${origin}/contact" style="color:#0d9488;">contact our team</a>.</p>
+              <p>Need help getting started? <a href="${appUrl}/quote" style="color:#0d9488;">Get a free quote</a> or <a href="${appUrl}/contact" style="color:#0d9488;">contact our team</a>.</p>
               <hr style="margin:30px 0;border:none;border-top:1px solid #e5e7eb;" />
               <p style="font-size:12px;color:#6b7280;">Doge Consulting Group Limited · Seattle, WA · Hong Kong SAR</p>
             </div>
@@ -50,7 +69,7 @@ export async function POST(request: NextRequest) {
       // Don't fail the request if email fails — user still gets the download
     }
 
-    return NextResponse.json({ success: true, downloadUrl: "/api/whitepaper/download" });
+    return NextResponse.json({ success: true, downloadUrl });
   } catch (error) {
     console.error("Whitepaper error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

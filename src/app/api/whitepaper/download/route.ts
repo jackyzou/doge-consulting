@@ -1,8 +1,26 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import jsPDF from "jspdf";
+import { prisma } from "@/lib/db";
+import { verifyWhitepaperDownloadToken } from "@/lib/whitepaper-access";
 
 // GET /api/whitepaper/download — Generate comprehensive 50-70 page PDF
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const token = request.nextUrl.searchParams.get("token");
+
+  if (!token) {
+    return NextResponse.json({ error: "A valid whitepaper download link is required." }, { status: 401 });
+  }
+
+  const accessPayload = verifyWhitepaperDownloadToken(token);
+  if (!accessPayload) {
+    return NextResponse.json({ error: "This whitepaper link is invalid or expired." }, { status: 401 });
+  }
+
+  const subscriber = await prisma.subscriber.findUnique({ where: { email: accessPayload.email } });
+  if (!subscriber) {
+    return NextResponse.json({ error: "This whitepaper link only works for subscribed email addresses." }, { status: 403 });
+  }
+
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const W = 210, H = 297;
   const m = 20; // margin
