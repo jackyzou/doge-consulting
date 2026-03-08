@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import {
   BarChart3, Eye, Users, Globe, Smartphone, Monitor, Tablet,
-  TrendingUp, ArrowUpRight, Loader2, Mail, MapPin,
+  TrendingUp, ArrowUpRight, Loader2, Mail, MapPin, BookOpen,
 } from "lucide-react";
 
 interface AnalyticsData {
@@ -20,6 +20,7 @@ interface AnalyticsData {
   countries: { country: string; views: number }[];
   devices: Record<string, number>;
   subscriberLanguages: Record<string, number>;
+  topBlogPosts?: { slug: string; title: string; viewCount: number }[];
 }
 
 const COUNTRY_FLAGS: Record<string, string> = {
@@ -141,21 +142,28 @@ export default function AnalyticsPage() {
           {viewDays.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">No page view data yet. Views will appear after visitors browse the site.</p>
           ) : (
-            <div className="flex items-end gap-[2px] h-32">
-              {viewDays.map((day) => {
-                const val = data.timeSeries.viewsByDay[day] || 0;
-                const h = Math.max((val / maxDayViews) * 100, 2);
-                const visitors = data.timeSeries.visitorsByDay[day] || 0;
-                return (
-                  <div key={day} className="flex-1 group relative" title={`${day}: ${val} views, ${visitors} visitors`}>
-                    <div className="bg-teal/80 hover:bg-teal rounded-t-sm transition-colors" style={{ height: `${h}%` }} />
-                    <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-navy text-white text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none z-10">
-                      {day.slice(5)}: {val} views
+            <>
+              <div className="flex items-end gap-[2px]" style={{ height: 128 }}>
+                {viewDays.map((day) => {
+                  const val = data.timeSeries.viewsByDay[day] || 0;
+                  const barH = Math.max(Math.round((val / maxDayViews) * 120), 3);
+                  const visitors = data.timeSeries.visitorsByDay[day] || 0;
+                  return (
+                    <div key={day} className="flex-1 group relative flex items-end" style={{ height: 128 }}
+                      title={`${day}: ${val} views, ${visitors} visitors`}>
+                      <div className="w-full bg-teal/80 hover:bg-teal rounded-t-sm transition-colors" style={{ height: barH }} />
+                      <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-navy text-white text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none z-10">
+                        {day.slice(5)}: {val} views
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+              <div className="flex justify-between text-[9px] text-muted-foreground mt-1 px-1">
+                <span>{viewDays[0]?.slice(5)}</span>
+                <span>{viewDays[viewDays.length - 1]?.slice(5)}</span>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -260,6 +268,26 @@ export default function AnalyticsPage() {
           </Card>
         </div>
       </div>
+
+      {/* Top Blog Posts by Views */}
+      {data.topBlogPosts && data.topBlogPosts.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm flex items-center gap-2"><BookOpen className="h-4 w-4 text-teal" /> Top Blog Posts by Views</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {data.topBlogPosts.map((post, i) => (
+              <div key={post.slug} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-xs font-bold text-muted-foreground w-5">{i + 1}.</span>
+                  <span className="truncate font-medium">{post.title}</span>
+                </div>
+                <Badge variant="outline" className="shrink-0 ml-3 text-xs">{post.viewCount.toLocaleString()} views</Badge>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -114,6 +114,17 @@ export async function GET(request: NextRequest) {
       distinct: ["sessionId"],
     });
 
+    // ── Top Blog Posts by view count ──────────────────────────
+    let topBlogPosts: { slug: string; title: string; viewCount: number }[] = [];
+    try {
+      topBlogPosts = await prisma.blogPost.findMany({
+        where: { published: true, language: "en" },
+        select: { slug: true, title: true, viewCount: true },
+        orderBy: { viewCount: "desc" },
+        take: 10,
+      });
+    } catch { /* viewCount column may not exist yet */ }
+
     // ── Summary ───────────────────────────────────────────────
     return NextResponse.json({
       period: { days, since: since.toISOString() },
@@ -139,6 +150,7 @@ export async function GET(request: NextRequest) {
       countries: countriesArr,
       devices,
       subscriberLanguages,
+      topBlogPosts,
     });
   } catch (e: unknown) {
     console.error("Analytics API error:", e);
