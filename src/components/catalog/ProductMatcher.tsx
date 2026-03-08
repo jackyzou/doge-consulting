@@ -22,6 +22,10 @@ interface MatchResult {
   message: string;
 }
 
+interface QuoteResult {
+  quoteNumber: string;
+}
+
 export default function ProductMatcher() {
   const [mode, setMode] = useState<InputMode>("url");
   const [url, setUrl] = useState("");
@@ -33,6 +37,14 @@ export default function ProductMatcher() {
   const [result, setResult] = useState<MatchResult | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Quote form state
+  const [showQuoteForm, setShowQuoteForm] = useState(false);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteResult, setQuoteResult] = useState<QuoteResult | null>(null);
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
 
   const handleImageSelect = useCallback((file: File) => {
     if (file.size > 2 * 1024 * 1024) {
@@ -215,7 +227,7 @@ export default function ProductMatcher() {
 
           {/* Result */}
           <AnimatePresence>
-            {result && (
+            {result && !quoteResult && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -247,17 +259,101 @@ export default function ProductMatcher() {
                       <p className="mt-1 text-sm text-green-800">{result.message}</p>
                     )}
                     <p className="mt-3 text-xs text-green-700">{result.message}</p>
-                    <div className="mt-4 flex gap-2">
-                      <NextLink href="/quote">
-                        <Button size="sm" className="bg-teal hover:bg-teal/90 text-white">
+
+                    {/* Inline quote form */}
+                    {!showQuoteForm ? (
+                      <div className="mt-4 flex gap-2">
+                        <Button size="sm" className="bg-teal hover:bg-teal/90 text-white" onClick={() => setShowQuoteForm(true)}>
                           Get Exact Quote <ArrowRight className="h-3.5 w-3.5 ml-1" />
                         </Button>
-                      </NextLink>
-                      <NextLink href="/contact">
-                        <Button size="sm" variant="outline">Talk to a Specialist</Button>
-                      </NextLink>
-                    </div>
+                        <NextLink href="/contact">
+                          <Button size="sm" variant="outline">Talk to a Specialist</Button>
+                        </NextLink>
+                      </div>
+                    ) : (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-4 space-y-3 border-t border-green-200 pt-4">
+                        <p className="text-sm font-medium text-green-900">Enter your details and we&apos;ll send you an exact quote:</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label className="text-xs text-green-800">Name *</Label>
+                            <Input placeholder="Your name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="mt-1 bg-white" />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-green-800">Email *</Label>
+                            <Input type="email" placeholder="you@email.com" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} className="mt-1 bg-white" />
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-green-800">Phone (optional)</Label>
+                          <Input placeholder="+1 (425) 000-0000" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="mt-1 bg-white" />
+                        </div>
+                        <Button
+                          className="w-full bg-teal hover:bg-teal/90 text-white"
+                          disabled={quoteLoading || !customerName.trim() || !customerEmail.trim()}
+                          onClick={async () => {
+                            setQuoteLoading(true);
+                            try {
+                              const res = await fetch("/api/catalog/match", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  matchId: result.id,
+                                  sourceUrl: url || null,
+                                  imageData: imageData || null,
+                                  description: description || null,
+                                  sourcePrice: price ? parseFloat(price) : null,
+                                  customerName: customerName.trim(),
+                                  customerEmail: customerEmail.trim(),
+                                  customerPhone: customerPhone.trim() || null,
+                                  createQuote: true,
+                                }),
+                              });
+                              const data = await res.json();
+                              if (data.quoteNumber) {
+                                setQuoteResult({ quoteNumber: data.quoteNumber });
+                              }
+                            } catch { /* empty */ }
+                            setQuoteLoading(false);
+                          }}
+                        >
+                          {quoteLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Submitting...</> : <>Submit Quote Request <ArrowRight className="h-4 w-4 ml-2" /></>}
+                        </Button>
+                      </motion.div>
+                    )}
                   </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Quote confirmation */}
+            {quoteResult && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="rounded-xl border border-teal/30 bg-teal/5 p-6 text-center"
+              >
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-teal/10">
+                  <CheckCircle2 className="h-8 w-8 text-teal" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground">Quote Request Submitted!</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Quote <strong className="text-teal">{quoteResult.quoteNumber}</strong> has been created.
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  We&apos;ve sent a confirmation to <strong>{customerEmail}</strong>. Our sourcing team will review
+                  your product and respond within 24 hours with an exact China-direct price.
+                </p>
+                <div className="mt-4 flex justify-center gap-3">
+                  <Button size="sm" variant="outline" onClick={() => {
+                    setResult(null); setQuoteResult(null); setShowQuoteForm(false);
+                    setUrl(""); setPrice(""); setDescription(""); setCustomerName(""); setCustomerEmail(""); setCustomerPhone("");
+                    clearImage();
+                  }}>
+                    Search Another Product
+                  </Button>
+                  <NextLink href="/contact">
+                    <Button size="sm" className="bg-teal hover:bg-teal/90 text-white">Contact Us</Button>
+                  </NextLink>
                 </div>
               </motion.div>
             )}
