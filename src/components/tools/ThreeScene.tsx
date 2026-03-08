@@ -215,13 +215,13 @@ const Scene = forwardRef<ThreeSceneHandle, ThreeSceneProps>(function Scene(props
     return m;
   }, [items, container, showContainer]);
 
-  const dist = maxDim * 2;
+  const dist = maxDim * 2.5;
   const bg = darkMode ? "#111827" : "#f0f4f8";
   if (!mounted) return <div style={{ width: "100%", height: "100%", background: bg }} />;
 
   return (
     <Canvas
-      camera={{ position: [dist * 0.6, dist * 0.45, dist * 0.7], fov: 40, near: 0.01, far: 200 }}
+      camera={{ position: [dist * 0.5, dist * 0.6, dist * 0.8], fov: 35, near: 0.01, far: 200 }}
       style={{ width: "100%", height: "100%", background: bg }}
       gl={{ antialias: true, preserveDrawingBuffer: true, powerPreference: "default", failIfMajorPerformanceCaveat: false }}
     >

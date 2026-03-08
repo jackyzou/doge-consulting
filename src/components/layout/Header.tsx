@@ -94,6 +94,7 @@ export function Header() {
     { href: "/tools/revenue-calculator", label: t("headerTools.revenueCalc"), icon: TrendingUp, desc: t("headerTools.revenueCalcDesc") },
     { href: "/tools/cbm-calculator", label: t("headerTools.cbmCalc"), icon: Package, desc: t("headerTools.cbmCalcDesc") },
     { href: "/tools/3d-visualizer", label: t("headerTools.visualizer"), icon: Package, desc: t("headerTools.visualizerDesc") },
+    { href: "/tools/shipping-tracker", label: "Shipping Tracker", icon: TrendingUp, desc: "Live vessel map & rate history" },
     { href: "/tools/duty-calculator", label: t("headerTools.dutyCalc"), icon: Calculator, desc: t("headerTools.dutyCalcDesc") },
     { href: "/glossary", label: t("headerTools.glossary"), icon: GraduationCap, desc: t("headerTools.glossaryDesc") },
     { href: "/case-studies", label: t("headerTools.caseStudies"), icon: TrendingUp, desc: t("headerTools.caseStudiesDesc") },
