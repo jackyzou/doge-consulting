@@ -321,6 +321,7 @@ model BlogPost {
   published  Boolean  @default(false)
   authorName String   @default("Doge Consulting Team")
   readTime   String   @default("5 min")
+  viewCount  Int      @default(0)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

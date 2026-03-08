@@ -2,10 +2,11 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, MapPin, Shield, Sparkles, Users, Brain, Cpu, Globe, Target } from "lucide-react";
+import { ArrowRight, CheckCircle2, MapPin, Shield, Sparkles, Users, Brain, Cpu, Globe, Target, Ship, Rocket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { DogeLogo } from "@/components/ui/doge-logo";
 import GlobalPresenceMap from "@/components/home/GlobalPresenceMap";
 
 export default function AboutPage() {
@@ -25,7 +26,8 @@ export default function AboutPage() {
   const timeline = [
     { year: "The Problem", desc: "Importing from China has always been complex — language barriers, unreliable suppliers, confusing tariffs, opaque pricing, and slow logistics. Small businesses were locked out of the $308B China-US trade corridor." },
     { year: "The Insight", desc: "We realized that AI and digital platforms could eliminate 80% of the friction in cross-border trade. The same intelligence that powers billion-dollar supply chains could be made accessible to everyone." },
-    { year: "The Solution", desc: "Doge Consulting was built to be the bridge — combining 15+ years of China sourcing expertise with AI-powered tools that make importing profitable, predictable, and accessible to businesses of any size." },
+    { year: "The Name", desc: "Why \"Doge\"? Like a loyal dog, we fetch what you need — reliably, tirelessly, and always coming back with exactly what you asked for. It's a nod to internet culture, but with a serious mission: we retrieve the best products from China's factories and deliver them to your door." },
+    { year: "The Platform", desc: "DogeTech is our shipping technology platform built to digitally transform cross-border commerce. Sea freight sourcing is our first incubated product, but the platform powers AI supplier matching, real-time vessel tracking, customs optimization, and end-to-end supply chain visibility." },
   ];
 
   const mapLocations = [
@@ -111,6 +113,56 @@ export default function AboutPage() {
               </div>
             </motion.div>
           </div>
+        </div>
+      </section>
+
+      {/* Doge Branding Story */}
+      <section className="py-12 lg:py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <div className="rounded-[32px] border border-teal/15 bg-gradient-to-br from-teal/5 via-white to-teal/5 p-8 sm:p-12 shadow-sm">
+              <div className="grid gap-10 lg:grid-cols-[auto_1fr] lg:items-center">
+                <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+                  <DogeLogo size={120} className="mb-4 drop-shadow-lg" />
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-teal">Meet Our Mascot</p>
+                </div>
+                <div className="space-y-4">
+                  <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                    Why <span className="text-teal">&ldquo;Doge&rdquo;</span>? Because We Fetch.
+                  </h2>
+                  <div className="space-y-3 text-base leading-7 text-muted-foreground">
+                    <p>
+                      Yes, we know the meme. But behind the playful name is a serious metaphor:
+                      <strong className="text-foreground"> a Doge is loyal, reliable, and tireless</strong>. Tell it what you want,
+                      and it fetches — no matter how far it has to go. That&apos;s exactly what we do: you tell us what product
+                      you need, and we go to China&apos;s factories, source it, quality-check it, ship it, clear customs,
+                      and deliver it to your door.
+                    </p>
+                    <p>
+                      We chose this name deliberately to break from the stuffy, traditional image of freight forwarding.
+                      <strong className="text-foreground"> Global trade should feel approachable, not intimidating.</strong> Our brand
+                      is professional but invigorated with a new energy that makes cross-border commerce feel exciting — because it is.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 pt-4">
+                    {[
+                      { icon: Ship, label: "DogeTech Platform", desc: "Shipping tech that digitally transforms your supply chain" },
+                      { icon: Brain, label: "AI-Powered", desc: "Smart sourcing, routing, and tariff optimization" },
+                      { icon: Rocket, label: "Incubated Products", desc: "Sea freight is product #1 — more coming" },
+                    ].map((item) => (
+                      <div key={item.label} className="text-center">
+                        <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-teal/10">
+                          <item.icon className="h-5 w-5 text-teal" />
+                        </div>
+                        <p className="text-sm font-semibold">{item.label}</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">{item.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 

@@ -24,22 +24,22 @@ export interface FurniturePackage {
 export const STYLES = [
   { id: "modern", label: "Modern", emoji: "🏢", desc: "Clean lines, neutral tones, functional elegance", image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop" },
   { id: "scandinavian", label: "Scandinavian", emoji: "🇸🇪", desc: "Light wood, minimalist, hygge comfort", image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400&h=300&fit=crop" },
-  { id: "minimalist", label: "Minimalist", emoji: "◻️", desc: "Less is more — essential pieces only", image: "https://images.unsplash.com/photo-1598928506311-c55ez637a564?w=400&h=300&fit=crop" },
+  { id: "minimalist", label: "Minimalist", emoji: "◻️", desc: "Less is more — essential pieces only", image: "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=400&h=300&fit=crop" },
   { id: "italian", label: "Italian Luxury", emoji: "🇮🇹", desc: "Marble, leather, bold statement pieces", image: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&h=300&fit=crop" },
   { id: "french", label: "French Provincial", emoji: "🇫🇷", desc: "Carved wood, soft fabrics, romantic charm", image: "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=400&h=300&fit=crop" },
   { id: "farmhouse", label: "Farmhouse", emoji: "🏡", desc: "Rustic wood, warm textures, country living", image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&h=300&fit=crop" },
   { id: "contemporary", label: "Contemporary", emoji: "✨", desc: "Trendy, mixed materials, current design", image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&h=300&fit=crop" },
   { id: "midcentury", label: "Mid-Century Modern", emoji: "🪑", desc: "Tapered legs, organic shapes, retro cool", image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400&h=300&fit=crop" },
-  { id: "industrial", label: "Industrial", emoji: "🏭", desc: "Metal accents, raw wood, urban loft", image: "https://images.unsplash.com/photo-1600494603473-d2e9e7858d5e?w=400&h=300&fit=crop" },
+  { id: "industrial", label: "Industrial", emoji: "🏭", desc: "Metal accents, raw wood, urban loft", image: "https://images.unsplash.com/photo-1536437075651-01d675529a3b?w=400&h=300&fit=crop" },
   { id: "coastal", label: "Coastal", emoji: "🌊", desc: "White & blue, natural textures, beach vibe", image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=400&h=300&fit=crop" },
 ];
 
 export const HOME_SIZES = [
   { id: "1b1b", label: "1 Bed / 1 Bath Apartment", rooms: "1B/1B", sqft: "~600 sqft", image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&h=300&fit=crop" },
   { id: "2b", label: "2 Bedroom Apartment", rooms: "2B", sqft: "~900 sqft", image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=300&fit=crop" },
-  { id: "3b", label: "3 Bed Single Family", rooms: "3B", sqft: "~1,500 sqft", image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop" },
+  { id: "3b", label: "3 Bed Single Family", rooms: "3B", sqft: "~1,500 sqft", image: "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=400&h=300&fit=crop" },
   { id: "4b", label: "4 Bed Single Family", rooms: "4B", sqft: "~2,200 sqft", image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=300&fit=crop" },
-  { id: "5b", label: "5+ Bed Estate", rooms: "5B+", sqft: "~3,500+ sqft", image: "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?w=400&h=300&fit=crop" },
+  { id: "5b", label: "5+ Bed Estate", rooms: "5B+", sqft: "~3,500+ sqft", image: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=400&h=300&fit=crop" },
 ];
 
 // Base items per room that scale with home size

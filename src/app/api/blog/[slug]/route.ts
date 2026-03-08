@@ -23,6 +23,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
+    // Increment view count (fire-and-forget)
+    prisma.blogPost.update({
+      where: { id: post.id },
+      data: { viewCount: { increment: 1 } },
+    }).catch(() => {});
+
     return NextResponse.json(post);
   } catch (error) {
     console.error("Blog post error:", error);

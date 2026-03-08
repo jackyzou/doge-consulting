@@ -24,10 +24,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Image too large. Please use an image under 2MB." }, { status: 400 });
     }
 
-    // Calculate instant estimate: 20% off the source price
+    // Calculate instant estimate: random 5-20% off the source price
     let estimatedPrice: number | null = null;
     if (sourcePrice && sourcePrice > 0) {
-      estimatedPrice = Math.round(sourcePrice * 0.8 * 100) / 100;
+      const discountPct = 5 + Math.random() * 15; // 5% to 20%
+      estimatedPrice = Math.round(sourcePrice * (1 - discountPct / 100) * 100) / 100;
     }
 
     // Get user ID if logged in (optional)
@@ -100,7 +101,8 @@ async function handleCreateQuote(
   const matchQuery = await prisma.productMatchQuery.findUnique({ where: { id: matchId } });
 
   const sourcePrice = matchQuery?.sourcePrice ?? (body.sourcePrice ? parseFloat(String(body.sourcePrice)) : null);
-  const estimatedPrice = matchQuery?.estimatedPrice ?? (sourcePrice ? Math.round(sourcePrice * 0.8 * 100) / 100 : null);
+  const discountPct = 5 + Math.random() * 15;
+  const estimatedPrice = matchQuery?.estimatedPrice ?? (sourcePrice ? Math.round(sourcePrice * (1 - discountPct / 100) * 100) / 100 : null);
   const productDesc = matchQuery?.description || (body.description as string) || "Product from AI Matcher";
   const sourceUrl = matchQuery?.sourceUrl || (body.sourceUrl as string) || null;
 
