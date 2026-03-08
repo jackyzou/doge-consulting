@@ -7,7 +7,7 @@ import {
   LayoutDashboard, FileText, Package, Settings, ArrowLeft,
   ShoppingCart, Users, FileDown, LogOut, Loader2, Menu, X,
   ChevronDown, LogIn, User, BookOpen, Calculator, PenLine,
-  GraduationCap, TrendingUp, MessageSquare,
+  GraduationCap, TrendingUp, MessageSquare, Ship,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -94,7 +94,8 @@ export function Header() {
     { href: "/tools/revenue-calculator", label: t("headerTools.revenueCalc"), icon: TrendingUp, desc: t("headerTools.revenueCalcDesc") },
     { href: "/tools/cbm-calculator", label: t("headerTools.cbmCalc"), icon: Package, desc: t("headerTools.cbmCalcDesc") },
     { href: "/tools/3d-visualizer", label: t("headerTools.visualizer"), icon: Package, desc: t("headerTools.visualizerDesc") },
-    { href: "/tools/shipping-tracker", label: "Shipping Tracker", icon: TrendingUp, desc: "Live vessel map & rate history" },
+    { href: "/tools/shipping-tracker", label: "Live Vessel Map", icon: Ship, desc: "Live vessel map & rate history" },
+    { href: "/tools/vessel-tracker", label: "Container Tracker", icon: Ship, desc: "Track containers & vessels live" },
     { href: "/tools/duty-calculator", label: t("headerTools.dutyCalc"), icon: Calculator, desc: t("headerTools.dutyCalcDesc") },
     { href: "/glossary", label: t("headerTools.glossary"), icon: GraduationCap, desc: t("headerTools.glossaryDesc") },
     { href: "/case-studies", label: t("headerTools.caseStudies"), icon: TrendingUp, desc: t("headerTools.caseStudiesDesc") },
