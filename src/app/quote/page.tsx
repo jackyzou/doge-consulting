@@ -72,6 +72,27 @@ function QuotePageContent() {
         }
       } catch { /* ignore parse errors */ }
     }
+    // Check if navigated from furniture package builder
+    if (searchParams.get("source") === "furniture-package") {
+      try {
+        const stored = sessionStorage.getItem("catalogPackageItems");
+        if (stored) {
+          const parsed = JSON.parse(stored) as { name: string; quantity: number; lengthCm: number; widthCm: number; heightCm: number; weightKg: number; cbm: number }[];
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const productItems: ProductItem[] = parsed.map((p) => ({
+              name: p.name,
+              quantity: p.quantity,
+              cbm: Math.round(p.cbm * p.quantity * 10000) / 10000,
+              weightKG: p.weightKg * p.quantity,
+            }));
+            setItems(productItems);
+            setStep(2); // Skip to destination step
+            sessionStorage.removeItem("catalogPackageItems");
+            sessionStorage.removeItem("catalogPackageMeta");
+          }
+        }
+      } catch { /* ignore parse errors */ }
+    }
   }, [searchParams]);
   const [customItem, setCustomItem] = useState({ name: "", lengthCm: "", widthCm: "", heightCm: "", weightKG: "" });
 

@@ -471,3 +471,29 @@ model ShipmentEvent {
   @@index([shipmentId])
   @@index([timestamp])
 }
+
+// ──────────────────────────────────────────
+// Product Match Queries (AI Sourcing)
+// ──────────────────────────────────────────
+model ProductMatchQuery {
+  id             String   @id @default(cuid())
+  sourceUrl      String?                    // URL to the original US listing
+  imageData      String?                    // base64 image (max ~2MB)
+  description    String?                    // user description of what they want
+  sourcePrice    Float?                     // price the user saw on the US listing
+  estimatedPrice Float?                     // our instant 20%-off estimate
+  category       String?                    // furniture, electronics, etc.
+  status         String   @default("pending") // pending, quoted, contacted, closed
+  adminNotes     String?
+  quotedPrice    Float?                     // admin's real sourced price
+  customerName   String?
+  customerEmail  String?
+  customerPhone  String?
+  userId         String?                    // if logged in
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
