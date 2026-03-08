@@ -8,7 +8,7 @@ on:
 
 # Cancel any in-progress runs for the same branch
 concurrency:
-  group: deploy-${{ github.ref }}
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -33,121 +33,17 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
       - name: Run unit tests
         run: npx vitest run
 
-  deploy:
-    name: Build → Deploy
-    needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    runs-on: [self-hosted, Windows, X64]
-    timeout-minutes: 15
-
-    env:
-      NODE_ENV: production
-
-    steps:
-      # ── Deploy to production ──────────────────────────────────
-      - name: Deploy (Docker)
-        if: vars.DEPLOY_MODE == 'docker'
-        shell: powershell
+      - name: Build check
+        run: npm run build
         env:
-          DOGE_SERVICE_PATH: ${{ vars.DOGE_SERVICE_PATH || 'C:\doge-consulting' }}
-        run: |
-          $ErrorActionPreference = "Stop"
-          $ServiceDir = $env:DOGE_SERVICE_PATH
+          DOCKER_BUILD: "1"
 
-          Write-Host "=== Docker Deploy to $ServiceDir ===" -ForegroundColor Cyan
-
-          Push-Location $ServiceDir
-
-          # 1. Pull latest code
-          Write-Host "Pulling latest code..." -ForegroundColor Yellow
-          git pull origin master
-
-          # 2. Rebuild and restart containers
-          Write-Host "Rebuilding Docker containers..." -ForegroundColor Yellow
-          docker compose build --no-cache
-          docker compose up -d
-
-          Pop-Location
-
-          # 3. Health check (wait for container to be healthy)
-          Write-Host "Health check..." -ForegroundColor Yellow
-          $retries = 0
-          $healthy = $false
-          while ($retries -lt 20 -and -not $healthy) {
-            Start-Sleep -Seconds 5
-            try {
-              $resp = Invoke-RestMethod -Uri "http://localhost:3000/api/health" -TimeoutSec 5
-              if ($resp.status -eq "ok") { $healthy = $true }
-            } catch { $retries++ }
-          }
-
-          if ($healthy) {
-            Write-Host "=== Docker deploy successful! ===" -ForegroundColor Green
-          } else {
-            Write-Host "=== Health check failed after 100s ===" -ForegroundColor Red
-            docker compose logs app --tail 50
-            exit 1
-          }
-
-      - name: Deploy (Bare Metal)
-        if: vars.DEPLOY_MODE != 'docker'
-        shell: powershell
-        env:
-          DOGE_SERVICE_PATH: ${{ vars.DOGE_SERVICE_PATH || 'C:\doge-consulting' }}
-        run: |
-          $ErrorActionPreference = "Stop"
-          $ServiceDir = $env:DOGE_SERVICE_PATH
-
-          Write-Host "=== Deploying to $ServiceDir ===" -ForegroundColor Cyan
-
-          # 1. Pull latest code in the service directory
-          Write-Host "Pulling latest code..." -ForegroundColor Yellow
-          git -C $ServiceDir pull origin master
-
-          # 2. Install production dependencies
-          Write-Host "Installing dependencies..." -ForegroundColor Yellow
-          Push-Location $ServiceDir
-          npm ci
-          npx prisma generate
-
-          # 3. Run database migrations
-          Write-Host "Running migrations..." -ForegroundColor Yellow
-          npx prisma migrate deploy
-
-          # 4. Build
-          Write-Host "Building Next.js..." -ForegroundColor Yellow
-          npm run build
-          Pop-Location
-
-          # 5. Restart the Windows service
-          Write-Host "Restarting service..." -ForegroundColor Yellow
-          $svc = Get-Service DogeConsulting -ErrorAction SilentlyContinue
-          if ($svc) {
-            Restart-Service DogeConsulting -Force
-            Start-Sleep -Seconds 5
-          } else {
-            Write-Host "Service not installed — skipping restart" -ForegroundColor Red
-            exit 0
-          }
-
-          # 6. Health check
-          Write-Host "Health check..." -ForegroundColor Yellow
-          $retries = 0
-          $healthy = $false
-          while ($retries -lt 10 -and -not $healthy) {
-            Start-Sleep -Seconds 3
-            try {
-              $resp = Invoke-RestMethod -Uri "http://localhost:3000/api/health" -TimeoutSec 5
-              if ($resp.status -eq "ok") { $healthy = $true }
-            } catch { $retries++ }
-          }
-
-          if ($healthy) {
-            Write-Host "=== Deploy successful! ===" -ForegroundColor Green
-          } else {
-            Write-Host "=== Health check failed after 30s ===" -ForegroundColor Red
-            exit 1
-          }
+  # Deploy is handled by the target PC's auto-deploy listener (scripts/auto-deploy.ps1)
+  # which polls GitHub for successful CI runs and deploys automatically.
+  # No self-hosted runner needed — the listener runs independently on the target machine.
