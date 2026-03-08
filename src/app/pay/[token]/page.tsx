@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DogeLogo } from "@/components/ui/doge-logo";
 import {
-  Loader2, CreditCard, CheckCircle2, XCircle, Shield, Lock,
+  Loader2, CreditCard, CheckCircle2, XCircle, Shield, Lock, Tag, X,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 interface PaymentLinkData {
   token: string;
@@ -35,6 +36,18 @@ export default function PaymentPage() {
   const [processing, setProcessing] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  // Coupon state
+  const [couponCode, setCouponCode] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    couponId: string; code: string; discountAmount: number; description?: string;
+  } | null>(null);
+
+  const effectiveAmount = appliedCoupon
+    ? Math.round((data?.amount || 0) - appliedCoupon.discountAmount)
+    : data?.amount || 0;
+
   useEffect(() => {
     fetch(`/api/pay/${token}`)
       .then(async (r) => {
@@ -46,6 +59,45 @@ export default function PaymentPage() {
       .finally(() => setLoading(false));
   }, [token]);
 
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    setCouponError("");
+    try {
+      const res = await fetch("/api/coupon/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: couponCode,
+          orderAmount: data?.amount || 0,
+          email: data?.quote?.customerEmail || "",
+        }),
+      });
+      const result = await res.json();
+      if (result.valid) {
+        setAppliedCoupon({
+          couponId: result.couponId,
+          code: result.code,
+          discountAmount: result.discountAmount,
+          description: result.description,
+        });
+        setCouponError("");
+      } else {
+        setCouponError(result.error || "Invalid coupon");
+        setAppliedCoupon(null);
+      }
+    } catch {
+      setCouponError("Failed to validate coupon");
+    }
+    setCouponLoading(false);
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponError("");
+  };
+
   const handlePay = async () => {
     setProcessing(true);
     setError("");
@@ -56,6 +108,9 @@ export default function PaymentPage() {
         body: JSON.stringify({
           email: data?.quote?.customerEmail || "",
           name: data?.quote?.customerName || "",
+          couponId: appliedCoupon?.couponId || null,
+          couponCode: appliedCoupon?.code || null,
+          discountAmount: appliedCoupon?.discountAmount || 0,
         }),
       });
       const result = await res.json();
@@ -176,10 +231,46 @@ export default function PaymentPage() {
               Payment Details
             </CardTitle>
             <div className="flex items-center gap-2 text-2xl font-bold">
-              ${data?.amount.toLocaleString()} <span className="text-sm font-normal text-muted-foreground">{data?.currency}</span>
+              ${effectiveAmount.toLocaleString()} <span className="text-sm font-normal text-muted-foreground">{data?.currency}</span>
+              {appliedCoupon && (
+                <span className="text-sm font-normal line-through text-muted-foreground">${data?.amount.toLocaleString()}</span>
+              )}
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Coupon code input */}
+            <div className="space-y-2">
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-4 w-4 text-green-600" />
+                    <div>
+                      <p className="text-sm font-medium text-green-800">{appliedCoupon.code} applied!</p>
+                      <p className="text-xs text-green-600">-${appliedCoupon.discountAmount.toFixed(2)} discount{appliedCoupon.description ? ` · ${appliedCoupon.description}` : ""}</p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={removeCoupon} className="h-7 w-7 p-0 text-green-600 hover:text-red-500">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Coupon code"
+                      value={couponCode}
+                      onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(""); }}
+                      className="pl-9 uppercase"
+                    />
+                  </div>
+                  <Button variant="outline" onClick={handleApplyCoupon} disabled={couponLoading || !couponCode.trim()}>
+                    {couponLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
+                  </Button>
+                </div>
+              )}
+              {couponError && <p className="text-xs text-red-600">{couponError}</p>}
+            </div>
             {error && (
               <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">{error}</div>
             )}
@@ -204,7 +295,7 @@ export default function PaymentPage() {
               {processing ? (
                 <><Loader2 className="h-5 w-5 animate-spin" />Redirecting to Airwallex…</>
               ) : (
-                <><Lock className="h-5 w-5" />Pay ${data?.amount.toLocaleString()}</>
+                <><Lock className="h-5 w-5" />Pay ${effectiveAmount.toLocaleString()}</>
               )}
             </Button>
 

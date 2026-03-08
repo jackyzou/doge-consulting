@@ -325,3 +325,38 @@ model BlogPost {
 
   @@unique([slug, language])
 }
+
+// ──────────────────────────────────────────
+// Coupons / Promo Codes
+// ──────────────────────────────────────────
+model Coupon {
+  id             String    @id @default(cuid())
+  code           String    @unique           // "WELCOME15", "SHIP2026"
+  description    String?
+  discountType   String    @default("percentage") // "percentage" | "fixed"
+  discountValue  Float                       // 15 = 15% or $15
+  minOrderAmount Float?                      // minimum order to qualify
+  maxDiscount    Float?                      // cap for percentage discounts
+  maxUses        Int?                        // null = unlimited
+  usedCount      Int       @default(0)
+  isActive       Boolean   @default(true)
+  validFrom      DateTime  @default(now())
+  validUntil     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  usages         CouponUsage[]
+}
+
+model CouponUsage {
+  id          String   @id @default(cuid())
+  couponId    String
+  coupon      Coupon   @relation(fields: [couponId], references: [id])
+  orderId     String?
+  quoteId     String?
+  email       String                         // customer email
+  discount    Float                          // actual $ amount deducted
+  createdAt   DateTime @default(now())
+
+  @@unique([couponId, email])                // one use per email per coupon
+}

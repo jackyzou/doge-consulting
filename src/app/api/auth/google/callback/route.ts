@@ -24,7 +24,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const origin = request.nextUrl.origin;
+    // Use APP_URL or forwarded host for public-facing URL
+    const fwdHost = request.headers.get("x-forwarded-host");
+    const fwdProto = request.headers.get("x-forwarded-proto") || "https";
+    const origin = fwdHost ? `${fwdProto}://${fwdHost}` : (process.env.APP_URL || request.nextUrl.origin);
     const redirectUri = `${origin}/api/auth/google/callback`;
 
     // Exchange the code for user info

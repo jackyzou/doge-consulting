@@ -37,11 +37,22 @@ Doge Consulting connects US businesses and consumers with China's manufacturing 
 | Validation | [Zod](https://zod.dev) + [React Hook Form](https://react-hook-form.com) |
 | PDF | [jsPDF](https://github.com/parallax/jsPDF) — invoice, receipt, PO generation |
 | Email | [Nodemailer](https://nodemailer.com) — quote sent, payment received, order confirmed |
+| 3D Rendering | [Three.js](https://threejs.org) + [React Three Fiber](https://docs.pmnd.rs/react-three-fiber) — 3D container visualizer |
 | Unit Tests | [Vitest](https://vitest.dev) + [Testing Library](https://testing-library.com) |
 | E2E Tests | [Playwright](https://playwright.dev) |
 | Font | [Inter](https://fonts.google.com/specimen/Inter) via `next/font` |
 
 **Brand colors:** Navy `#0F2B46` · Teal `#2EC4B6` · Gold `#F0A500`
+
+### Coupon / Promo Code System
+
+Admin-managed coupon codes with percentage or fixed-dollar discounts. Supports:
+- Unique coupon codes (e.g., `WELCOME15`)
+- Percentage or fixed-amount discounts with optional caps
+- Min order amount, max uses, expiry dates
+- Per-email usage tracking (one use per customer)
+- Customer applies coupon at checkout (`/pay/[token]`) and sees adjusted price
+- Admin manages coupons at `/admin/coupons`
 
 ---
 

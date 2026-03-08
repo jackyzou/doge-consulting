@@ -10,7 +10,10 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const origin = request.nextUrl.origin;
+  // Use APP_URL or forwarded host for public-facing URL (not internal Docker origin)
+  const fwdHost = request.headers.get("x-forwarded-host");
+  const fwdProto = request.headers.get("x-forwarded-proto") || "https";
+  const origin = fwdHost ? `${fwdProto}://${fwdHost}` : (process.env.APP_URL || request.nextUrl.origin);
   const redirectUri = `${origin}/api/auth/google/callback`;
 
   // Pass the "from" query param as state so we can redirect back after login
