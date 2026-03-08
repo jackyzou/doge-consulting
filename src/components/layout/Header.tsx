@@ -89,15 +89,15 @@ export function Header() {
   ];
 
   const resourceLinks = [
-    { href: "/blog", label: "Blog", icon: PenLine, desc: "Import guides & insights" },
-    { href: "/whitepaper", label: "Free Guide", icon: BookOpen, desc: "China Sourcing Playbook" },
-    { href: "/tools/revenue-calculator", label: "Revenue Calculator", icon: TrendingUp, desc: "Import profit, duty & ROI" },
-    { href: "/tools/cbm-calculator", label: "CBM Calculator", icon: Package, desc: "Freight volume & container fit" },
-    { href: "/tools/3d-visualizer", label: "3D Visualizer", icon: Package, desc: "Visualize cargo in containers" },
-    { href: "/tools/duty-calculator", label: "Duty Calculator", icon: Calculator, desc: "Estimate import duties" },
-    { href: "/glossary", label: "Glossary", icon: GraduationCap, desc: "Shipping & trade terms" },
-    { href: "/case-studies", label: "Case Studies", icon: TrendingUp, desc: "Customer success stories" },
-    { href: "/faq", label: t("nav.faq"), icon: MessageSquare, desc: "Common questions" },
+    { href: "/blog", label: t("headerTools.blog"), icon: PenLine, desc: t("headerTools.blogDesc") },
+    { href: "/whitepaper", label: t("headerTools.freeGuide"), icon: BookOpen, desc: t("headerTools.freeGuideDesc") },
+    { href: "/tools/revenue-calculator", label: t("headerTools.revenueCalc"), icon: TrendingUp, desc: t("headerTools.revenueCalcDesc") },
+    { href: "/tools/cbm-calculator", label: t("headerTools.cbmCalc"), icon: Package, desc: t("headerTools.cbmCalcDesc") },
+    { href: "/tools/3d-visualizer", label: t("headerTools.visualizer"), icon: Package, desc: t("headerTools.visualizerDesc") },
+    { href: "/tools/duty-calculator", label: t("headerTools.dutyCalc"), icon: Calculator, desc: t("headerTools.dutyCalcDesc") },
+    { href: "/glossary", label: t("headerTools.glossary"), icon: GraduationCap, desc: t("headerTools.glossaryDesc") },
+    { href: "/case-studies", label: t("headerTools.caseStudies"), icon: TrendingUp, desc: t("headerTools.caseStudiesDesc") },
+    { href: "/faq", label: t("nav.faq"), icon: MessageSquare, desc: t("headerTools.faqDesc") },
   ];
 
   const [resourcesOpen, setResourcesOpen] = useState(false);
@@ -132,7 +132,7 @@ export function Header() {
               onMouseEnter={() => setResourcesOpen(true)}
               className="flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             >
-              Tools
+              {t("headerTools.tools")}
               <ChevronDown className={`h-3.5 w-3.5 transition-transform ${resourcesOpen ? "rotate-180" : ""}`} />
             </button>
             {resourcesOpen && (

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { getTransporter } from "@/lib/email-notifications";
 
-async function notifyOnPublish(post: { published: boolean; title: string; slug: string; excerpt: string; emoji: string }, wasDraft: boolean) {
+async function notifyOnPublish(post: { published: boolean; title: string; slug: string; excerpt: string; emoji: string; language?: string }, wasDraft: boolean) {
   if (!post.published || !wasDraft) return;
   try {
     const transporter = await getTransporter();

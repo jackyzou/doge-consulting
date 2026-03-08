@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { ArrowRight, Calendar, Clock, Filter } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 interface BlogPost {
   id: string;
@@ -27,16 +28,17 @@ function getCoverImage(content: string): string | null {
 }
 
 export default function BlogPage() {
+  const { locale } = useTranslation();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/blog")
+    fetch(`/api/blog?lang=${locale}`)
       .then((r) => r.json())
       .then((data) => { setPosts(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));
-  }, []);
+  }, [locale]);
 
   const categories = [...new Set(posts.map((p) => p.category))].sort();
   const filtered = selectedCategory ? posts.filter((p) => p.category === selectedCategory) : posts;

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 // POST /api/newsletter — subscribe to newsletter
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json();
+    const { email, language } = await request.json();
 
     if (!email) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
@@ -15,11 +15,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
     }
 
-    // Upsert — don't error if already subscribed
+    const validLangs = ["en", "zh-CN", "zh-TW", "es", "fr"];
+    const lang = validLangs.includes(language) ? language : "en";
+
+    // Upsert — don't error if already subscribed, but update language preference
     await prisma.subscriber.upsert({
       where: { email },
-      update: {},
-      create: { email },
+      update: { language: lang },
+      create: { email, language: lang },
     });
 
     return NextResponse.json({ success: true, message: "Subscribed successfully!" });

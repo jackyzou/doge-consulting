@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { getTransporter } from "@/lib/email-notifications";
 
-async function notifySubscribers(post: { title: string; slug: string; excerpt: string; emoji: string }) {
+async function notifySubscribers(post: { title: string; slug: string; excerpt: string; emoji: string; language?: string }) {
   try {
     const transporter = await getTransporter();
     if (!transporter) return;
@@ -60,11 +60,13 @@ export async function POST(request: NextRequest) {
   try {
     await requireAdmin();
     const data = await request.json();
-    const { title, slug, excerpt, content, category, emoji, published, readTime } = data;
+    const { title, slug, excerpt, content, category, emoji, published, readTime, language } = data;
 
     if (!title || !slug || !content) {
       return NextResponse.json({ error: "Title, slug, and content are required" }, { status: 400 });
     }
+
+    const validLangs = ["en", "zh-CN", "zh-TW", "es", "fr"];
 
     const post = await prisma.blogPost.create({
       data: {
@@ -73,15 +75,16 @@ export async function POST(request: NextRequest) {
         excerpt: excerpt || title,
         content,
         category: category || "General",
-        emoji: emoji || "📦",
+        emoji: emoji || "\uD83D\uDCE6",
         published: published ?? false,
         readTime: readTime || "5 min",
+        language: validLangs.includes(language) ? language : "en",
       },
     });
 
     // Notify newsletter subscribers when publishing
     if (post.published) {
-      notifySubscribers({ title: post.title, slug: post.slug, excerpt: post.excerpt, emoji: post.emoji }).catch(() => {});
+      notifySubscribers({ title: post.title, slug: post.slug, excerpt: post.excerpt, emoji: post.emoji, language: post.language }).catch(() => {});
     }
 
     return NextResponse.json(post, { status: 201 });

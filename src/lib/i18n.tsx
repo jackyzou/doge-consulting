@@ -12,12 +12,12 @@ import {
 
 export type Locale = "en" | "zh-CN" | "zh-TW" | "es" | "fr";
 
-export const LOCALES: { code: Locale; name: string; flag: string }[] = [
-  { code: "en", name: "English", flag: "🇺🇸" },
-  { code: "zh-CN", name: "简体中文", flag: "🇨🇳" },
-  { code: "zh-TW", name: "繁體中文", flag: "�🇰" },
-  { code: "es", name: "Español", flag: "🇪🇸" },
-  { code: "fr", name: "Français", flag: "🇫🇷" },
+export const LOCALES: { code: Locale; name: string; flag: string; currency: string; currencySymbol: string }[] = [
+  { code: "en", name: "English", flag: "\u{1F1FA}\u{1F1F8}", currency: "USD", currencySymbol: "$" },
+  { code: "zh-CN", name: "简体中文", flag: "\u{1F1E8}\u{1F1F3}", currency: "CNY", currencySymbol: "\u00A5" },
+  { code: "zh-TW", name: "繁體中文", flag: "\u{1F1ED}\u{1F1F0}", currency: "HKD", currencySymbol: "HK$" },
+  { code: "es", name: "Español", flag: "\u{1F1EA}\u{1F1F8}", currency: "MXN", currencySymbol: "MX$" },
+  { code: "fr", name: "Français", flag: "\u{1F1EB}\u{1F1F7}", currency: "EUR", currencySymbol: "\u20AC" },
 ];
 
 import en from "@/messages/en";
@@ -128,4 +128,31 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
 export function useTranslation() {
   return useContext(I18nContext);
+}
+
+// ── Currency formatting per locale ────────────────────────────
+const EXCHANGE_RATES: Record<string, number> = {
+  USD: 1,
+  CNY: 7.2,
+  HKD: 7.8,
+  MXN: 17.2,
+  EUR: 0.92,
+};
+
+export function useLocaleCurrency() {
+  const { locale } = useContext(I18nContext);
+  const loc = LOCALES.find((l) => l.code === locale) || LOCALES[0];
+
+  const formatPrice = (usdAmount: number, decimals = 0): string => {
+    if (loc.currency === "USD") {
+      return `$${usdAmount.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
+    }
+    const rate = EXCHANGE_RATES[loc.currency] || 1;
+    const converted = usdAmount * rate;
+    const local = `${loc.currencySymbol}${converted.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
+    const usd = `$${usdAmount.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
+    return `${local} (${usd})`;
+  };
+
+  return { formatPrice, currency: loc.currency, currencySymbol: loc.currencySymbol };
 }

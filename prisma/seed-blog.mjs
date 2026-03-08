@@ -1318,9 +1318,9 @@ const allPosts = [...posts, ...posts2, ...posts3];
 console.log("🌱 Seeding blog posts...");
 
 const upsert = db.prepare(`
-  INSERT INTO BlogPost (id, slug, title, excerpt, content, category, emoji, published, authorName, readTime, createdAt, updatedAt)
-  VALUES (?, ?, ?, ?, ?, ?, ?, 1, 'Doge Consulting Team', ?, datetime('now'), datetime('now'))
-  ON CONFLICT(slug) DO UPDATE SET
+  INSERT INTO BlogPost (id, slug, language, title, excerpt, content, category, emoji, published, authorName, readTime, createdAt, updatedAt)
+  VALUES (?, ?, 'en', ?, ?, ?, ?, ?, 1, 'Doge Consulting Team', ?, datetime('now'), datetime('now'))
+  ON CONFLICT(slug, language) DO UPDATE SET
     title=excluded.title, excerpt=excluded.excerpt, content=excluded.content,
     category=excluded.category, emoji=excluded.emoji, readTime=excluded.readTime,
     updatedAt=datetime('now')

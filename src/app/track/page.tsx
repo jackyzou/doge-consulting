@@ -11,7 +11,7 @@ import { getShipmentByTrackingId, type Shipment } from "@/lib/tracking";
 import { useTranslation } from "@/lib/i18n";
 import Link from "next/link";
 
-const statusIcons: Record<string, React.ElementType> = {
+const statusIcons: Record<string, typeof Clock> = {
   order_confirmed: Check,
   items_sourced: Package,
   quality_inspected: Search,

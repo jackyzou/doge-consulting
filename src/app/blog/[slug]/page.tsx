@@ -7,12 +7,42 @@ import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, Calendar, Clock, User, Loader2, List, Share2 } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 interface Post { title: string; content: string; category: string; emoji: string; authorName: string; readTime: string; createdAt: string; }
 interface RelatedPost { slug: string; title: string; emoji: string; category: string; readTime: string; }
 
 function renderMarkdown(md: string): string {
-  return md
+  // First, extract and convert markdown tables into HTML tables before other processing
+  const tableRegex = /(?:^\|.+\|$\n?)+/gm;
+  const withTables = md.replace(tableRegex, (tableBlock: string) => {
+    const rows = tableBlock.trim().split("\n").filter(Boolean);
+    if (rows.length < 2) return tableBlock;
+
+    let html = '<div class="overflow-x-auto my-6"><table class="w-full text-sm border-collapse">';
+
+    rows.forEach((row: string, idx: number) => {
+      const cells = row.split("|").filter(Boolean).map((c: string) => c.trim());
+      // Skip separator row (---|---|---)
+      if (cells.every((c: string) => /^[-:]+$/.test(c))) return;
+
+      if (idx === 0) {
+        // Header row
+        html += '<thead><tr class="border-b-2 border-border">' +
+          cells.map((c: string) => `<th class="px-4 py-3 text-left font-semibold text-foreground">${c}</th>`).join("") +
+          '</tr></thead><tbody>';
+      } else {
+        html += '<tr class="border-b hover:bg-muted/30">' +
+          cells.map((c: string) => `<td class="px-4 py-3">${c}</td>`).join("") +
+          '</tr>';
+      }
+    });
+
+    html += '</tbody></table></div>';
+    return html;
+  });
+
+  return withTables
     .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<figure class="my-8"><img src="$2" alt="$1" class="rounded-xl w-full object-cover max-h-[420px] shadow-md" loading="lazy" /><figcaption class="text-xs text-center text-muted-foreground mt-2 italic">$1</figcaption></figure>')
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-teal underline hover:text-teal/80" target="_blank" rel="noopener noreferrer">$1</a>')
     .replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-teal pl-4 py-2 my-5 bg-teal/5 rounded-r-lg"><p class="text-sm text-muted-foreground italic leading-relaxed">$1</p></blockquote>')
@@ -24,12 +54,7 @@ function renderMarkdown(md: string): string {
     .replace(/\*([^*]+)\*/g, "<em>$1</em>")
     .replace(/^- (.+)$/gm, '<li class="ml-6 list-disc text-muted-foreground leading-relaxed py-0.5">$1</li>')
     .replace(/^\d+\. (.+)$/gm, '<li class="ml-6 list-decimal text-muted-foreground leading-relaxed py-0.5">$1</li>')
-    .replace(/\n\n(?!<[hulfbdoi])/g, '</p><p class="mb-5 text-muted-foreground leading-relaxed text-[15px]">')
-    .replace(/\|(.+)\|/gm, (match: string) => {
-      const cells = match.split("|").filter(Boolean).map((c: string) => c.trim());
-      if (cells.every((c: string) => /^[-:]+$/.test(c))) return "";
-      return '<tr class="border-b hover:bg-muted/30">' + cells.map((c: string) => '<td class="border-x px-4 py-3 text-sm">' + c + "</td>").join("") + "</tr>";
-    });
+    .replace(/\n\n(?!<[hulfbdoi])/g, '</p><p class="mb-5 text-muted-foreground leading-relaxed text-[15px]">');
 }
 
 function extractHeadings(md: string): { id: string; text: string; level: number }[] {
@@ -49,6 +74,7 @@ function extractCoverImage(md: string): string | null {
 
 export default function BlogPostPage() {
   const params = useParams();
+  const { locale } = useTranslation();
   const slug = params.slug as string;
   const [post, setPost] = useState<Post | null>(null);
   const [related, setRelated] = useState<RelatedPost[]>([]);
@@ -57,11 +83,11 @@ export default function BlogPostPage() {
   const [tocOpen, setTocOpen] = useState(true);
 
   useEffect(() => {
-    fetch("/api/blog/" + slug)
+    fetch(`/api/blog/${slug}?lang=${locale}`)
       .then((r) => { if (!r.ok) { setNotFound(true); setLoading(false); return null; } return r.json(); })
-      .then((data) => { if (data) { setPost(data); setLoading(false); fetch("/api/blog").then(r => r.json()).then((all: RelatedPost[]) => { setRelated((Array.isArray(all) ? all : []).filter((p: RelatedPost) => p.slug !== slug).slice(0, 4)); }).catch(() => {}); } })
+      .then((data) => { if (data) { setPost(data); setLoading(false); fetch(`/api/blog?lang=${locale}`).then(r => r.json()).then((all: RelatedPost[]) => { setRelated((Array.isArray(all) ? all : []).filter((p: RelatedPost) => p.slug !== slug).slice(0, 4)); }).catch(() => {}); } })
       .catch(() => { setNotFound(true); setLoading(false); });
-  }, [slug]);
+  }, [slug, locale]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-teal" /></div>;
   if (notFound || !post) return (<div className="min-h-screen flex items-center justify-center"><div className="text-center"><p className="text-6xl mb-4">📝</p><h1 className="text-2xl font-bold mb-2">Post Not Found</h1><p className="text-muted-foreground mb-6">This blog post doesn&apos;t exist yet.</p><Link href="/blog"><Button className="bg-teal hover:bg-teal/90"><ArrowLeft className="h-4 w-4 mr-2" /> Back to Blog</Button></Link></div></div>);

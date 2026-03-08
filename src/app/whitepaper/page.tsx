@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { Download, Lock, CheckCircle, ArrowRight, BookOpen, DollarSign, Globe, Ship, TrendingUp, Users, Loader2 } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 const CHAPTERS = [
   { icon: Globe, title: "Why China? The $3.7 Trillion Manufacturing Powerhouse", desc: "China produces 28% of global manufactured goods. Learn why the cost advantage persists and how to leverage it." },
@@ -20,6 +21,7 @@ const CHAPTERS = [
 ];
 
 export default function WhitepaperPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [downloadUrl, setDownloadUrl] = useState("");
@@ -83,13 +85,12 @@ export default function WhitepaperPage() {
         <div className="mx-auto max-w-5xl px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-              <Badge className="mb-4 bg-gold/20 text-gold border-gold/30">FREE GUIDE — 50+ Pages</Badge>
+              <Badge className="mb-4 bg-gold/20 text-gold border-gold/30">{t("whitepaperPage.badge")}</Badge>
               <h1 className="text-4xl font-bold mb-4 leading-tight">
-                The China Sourcing Playbook: How to Build a Profitable Import Business
+                {t("whitepaperPage.title")}
               </h1>
               <p className="text-lg text-slate-300 mb-6">
-                Everything you need to know about sourcing products from China and selling them in North America.
-                Real factory prices, profit calculations, and step-by-step business plans.
+                {t("whitepaperPage.desc")}
               </p>
               <div className="flex flex-wrap gap-3 text-sm">
                 {["Factory prices revealed", "3 business models", "15 product categories", "City-by-city guide", "Customs walkthrough", "Profit calculators"].map((tag) => (
@@ -106,42 +107,42 @@ export default function WhitepaperPage() {
                   {status === "unlocked" ? (
                     <div className="text-center py-6">
                       <CheckCircle className="h-16 w-16 text-teal mx-auto mb-4" />
-                      <h3 className="text-xl font-bold mb-2">Guide Unlocked! 🎉</h3>
-                      <p className="text-muted-foreground mb-6">Your secure guide link is ready and tied to your subscriber email.</p>
+                      <h3 className="text-xl font-bold mb-2">{t("whitepaperPage.unlocked")} 🎉</h3>
+                      <p className="text-muted-foreground mb-6">{t("whitepaperPage.readyDesc")}</p>
                       <a href={downloadUrl}>
                         <Button size="lg" className="w-full bg-teal hover:bg-teal/90 gap-2">
-                          <Download className="h-5 w-5" /> Download PDF Guide
+                          <Download className="h-5 w-5" /> {t("whitepaperPage.downloadPdf")}
                         </Button>
                       </a>
-                      <p className="text-xs text-muted-foreground mt-4">We also sent the same secure link to your email.</p>
+                      <p className="text-xs text-muted-foreground mt-4">{t("whitepaperPage.sentToEmail")}</p>
                     </div>
                   ) : (
                     <>
                       <div className="flex items-center gap-2 mb-4">
                         <Lock className="h-5 w-5 text-gold" />
-                        <h3 className="font-bold">Get Instant Access (Free)</h3>
+                        <h3 className="font-bold">{t("whitepaperPage.getAccess")}</h3>
                       </div>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Enter your email to unlock the complete guide. Your download link is secured to that subscriber email, and we&apos;ll also create a free account so you can track quotes and orders.
+                        {t("whitepaperPage.enterEmail")}
                       </p>
                       <form onSubmit={handleUnlock} className="space-y-3">
                         <div>
-                          <Label className="text-xs">Full Name</Label>
+                          <Label className="text-xs">{t("whitepaperPage.fullName")}</Label>
                           <Input placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} className="mt-1" />
                         </div>
                         <div>
-                          <Label className="text-xs">Email Address *</Label>
+                          <Label className="text-xs">{t("whitepaperPage.emailAddress")} *</Label>
                           <Input type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1" />
                         </div>
                         <Button type="submit" className="w-full bg-teal hover:bg-teal/90 gap-2" disabled={status === "loading"}>
                           {status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                          {status === "loading" ? "Unlocking..." : "Download Free Guide"}
+                          {status === "loading" ? t("whitepaperPage.unlocking") : t("whitepaperPage.downloadFreeGuide")}
                         </Button>
                         <p className="text-[11px] text-muted-foreground text-center">
-                          No spam. Unsubscribe anytime. By signing up you agree to our <Link href="/privacy" className="underline">privacy policy</Link>.
+                          {t("whitepaperPage.noSpam")} {t("whitepaperPage.privacyAgree")} <Link href="/privacy" className="underline">{t("whitepaperPage.privacyPolicy")}</Link>.
                         </p>
                         {status === "error" ? (
-                          <p className="text-xs text-center text-red-600">We couldn&apos;t generate your secure whitepaper link. Please try again.</p>
+                          <p className="text-xs text-center text-red-600">{t("whitepaperPage.errorMsg")}</p>
                         ) : null}
                       </form>
                     </>
@@ -157,8 +158,8 @@ export default function WhitepaperPage() {
       <section className="py-20">
         <div className="mx-auto max-w-5xl px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">What&apos;s Inside the Playbook</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">6 comprehensive chapters covering everything from factory economics to customs compliance</p>
+            <h2 className="text-3xl font-bold mb-4">{t("whitepaperPage.whatsInside")}</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">{t("whitepaperPage.whatsInsideDesc")}</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {CHAPTERS.map((ch, i) => (
@@ -179,7 +180,7 @@ export default function WhitepaperPage() {
       {/* Key Stats */}
       <section className="py-16 bg-muted/50">
         <div className="mx-auto max-w-5xl px-4">
-          <h2 className="text-2xl font-bold text-center mb-10">The Opportunity in Numbers</h2>
+          <h2 className="text-2xl font-bold text-center mb-10">{t("whitepaperPage.opportunityTitle")}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
               { value: "$3.7T", label: "China manufacturing output" },
@@ -199,7 +200,7 @@ export default function WhitepaperPage() {
       {/* Sample Content Preview */}
       <section className="py-20">
         <div className="mx-auto max-w-5xl px-4">
-          <h2 className="text-2xl font-bold text-center mb-10">Sample: Factory Price vs US Retail</h2>
+          <h2 className="text-2xl font-bold text-center mb-10">{t("whitepaperPage.sampleTitle")}</h2>
           <Card>
             <CardContent className="p-6 overflow-x-auto">
               <table className="w-full text-sm">
@@ -242,13 +243,13 @@ export default function WhitepaperPage() {
       {/* Final CTA */}
       <section className="py-20 gradient-hero text-white">
         <div className="mx-auto max-w-3xl px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Start Your Import Business?</h2>
+          <h2 className="text-3xl font-bold mb-4">{t("whitepaperPage.readyToStart")}</h2>
           <p className="text-lg text-slate-300 mb-8">
-            Download the free playbook, then let us handle the logistics. From sourcing to delivery — we&apos;ve got you covered.
+            {t("whitepaperPage.readyToStartDesc")}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="#top"><Button size="lg" className="bg-gold text-navy hover:bg-gold/90 font-bold">Download Free Playbook <Download className="ml-2 h-5 w-5" /></Button></a>
-            <Link href="/quote"><Button size="lg" variant="outline" className="border-white/25 bg-white/10 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-sm hover:bg-white/18 hover:border-white/40">Get Shipping Quote <ArrowRight className="ml-2 h-5 w-5" /></Button></Link>
+            <a href="#top"><Button size="lg" className="bg-gold text-navy hover:bg-gold/90 font-bold">{t("whitepaperPage.downloadPlaybook")} <Download className="ml-2 h-5 w-5" /></Button></a>
+            <Link href="/quote"><Button size="lg" variant="outline" className="border-white/25 bg-white/10 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-sm hover:bg-white/18 hover:border-white/40">{t("whitepaperPage.getShippingQuote")} <ArrowRight className="ml-2 h-5 w-5" /></Button></Link>
           </div>
         </div>
       </section>

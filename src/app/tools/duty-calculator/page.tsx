@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
+import { useTranslation } from "@/lib/i18n";
 
 // Common HTS categories with duty rates for China→USA imports
 const PRODUCT_CATEGORIES = [
@@ -38,6 +39,7 @@ const PRODUCT_CATEGORIES = [
 const SECTION_301_RATE = 25; // Standard Section 301 tariff on China goods
 
 export default function DutyCalculatorPage() {
+  const { t } = useTranslation();
   const [category, setCategory] = useState("");
   const [productValue, setProductValue] = useState("");
   const [shippingCost, setShippingCost] = useState("");
@@ -64,11 +66,10 @@ export default function DutyCalculatorPage() {
       <section className="gradient-hero py-16 text-white">
         <div className="mx-auto max-w-7xl px-4 text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <Badge className="mb-4 bg-teal/20 text-teal-200 border-teal/30">Free Tool</Badge>
-            <h1 className="text-4xl font-bold mb-4">Import Duty Calculator</h1>
+            <Badge className="mb-4 bg-teal/20 text-teal-200 border-teal/30">{t("tools.dutyBadge")}</Badge>
+            <h1 className="text-4xl font-bold mb-4">{t("tools.dutyPageTitle")}</h1>
             <p className="text-lg text-slate-300 max-w-2xl mx-auto">
-              Estimate US import duties and taxes for products from China.
-              Includes Section 301 tariffs, MPF, and harbor fees.
+              {t("tools.dutyPageDesc")}
             </p>
           </motion.div>
         </div>
@@ -81,13 +82,13 @@ export default function DutyCalculatorPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Search className="h-5 w-5 text-teal" /> Product Category
+                  <Search className="h-5 w-5 text-teal" /> {t("tools.productCategoryLabel")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <Select value={category} onValueChange={setCategory}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select product category..." />
+                    <SelectValue placeholder={t("tools.selectCategory")} />
                   </SelectTrigger>
                   <SelectContent>
                     {PRODUCT_CATEGORIES.map((cat) => (
@@ -100,7 +101,7 @@ export default function DutyCalculatorPage() {
                 {selectedCategory && (
                   <div className="mt-3 p-3 bg-muted/50 rounded-lg text-sm">
                     <p className="text-muted-foreground">{selectedCategory.note}</p>
-                    <p className="font-medium mt-1">Base duty rate: {selectedCategory.dutyRate}%</p>
+                    <p className="font-medium mt-1">{t("tools.baseDutyRate")}: {selectedCategory.dutyRate}%</p>
                   </div>
                 )}
               </CardContent>
@@ -109,21 +110,21 @@ export default function DutyCalculatorPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-teal" /> Value & Costs
+                  <DollarSign className="h-5 w-5 text-teal" /> {t("tools.valueAndCosts")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Product Value (USD)</Label>
+                  <Label>{t("tools.productValue")}</Label>
                   <Input type="number" placeholder="e.g. 5000" value={productValue} onChange={(e) => setProductValue(e.target.value)} className="mt-1" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Shipping Cost (USD)</Label>
+                    <Label>{t("tools.shippingCost")}</Label>
                     <Input type="number" placeholder="e.g. 800" value={shippingCost} onChange={(e) => setShippingCost(e.target.value)} className="mt-1" />
                   </div>
                   <div>
-                    <Label>Insurance (USD)</Label>
+                    <Label>{t("tools.insurance")}</Label>
                     <Input type="number" placeholder="e.g. 50" value={insuranceCost} onChange={(e) => setInsuranceCost(e.target.value)} className="mt-1" />
                   </div>
                 </div>
@@ -133,16 +134,15 @@ export default function DutyCalculatorPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Info className="h-5 w-5 text-gold" /> Section 301 Tariffs (China)
+                  <Info className="h-5 w-5 text-gold" /> {t("tools.section301Info")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium">Include Section 301 tariff (25%)</p>
+                    <p className="text-sm font-medium">{t("tools.includeSection301")}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Most goods imported from China are subject to an additional 25% tariff.
-                      Some categories are exempt — check with a customs broker for your specific product.
+                      {t("tools.section301Note")}
                     </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
@@ -159,12 +159,12 @@ export default function DutyCalculatorPage() {
             <Card className="sticky top-24 border-teal/20">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Calculator className="h-5 w-5 text-teal" /> Estimated Duties & Fees
+                  <Calculator className="h-5 w-5 text-teal" /> {t("tools.estimatedDuties")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between py-2 border-b text-sm">
-                  <span className="text-muted-foreground">Customs Value (CIF)</span>
+                  <span className="text-muted-foreground">{t("tools.customsValue")}</span>
                   <span className="font-medium">${customsValue.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between py-2 border-b text-sm">
@@ -186,24 +186,24 @@ export default function DutyCalculatorPage() {
                   <span className="font-medium">${hmtFee.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between py-2 border-b text-sm font-semibold">
-                  <span>Total Duties & Fees</span>
+                  <span>{t("tools.totalDutiesFees")}</span>
                   <span className="text-red-600">${(totalDuty + mphFee + hmtFee).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between py-3 bg-teal/5 rounded-lg px-3 -mx-1">
-                  <span className="font-semibold">Total Landed Cost</span>
+                  <span className="font-semibold">{t("tools.totalLandedCost")}</span>
                   <span className="text-xl font-bold text-teal">${totalLandedCost.toFixed(2)}</span>
                 </div>
 
                 {customsValue > 0 && (
                   <div className="text-xs text-muted-foreground pt-2 space-y-1">
-                    <p>Effective duty rate: <strong>{((totalDuty / customsValue) * 100).toFixed(1)}%</strong></p>
-                    <p>Duties as % of product: <strong>{value > 0 ? ((totalDuty / value) * 100).toFixed(1) : 0}%</strong></p>
+                    <p>{t("tools.effectiveDutyRateLabel")}: <strong>{((totalDuty / customsValue) * 100).toFixed(1)}%</strong></p>
+                    <p>{t("tools.dutiesAsPct")}: <strong>{value > 0 ? ((totalDuty / value) * 100).toFixed(1) : 0}%</strong></p>
                   </div>
                 )}
 
                 <Link href="/quote" className="block pt-2">
                   <Button className="w-full bg-teal hover:bg-teal/90">
-                    Get Shipping Quote <ArrowRight className="ml-2 h-4 w-4" />
+                    {t("tools.getQuote")} <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </CardContent>
@@ -211,15 +211,12 @@ export default function DutyCalculatorPage() {
 
             <Card className="mt-4">
               <CardContent className="p-4 text-xs text-muted-foreground">
-                <p className="font-semibold text-foreground mb-2">⚠️ Disclaimer</p>
+                <p className="font-semibold text-foreground mb-2">{"\u26A0\uFE0F"} {t("tools.disclaimer").split(".")[0]}.</p>
                 <p>
-                  This calculator provides estimates only. Actual duty rates depend on the
-                  specific HTS code of your product. Section 301 tariffs and exemptions
-                  change frequently. Always confirm with a licensed customs broker.
+                  {t("tools.disclaimer")}
                 </p>
                 <p className="mt-2">
-                  <strong>We handle all customs clearance</strong> — our team will determine
-                  exact duties for your shipment as part of our service.
+                  <strong>{t("tools.weHandle")}</strong>
                 </p>
               </CardContent>
             </Card>

@@ -301,6 +301,7 @@ model Setting {
 model Subscriber {
   id        String   @id @default(cuid())
   email     String   @unique
+  language  String   @default("en") // "en" | "zh-CN" | "zh-TW" | "es" | "fr"
   createdAt DateTime @default(now())
 }
 
@@ -309,15 +310,18 @@ model Subscriber {
 // ──────────────────────────────────────────
 model BlogPost {
   id         String   @id @default(cuid())
-  slug       String   @unique
+  slug       String
+  language   String   @default("en") // "en" | "zh-CN" | "zh-TW" | "es" | "fr"
   title      String
   excerpt    String
   content    String   // markdown
   category   String
-  emoji      String   @default("📦")
+  emoji      String   @default("\uD83D\uDCE6")
   published  Boolean  @default(false)
   authorName String   @default("Doge Consulting Team")
   readTime   String   @default("5 min")
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  @@unique([slug, language])
 }

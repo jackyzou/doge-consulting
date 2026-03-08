@@ -39,7 +39,7 @@ const statusColors: Record<string, string> = {
   closed: "bg-gray-500/10 text-gray-600",
 };
 
-const statusIcons: Record<string, React.ElementType> = {
+const statusIcons: Record<string, typeof Clock> = {
   pending: Clock,
   confirmed: Check,
   sourcing: Package,

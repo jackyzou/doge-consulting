@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -43,7 +43,15 @@ function formatUSD(val: number) {
   return `$${val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export default function QuotePage() {
+export default function QuotePageWrapper() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-pulse text-teal text-lg">Loading...</div></div>}>
+      <QuotePageContent />
+    </Suspense>
+  );
+}
+
+function QuotePageContent() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const [step, setStep] = useState(1);
