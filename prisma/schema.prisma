@@ -176,6 +176,7 @@ model Order {
   payments       Payment[]
   statusHistory  OrderStatusHistory[]
   documents      Document[]
+  shipments      Shipment[]
 }
 
 model OrderItem {
@@ -381,4 +382,92 @@ model PageView {
   @@index([path])
   @@index([createdAt])
   @@index([country])
+}
+
+// ──────────────────────────────────────────
+// Vessel & Shipment Tracking
+// ──────────────────────────────────────────
+model Vessel {
+  id         String   @id @default(cuid())
+  name       String                        // "EVER GIVEN"
+  imo        String?  @unique              // IMO number (7 digits)
+  mmsi       String?  @unique              // MMSI for AIS tracking
+  flag       String?                       // Country code "PA", "LR", "HK"
+  carrier    String?                       // "COSCO", "Maersk", "Evergreen"
+  vesselType String   @default("container") // container, bulk, tanker, roro
+  callSign   String?
+  lengthM    Float?                        // overall length in meters
+  widthM     Float?                        // beam in meters
+  yearBuilt  Int?
+  photoUrl   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  shipments  Shipment[]
+}
+
+model Shipment {
+  id              String   @id @default(cuid())
+  containerNumber String?                  // e.g. "CSLU6543210"
+  containerType   String   @default("40HC") // 20GP, 40GP, 40HC, 45HC, 20RF, 40RF
+  sealNumber      String?
+
+  // Voyage info
+  vesselId        String?
+  vessel          Vessel?  @relation(fields: [vesselId], references: [id])
+  voyageNumber    String?                  // "0W1E5S1MA"
+  billOfLading    String?                  // B/L number
+
+  // Route
+  portOfLoading   String   @default("Shenzhen (CNSZX)")
+  portOfDischarge String   @default("Seattle (USSEA)")
+  placeOfReceipt  String?                  // factory / warehouse pickup
+  placeOfDelivery String?                  // final destination
+
+  // Dates
+  etd             DateTime?                // estimated departure
+  atd             DateTime?                // actual departure
+  eta             DateTime?                // estimated arrival
+  ata             DateTime?                // actual arrival
+
+  // Status
+  status          String   @default("booked") // booked, loaded, in_transit, transshipment, arriving, discharged, customs, delivered
+
+  // Weight / measurement
+  grossWeightKg   Float?
+  volumeCbm       Float?
+
+  // Order link
+  orderId         String?
+  order           Order?   @relation(fields: [orderId], references: [id])
+
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  events          ShipmentEvent[]
+
+  @@index([containerNumber])
+  @@index([billOfLading])
+  @@index([status])
+  @@index([orderId])
+}
+
+model ShipmentEvent {
+  id          String   @id @default(cuid())
+  shipmentId  String
+  shipment    Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+
+  location    String                       // "Yantian, China" or UN/LOCODE
+  status      String                       // "gate_in", "loaded", "departed", "arrived", "discharged", "customs_hold", "released", "delivered"
+  description String?                      // free-text detail
+  timestamp   DateTime                     // when this event occurred
+  source      String   @default("manual")  // "manual", "api", "carrier_webhook"
+
+  createdAt   DateTime @default(now())
+
+  @@index([shipmentId])
+  @@index([timestamp])
 }

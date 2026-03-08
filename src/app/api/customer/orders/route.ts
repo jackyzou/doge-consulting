@@ -20,6 +20,12 @@ export async function GET() {
           select: { id: true, paymentNumber: true, amount: true, method: true, status: true, paidAt: true },
         },
         statusHistory: { orderBy: { createdAt: "desc" } },
+        shipments: {
+          include: {
+            vessel: { select: { name: true, imo: true, flag: true, carrier: true } },
+            events: { orderBy: { timestamp: "desc" }, take: 5 },
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
