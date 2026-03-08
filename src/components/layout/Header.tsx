@@ -255,63 +255,78 @@ export function Header() {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-72">
-              <div className="flex flex-col gap-4 pt-8">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setOpen(false)}
-                    className="rounded-md px-3 py-2 text-base font-medium text-foreground transition-colors hover:bg-secondary"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-                <div className="border-t pt-2">
-                  <p className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tools & Resources</p>
-                  {resourceLinks.map((item) => (
+            <SheetContent side="right" className="w-80 overflow-y-auto">
+              <div className="flex flex-col gap-2 pt-6 pb-8">
+                {/* Main nav */}
+                <div className="space-y-1">
+                  {navLinks.map((link) => (
                     <Link
-                      key={item.href}
-                      href={item.href}
+                      key={link.href}
+                      href={link.href}
                       onClick={() => setOpen(false)}
-                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
+                      className={`block rounded-lg px-4 py-2.5 text-base font-medium transition-colors hover:bg-secondary ${pathname === link.href ? "bg-teal/5 text-teal" : "text-foreground"}`}
                     >
-                      <item.icon className="h-4 w-4 text-teal" />
-                      {item.label}
+                      {link.label}
                     </Link>
                   ))}
                 </div>
-                <Link href="/quote" onClick={() => setOpen(false)}>
-                  <Button className="mt-4 w-full bg-teal text-white hover:bg-teal/90">
-                    {t("nav.getFreeQuote")}
-                  </Button>
-                </Link>
-                {user ? (
-                  <>
-                    <Link
-                      href={user.role === "admin" ? "/admin" : "/account"}
-                      onClick={() => setOpen(false)}
-                      className="rounded-md px-3 py-2 text-base font-medium text-foreground transition-colors hover:bg-secondary flex items-center gap-2"
-                    >
-                      <User className="h-4 w-4" />
-                      {user.role === "admin" ? t("header.adminPanel") : t("header.myAccount")}
-                    </Link>
-                    <button
-                      onClick={() => { setOpen(false); handleLogout(); }}
-                      className="rounded-md px-3 py-2 text-base font-medium text-red-500 transition-colors hover:bg-red-50 flex items-center gap-2 text-left"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      {t("header.signOut")}
-                    </button>
-                  </>
-                ) : (
-                  <Link href="/login" onClick={() => setOpen(false)}>
-                    <Button variant="outline" className="w-full gap-2">
-                      <LogIn className="h-4 w-4" />
-                      {t("header.signInSignUp")}
+
+                {/* Tools & Resources */}
+                <div className="border-t pt-3 mt-2">
+                  <p className="px-4 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("headerTools.tools")} &amp; Resources</p>
+                  <div className="space-y-0.5 mt-1">
+                    {resourceLinks.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setOpen(false)}
+                        className={`flex items-center gap-3 rounded-lg px-4 py-2 text-sm transition-colors hover:bg-secondary ${pathname === item.href ? "bg-teal/5 font-medium text-teal" : "text-foreground"}`}
+                      >
+                        <item.icon className="h-4 w-4 text-teal shrink-0" />
+                        <div>
+                          <p className="font-medium text-sm">{item.label}</p>
+                          <p className="text-[10px] text-muted-foreground">{item.desc}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+                {/* CTA buttons */}
+                <div className="border-t pt-3 mt-2 space-y-2">
+                  <Link href="/quote" onClick={() => setOpen(false)}>
+                    <Button className="w-full bg-teal text-white hover:bg-teal/90">
+                      {t("nav.getFreeQuote")}
                     </Button>
                   </Link>
-                )}
+                  {user ? (
+                    <>
+                      <Link
+                        href={user.role === "admin" ? "/admin" : "/account"}
+                        onClick={() => setOpen(false)}
+                      >
+                        <Button variant="outline" className="w-full gap-2">
+                          <User className="h-4 w-4" />
+                          {user.role === "admin" ? t("header.adminPanel") : t("header.myAccount")}
+                        </Button>
+                      </Link>
+                      <button
+                        onClick={() => { setOpen(false); handleLogout(); }}
+                        className="w-full rounded-lg px-4 py-2 text-sm font-medium text-red-500 transition-colors hover:bg-red-50 flex items-center justify-center gap-2"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        {t("header.signOut")}
+                      </button>
+                    </>
+                  ) : (
+                    <Link href="/login" onClick={() => setOpen(false)}>
+                      <Button variant="outline" className="w-full gap-2">
+                        <LogIn className="h-4 w-4" />
+                        {t("header.signInSignUp")}
+                      </Button>
+                    </Link>
+                  )}
+                </div>
               </div>
             </SheetContent>
           </Sheet>

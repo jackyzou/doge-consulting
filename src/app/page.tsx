@@ -4,6 +4,7 @@ import { HowItWorks } from "@/components/home/HowItWorks";
 import { ServicesOverview } from "@/components/home/ServicesOverview";
 import { PricingOverview } from "@/components/home/PricingOverview";
 import { Testimonials } from "@/components/home/Testimonials";
+import { NewsletterSection } from "@/components/home/NewsletterSection";
 import { FAQPreview } from "@/components/home/FAQPreview";
 import { CTABanner } from "@/components/home/CTABanner";
 import Link from "next/link";
@@ -17,6 +18,7 @@ export default function HomePage() {
       <ServicesOverview />
       <PricingOverview />
       <Testimonials />
+      <NewsletterSection />
       <FAQPreview />
       <CTABanner />
       {/* App Description + Privacy — visible without login, satisfies Google OAuth requirements */}

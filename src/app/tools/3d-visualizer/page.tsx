@@ -257,9 +257,65 @@ export default function ThreeDVisualizerPage() {
       </section>
 
       <div className="mx-auto max-w-7xl px-4 py-6">
-        <div className="grid lg:grid-cols-[380px_1fr] gap-6">
-          {/* ── LEFT PANEL ──────────────────────────────────── */}
-          <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
+        {/* ── 3D VIEWPORT (full width, top) ─────────────── */}
+        <Card className="overflow-hidden border-teal/20 mb-6">
+          <div className="h-[420px] lg:h-[520px] min-h-[350px] relative">
+            <ThreeScene
+              ref={sceneRef}
+              items={displayItems}
+              container={showContainer ? container : null}
+              showContainer={showContainer}
+              showHuman={showHuman}
+              darkMode={false}
+              packedMode={packedMode}
+            />
+            {/* Overlays */}
+            {items.length > 0 && (
+              <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm text-foreground rounded-lg px-3 py-2 shadow-sm border">
+                <p className="text-[10px] text-muted-foreground">{items.length} items · {round(totalWeight, 0)} kg</p>
+                <p className="text-xl font-bold text-teal">{round(totalCbm, 2)} <span className="text-xs font-normal text-muted-foreground">CBM</span></p>
+              </div>
+            )}
+            <div className="absolute bottom-3 right-3 flex gap-1">
+              {CONTAINERS.map(c => (
+                <button key={c.type} onClick={() => { setContainerType(c.type); setPackedMode(false); setPackResult(null); }}
+                  className={`px-2.5 py-1 rounded text-xs font-medium transition-colors shadow-sm ${containerType === c.type ? "bg-teal text-white" : "bg-white/90 text-foreground hover:bg-white border"}`}>
+                  {c.type === "20gp" ? "20ft" : c.type === "40gp" ? "40ft" : "40ft HC"}
+                </button>
+              ))}
+            </div>
+            <div className="absolute top-3 left-3 flex gap-2">
+              <Button size="sm" variant={showHuman ? "default" : "outline"} className={`h-7 text-xs gap-1 ${showHuman ? "bg-teal hover:bg-teal/90" : "bg-white/90 border"}`} onClick={() => setShowHuman(!showHuman)}>
+                <User className="h-3 w-3" /> Human
+              </Button>
+              <Button size="sm" variant={showContainer ? "default" : "outline"} className={`h-7 text-xs gap-1 ${showContainer ? "bg-teal hover:bg-teal/90" : "bg-white/90 border"}`} onClick={() => setShowContainer(!showContainer)}>
+                <Ship className="h-3 w-3" /> Container
+              </Button>
+            </div>
+            {items.length > 0 && (
+              <div className="absolute top-3 right-3">
+                <Button size="sm" onClick={handlePack} disabled={items.length === 0} className="h-7 text-xs gap-1 bg-navy hover:bg-navy/90">
+                  <ArrowUpCircle className="h-3 w-3" /> Pack into Container
+                </Button>
+              </div>
+            )}
+            {packResult && packResult.fits && (
+              <div className="absolute top-12 right-3">
+                <Badge className="bg-green-100 text-green-800 text-[10px]"><CheckCircle className="h-3 w-3 mr-1" /> All items fit!</Badge>
+              </div>
+            )}
+            {packResult && !packResult.fits && packResult.suggestedContainer && (
+              <div className="absolute top-12 right-3">
+                <Button size="sm" variant="outline" className="h-7 text-xs border-amber-300 bg-amber-50 text-amber-800" onClick={() => { setContainerType(packResult.suggestedContainer!); setPackedMode(false); setPackResult(null); }}>
+                  <AlertTriangle className="h-3 w-3 mr-1" /> Upgrade to {packResult.suggestedContainer === "40gp" ? "40ft" : "40ft HC"}
+                </Button>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* ── BELOW: Controls in 3-column grid ──────────── */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Add from presets */}
             <Card>
               <CardHeader className="pb-2">
@@ -403,77 +459,56 @@ export default function ThreeDVisualizerPage() {
               </CardContent>
             </Card>
 
-            {/* Scene toggles */}
+            {/* Container & Quote */}
             <Card>
-              <CardContent className="p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs flex items-center gap-1"><User className="h-3 w-3" /> Human Scale</Label>
-                  <Switch checked={showHuman} onCheckedChange={setShowHuman} />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs flex items-center gap-1"><Ship className="h-3 w-3" /> Show Container</Label>
-                  <Switch checked={showContainer} onCheckedChange={setShowContainer} />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Actions */}
-            <div className="space-y-2">
-              <Button onClick={handleGetQuote} className="w-full bg-teal hover:bg-teal/90 gap-2 text-sm" disabled={items.length === 0}>
-                <Send className="h-4 w-4" /> Save &amp; Get Quote
-              </Button>
-              <Link href="/tools/cbm-calculator"><Button variant="outline" className="w-full gap-2 text-sm"><Calculator className="h-4 w-4" /> CBM Calculator</Button></Link>
-              <Link href="/tools/revenue-calculator"><Button variant="outline" className="w-full gap-2 text-sm"><BarChart3 className="h-4 w-4" /> Revenue Calculator</Button></Link>
-            </div>
-          </div>
-
-          {/* ── RIGHT: 3D VIEWPORT ─────────────────────────── */}
-          <div className="space-y-4">
-            <Card className="overflow-hidden border-teal/20">
-              <div className="h-[520px] lg:h-[640px] min-h-[400px] relative">
-                <ThreeScene
-                  ref={sceneRef}
-                  items={displayItems}
-                  container={showContainer ? container : null}
-                  showContainer={showContainer}
-                  showHuman={showHuman}
-                  darkMode={true}
-                  packedMode={packedMode}
-                />
-                {/* Overlays */}
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm"><Ship className="h-4 w-4 text-teal" /> Container &amp; Quote</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Select value={containerType} onValueChange={(v) => { setContainerType(v); setPackedMode(false); setPackResult(null); }}>
+                  <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CONTAINERS.map(c => <SelectItem key={c.type} value={c.type}>{c.label} — {c.cbm}m³</SelectItem>)}
+                  </SelectContent>
+                </Select>
                 {items.length > 0 && (
-                  <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-sm text-white rounded-lg px-3 py-2">
-                    <p className="text-[10px] text-slate-400">{items.length} items · {round(totalWeight, 0)} kg</p>
-                    <p className="text-xl font-bold">{round(totalCbm, 2)} <span className="text-xs font-normal text-slate-400">CBM</span></p>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] w-10 text-muted-foreground">Volume</span>
+                      <Progress value={Math.min(volPct, 100)} className={`h-2 flex-1 ${volPct > 100 ? "[&>div]:bg-red-500" : "[&>div]:bg-teal"}`} />
+                      <span className={`text-[10px] w-12 text-right font-medium ${volPct > 100 ? "text-red-600" : ""}`}>{round(volPct, 1)}%</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] w-10 text-muted-foreground">Weight</span>
+                      <Progress value={Math.min(wtPct, 100)} className={`h-2 flex-1 ${wtPct > 100 ? "[&>div]:bg-red-500" : "[&>div]:bg-navy-light"}`} />
+                      <span className={`text-[10px] w-12 text-right font-medium ${wtPct > 100 ? "text-red-600" : ""}`}>{round(wtPct, 1)}%</span>
+                    </div>
+                    <div className="flex justify-between text-[10px] text-muted-foreground">
+                      <span>{round(totalCbm, 3)} / {container.cbm} m³</span>
+                      <span><Scale className="h-3 w-3 inline" /> {round(totalWeight, 0)}kg / {(container.maxKg / 1000).toFixed(1)}t</span>
+                    </div>
                   </div>
                 )}
-                <div className="absolute bottom-4 right-4 flex gap-1">
+                <Separator />
+                <div className="space-y-1.5">
                   {CONTAINERS.map(c => (
-                    <button key={c.type} onClick={() => { setContainerType(c.type); setPackedMode(false); setPackResult(null); }}
-                      className={`px-2 py-1 rounded text-xs font-medium transition-colors ${containerType === c.type ? "bg-white text-black" : "bg-white/20 text-white hover:bg-white/30"}`}>
-                      {c.type === "20gp" ? "20ft" : c.type === "40gp" ? "40ft" : "40ft HC"}
-                    </button>
+                    <div key={c.type} className={`p-2 rounded border text-[11px] transition-colors cursor-pointer ${containerType === c.type ? "border-teal/30 bg-teal/5" : "hover:bg-muted/50"}`}
+                      onClick={() => { setContainerType(c.type); setPackedMode(false); setPackResult(null); }}>
+                      <span className="font-medium">{c.type === "20gp" ? "20ft" : c.type === "40gp" ? "40ft" : "40ft HC"}</span>
+                      <span className="text-muted-foreground ml-1">{c.internalM.l}×{c.internalM.w}×{c.internalM.h}m · {c.cbm}m³</span>
+                    </div>
                   ))}
                 </div>
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-black/50 text-white/80 text-[10px] backdrop-blur-sm">Drag to rotate · Scroll to zoom</Badge>
+                <Separator />
+                <Button onClick={handleGetQuote} className="w-full bg-teal hover:bg-teal/90 gap-2 text-sm" disabled={items.length === 0}>
+                  <Send className="h-4 w-4" /> Save &amp; Get Quote
+                </Button>
+                <div className="flex gap-2">
+                  <Link href="/tools/cbm-calculator" className="flex-1"><Button variant="outline" className="w-full gap-2 text-xs"><Calculator className="h-3 w-3" /> CBM Calc</Button></Link>
+                  <Link href="/tools/revenue-calculator" className="flex-1"><Button variant="outline" className="w-full gap-2 text-xs"><BarChart3 className="h-3 w-3" /> Revenue Calc</Button></Link>
                 </div>
-              </div>
-            </Card>
-
-            {/* Container ref */}
-            <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Container Dimensions</CardTitle></CardHeader>
-              <CardContent className="space-y-2">
-                {CONTAINERS.map(c => (
-                  <div key={c.type} className={`p-2.5 rounded-lg border text-xs transition-colors ${containerType === c.type ? "border-teal/30 bg-teal/5" : ""}`}>
-                    <span className="font-semibold">{c.label}</span>
-                    <span className="text-muted-foreground ml-2">{c.internalM.l}×{c.internalM.w}×{c.internalM.h}m · {c.cbm}m³ · {(c.maxKg / 1000).toFixed(1)}t max</span>
-                  </div>
-                ))}
               </CardContent>
             </Card>
-          </div>
         </div>
       </div>
 
