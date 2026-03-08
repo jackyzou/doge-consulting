@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import {
   DollarSign, Package, FileText, TrendingUp, ArrowUpRight,
   Ship, Loader2, Users, ShoppingCart, ClipboardList, CalendarDays,
+  Eye, BarChart3, Globe,
 } from "lucide-react";
 
 interface DashboardData {
@@ -47,6 +48,7 @@ const statusColors: Record<string, string> = {
 export default function AdminDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [analyticsData, setAnalyticsData] = useState<{ today: { pageViews: number; uniqueVisitors: number }; totals: { newCustomers: number; newSubscribers: number; totalSubscribers: number }; topPages: { path: string; views: number }[]; countries: { country: string; views: number }[] } | null>(null);
 
   // Date range for revenue chart
   const defaultFrom = new Date(new Date().setMonth(new Date().getMonth() - 6)).toISOString().slice(0, 10);
@@ -95,6 +97,12 @@ export default function AdminDashboard() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
+
+    // Fetch analytics summary
+    fetch("/api/admin/analytics?days=30")
+      .then((r) => r.json())
+      .then(setAnalyticsData)
+      .catch(() => {});
   }, [dateFrom, dateTo]);
 
   if (loading || !data) {
@@ -185,6 +193,50 @@ export default function AdminDashboard() {
         </Card>
         </Link>
       </div>
+
+      {/* Traffic Summary */}
+      {analyticsData && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="border-teal/20">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="rounded-lg bg-teal/10 p-2"><Eye className="h-5 w-5 text-teal" /></div>
+              <div>
+                <p className="text-xl font-bold">{analyticsData.today.pageViews.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Page Views Today</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-teal/20">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="rounded-lg bg-teal/10 p-2"><Users className="h-5 w-5 text-teal" /></div>
+              <div>
+                <p className="text-xl font-bold">{analyticsData.today.uniqueVisitors.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Unique Visitors Today</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-teal/20">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="rounded-lg bg-gold/10 p-2"><TrendingUp className="h-5 w-5 text-gold" /></div>
+              <div>
+                <p className="text-xl font-bold">+{analyticsData.totals.newCustomers}</p>
+                <p className="text-xs text-muted-foreground">New Customers (30d)</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Link href="/admin/analytics">
+            <Card className="border-teal/20 cursor-pointer hover:border-teal/50 transition-colors">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="rounded-lg bg-navy/10 p-2"><BarChart3 className="h-5 w-5 text-navy" /></div>
+                <div>
+                  <p className="text-sm font-bold">View Full Analytics</p>
+                  <p className="text-xs text-muted-foreground">Pages, regions, devices →</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+      )}
 
       {/* Revenue Chart */}
       <Card>

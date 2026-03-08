@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, FileText, Package, Settings, ArrowLeft,
-  ShoppingCart, Users, FileDown, LogOut, Loader2, Menu, X, PenLine, Tag,
+  ShoppingCart, Users, FileDown, LogOut, Loader2, Menu, X, PenLine, Tag, BarChart3,
 } from "lucide-react";
 import { DogeLogo } from "@/components/ui/doge-logo";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,7 @@ interface SessionUser {
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/quotes", label: "Quotes / PO", icon: FileText },
   { href: "/admin/orders", label: "Orders", icon: Package },
   { href: "/admin/products", label: "Products", icon: ShoppingCart },

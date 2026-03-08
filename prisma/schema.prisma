@@ -360,3 +360,25 @@ model CouponUsage {
 
   @@unique([couponId, email])                // one use per email per coupon
 }
+
+// ──────────────────────────────────────────
+// Page View Analytics
+// ──────────────────────────────────────────
+model PageView {
+  id        String   @id @default(cuid())
+  path      String                          // "/catalog", "/blog/xyz"
+  referrer  String?                         // document.referrer or Referer header
+  userAgent String?
+  country   String?                         // from CF-IPCountry or geo lookup
+  region    String?                         // state/province
+  city      String?
+  language  String?                         // Accept-Language
+  sessionId String?                         // anonymous session cookie
+  userId    String?                         // if logged in
+  deviceType String?                        // "desktop" | "mobile" | "tablet"
+  createdAt DateTime @default(now())
+
+  @@index([path])
+  @@index([createdAt])
+  @@index([country])
+}
