@@ -109,11 +109,16 @@ function handleAuth(request: NextRequest, pathname: string): NextResponse {
   const isAPI = pathname.startsWith("/api/");
   const isAdmin = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
 
+  // Compute public origin for redirects
+  const fwdHost = request.headers.get("x-forwarded-host");
+  const fwdProto = request.headers.get("x-forwarded-proto") || "https";
+  const publicOrigin = fwdHost ? `${fwdProto}://${fwdHost}` : (process.env.APP_URL || request.nextUrl.origin);
+
   const token = request.cookies.get(COOKIE_NAME)?.value;
 
   if (!token) {
     if (isAPI) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const loginUrl = new URL("/login", request.url);
+    const loginUrl = new URL("/login", publicOrigin);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
   }
@@ -121,14 +126,14 @@ function handleAuth(request: NextRequest, pathname: string): NextResponse {
   const session = parseJwtPayload(token);
   if (!session) {
     if (isAPI) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const loginUrl = new URL("/login", request.url);
+    const loginUrl = new URL("/login", publicOrigin);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   if (isAdmin && session.role !== "admin") {
     if (isAPI) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    return NextResponse.redirect(new URL("/account", request.url));
+    return NextResponse.redirect(new URL("/account", publicOrigin));
   }
 
   return NextResponse.next();

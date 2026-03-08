@@ -8,8 +8,13 @@ import {
 
 // GET /api/auth/google/callback — handle Google's OAuth redirect
 export async function GET(request: NextRequest) {
+  // Compute public-facing origin once (used for all redirects)
+  const fwdHost = request.headers.get("x-forwarded-host");
+  const fwdProto = request.headers.get("x-forwarded-proto") || "https";
+  const origin = fwdHost ? `${fwdProto}://${fwdHost}` : (process.env.APP_URL || request.nextUrl.origin);
+
   if (!isGoogleOAuthConfigured()) {
-    return NextResponse.redirect(new URL("/login?error=google_not_configured", request.url));
+    return NextResponse.redirect(new URL("/login?error=google_not_configured", origin));
   }
 
   const code = request.nextUrl.searchParams.get("code");
@@ -19,15 +24,11 @@ export async function GET(request: NextRequest) {
   // User denied access or Google returned an error
   if (error || !code) {
     return NextResponse.redirect(
-      new URL(`/login?error=${error || "no_code"}`, request.url)
+      new URL(`/login?error=${error || "no_code"}`, origin)
     );
   }
 
   try {
-    // Use APP_URL or forwarded host for public-facing URL
-    const fwdHost = request.headers.get("x-forwarded-host");
-    const fwdProto = request.headers.get("x-forwarded-proto") || "https";
-    const origin = fwdHost ? `${fwdProto}://${fwdHost}` : (process.env.APP_URL || request.nextUrl.origin);
     const redirectUri = `${origin}/api/auth/google/callback`;
 
     // Exchange the code for user info
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Set session cookie and redirect
-    const response = NextResponse.redirect(new URL(redirectTo, request.url));
+    const response = NextResponse.redirect(new URL(redirectTo, origin));
     response.cookies.set(COOKIE_OPTIONS.name, result.token, {
       httpOnly: COOKIE_OPTIONS.httpOnly,
       secure: COOKIE_OPTIONS.secure,
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     console.error("Google OAuth callback error:", err);
     return NextResponse.redirect(
-      new URL("/login?error=oauth_failed", request.url)
+      new URL("/login?error=oauth_failed", origin)
     );
   }
 }

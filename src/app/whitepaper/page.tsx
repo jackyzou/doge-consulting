@@ -52,13 +52,6 @@ export default function WhitepaperPage() {
         throw new Error("Failed to unlock whitepaper");
       }
 
-      const whitepaperData = await whitepaperRes.json();
-      if (!whitepaperData.downloadUrl) {
-        throw new Error("Missing secure whitepaper link");
-      }
-
-      setDownloadUrl(whitepaperData.downloadUrl);
-
       // Try to create account if name provided
       if (name) {
         const signupRes = await fetch("/api/auth/signup", {
@@ -108,13 +101,13 @@ export default function WhitepaperPage() {
                     <div className="text-center py-6">
                       <CheckCircle className="h-16 w-16 text-teal mx-auto mb-4" />
                       <h3 className="text-xl font-bold mb-2">{t("whitepaperPage.unlocked")} 🎉</h3>
-                      <p className="text-muted-foreground mb-6">{t("whitepaperPage.readyDesc")}</p>
-                      <a href={downloadUrl}>
-                        <Button size="lg" className="w-full bg-teal hover:bg-teal/90 gap-2">
-                          <Download className="h-5 w-5" /> {t("whitepaperPage.downloadPdf")}
-                        </Button>
-                      </a>
-                      <p className="text-xs text-muted-foreground mt-4">{t("whitepaperPage.sentToEmail")}</p>
+                      <p className="text-muted-foreground mb-4">We&apos;ve sent your free China Sourcing Playbook and a <strong className="text-gold">15% off coupon</strong> to your email.</p>
+                      <div className="bg-teal/5 border border-teal/15 rounded-xl p-4 space-y-2 text-sm text-left">
+                        <p className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-teal shrink-0" /> 50+ page playbook download link in your inbox</p>
+                        <p className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-teal shrink-0" /> Exclusive 15% off coupon code: <strong className="text-gold">WELCOME15</strong></p>
+                        <p className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-teal shrink-0" /> Links to our free import tools & calculators</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-4">Check your inbox (and spam folder). The email contains everything you need to get started.</p>
                     </div>
                   ) : (
                     <>
