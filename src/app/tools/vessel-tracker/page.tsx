@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
 
 /* ──────────────────────────────────────────
@@ -43,14 +42,6 @@ const MAJOR_PORTS = [
   { name: "Dubai (Jebel Ali)", country: "AE", lat: 25.00, lng: 55.06, teu: "14.0M", rank: 11 },
 ];
 
-const VESSEL_TYPES = [
-  { id: "cargo", label: "Cargo Ships", color: "#22C55E" },
-  { id: "tanker", label: "Tankers", color: "#EF4444" },
-  { id: "passenger", label: "Passenger", color: "#3B82F6" },
-  { id: "highspeed", label: "High Speed", color: "#F59E0B" },
-  { id: "fishing", label: "Fishing", color: "#8B5CF6" },
-];
-
 // Demo route: Shenzhen → Seattle (Great Circle approximate)
 const DEMO_ROUTE = [
   { lat: 22.54, lng: 114.05, port: "Shenzhen, China", day: 0 },
@@ -78,7 +69,6 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 
 export default function VesselTrackerPage() {
   const [selectedChokepoint, setSelectedChokepoint] = useState<string | null>(null);
-  const [vesselTypeFilter, setVesselTypeFilter] = useState("cargo");
   const [trackingQuery, setTrackingQuery] = useState("");
   const [trackingResults, setTrackingResults] = useState<TrackResult[] | null>(null);
   const [trackingLoading, setTrackingLoading] = useState(false);
@@ -118,15 +108,15 @@ export default function VesselTrackerPage() {
     orderNumber: string | null;
   };
 
-  // VesselFinder embed URL
+  // MarineTraffic embed URL (VesselFinder blocks iframes)
   const mapUrl = useMemo(() => {
     const cp = CHOKEPOINTS.find((c) => c.id === selectedChokepoint);
     if (cp) {
-      return `https://www.vesselfinder.com/embed?lat=${cp.lat}&lng=${cp.lng}&zoom=${cp.zoom}&type=${vesselTypeFilter === "cargo" ? "1" : vesselTypeFilter === "tanker" ? "2" : "0"}&width=100%25&height=500`;
+      return `https://www.marinetraffic.com/en/ais/embed/zoom:${cp.zoom}/centery:${cp.lat}/centerx:${cp.lng}/maptype:0/shownames:0/mmsi:0/shipid:0/fleet:/fleet_id:/vtypes:7/showmenu:0/remember:no`;
     }
     // Default: global view centered on Pacific
-    return `https://www.vesselfinder.com/embed?lat=25&lng=140&zoom=3&type=${vesselTypeFilter === "cargo" ? "1" : vesselTypeFilter === "tanker" ? "2" : "0"}&width=100%25&height=500`;
-  }, [selectedChokepoint, vesselTypeFilter]);
+    return `https://www.marinetraffic.com/en/ais/embed/zoom:3/centery:20/centerx:140/maptype:0/shownames:0/mmsi:0/shipid:0/fleet:/fleet_id:/vtypes:7/showmenu:0/remember:no`;
+  }, [selectedChokepoint]);
 
   const handleTrack = useCallback(async () => {
     if (!trackingQuery.trim()) return;
@@ -225,34 +215,16 @@ export default function VesselTrackerPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <Card className="bg-slate-900/90 border-slate-700 backdrop-blur-xl shadow-2xl overflow-hidden">
             <CardHeader className="pb-2">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <Globe className="h-5 w-5 text-teal" />
-                  Live Vessel Map
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  <Select value={vesselTypeFilter} onValueChange={setVesselTypeFilter}>
-                    <SelectTrigger className="w-[160px] bg-slate-800 border-slate-600 text-white text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {VESSEL_TYPES.map((vt) => (
-                        <SelectItem key={vt.id} value={vt.id}>
-                          <span className="flex items-center gap-2">
-                            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: vt.color }} />
-                            {vt.label}
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              <CardTitle className="flex items-center gap-2 text-white">
+                <Globe className="h-5 w-5 text-teal" />
+                Live Vessel Map
+              </CardTitle>
+              <p className="text-xs text-slate-400">Real-time AIS vessel positions worldwide. Showing cargo vessels — zoom and pan to explore.</p>
             </CardHeader>
             <CardContent className="p-0">
               <div className="relative w-full" style={{ height: 500 }}>
                 <iframe
-                  title="VesselFinder Live Map"
+                  title="Live Vessel Traffic Map"
                   src={mapUrl}
                   className="w-full h-full border-0"
                   loading="lazy"
@@ -387,55 +359,98 @@ export default function VesselTrackerPage() {
           </div>
         </motion.div>
 
-        {/* ── SEO Content ── */}
+        {/* ── SEO Content: How Vessel Tracking Works ── */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-          <Card className="bg-slate-900/50 border-slate-700">
-            <CardContent className="p-8 prose prose-invert max-w-none prose-headings:text-white prose-p:text-slate-300 prose-a:text-teal">
-              <h2 className="flex items-center gap-2">
-                <Compass className="h-6 w-6 text-teal" />
-                How Vessel Tracking Works
-              </h2>
-              <p>
-                Modern vessel tracking relies on the <strong>Automatic Identification System (AIS)</strong>,
-                a transponder-based system required on all commercial vessels over 300 gross tons. AIS broadcasts
-                a ship&apos;s position, speed, course, and identity every few seconds via VHF radio, which is then
-                received by coastal stations and satellites.
-              </p>
-              <p>
-                Every vessel has a unique <strong>MMSI (Maritime Mobile Service Identity)</strong> number for radio
-                communications and an <strong>IMO number</strong> for lifelong identification. Container ships
-                typically travel at 12-25 knots (22-46 km/h) and carry standardized TEU containers.
-              </p>
-              <h3>Key Shipping Routes for China-to-USA Imports</h3>
-              <ul>
-                <li><strong>Trans-Pacific (Direct):</strong> Shenzhen/Shanghai → Los Angeles/Long Beach — 14-18 days</li>
-                <li><strong>Trans-Pacific (PNW):</strong> Shenzhen → Seattle/Tacoma — 18-22 days</li>
-                <li><strong>Trans-Pacific (East Coast):</strong> Shanghai → New York via Panama Canal — 30-35 days</li>
-                <li><strong>All-Water East Coast:</strong> Shanghai → Savannah/Charleston — 28-33 days via Suez</li>
-              </ul>
-              <h3>Common Container Types</h3>
-              <ul>
-                <li><strong>20GP:</strong> 20-foot standard (33.2 CBM) — small shipments</li>
-                <li><strong>40GP:</strong> 40-foot standard (67.7 CBM) — most common</li>
-                <li><strong>40HC:</strong> 40-foot high cube (76.3 CBM) — extra height for furniture</li>
-                <li><strong>45HC:</strong> 45-foot high cube (86.0 CBM) — oversized cargo</li>
-                <li><strong>20RF / 40RF:</strong> Refrigerated (reefer) — perishable goods</li>
-              </ul>
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+              <Compass className="h-6 w-6 text-teal" />
+              How Vessel Tracking Works
+            </h2>
 
-              <div className="flex flex-col sm:flex-row gap-4 mt-6 not-prose">
-                <Link href="/quote">
-                  <Button size="lg" className="bg-teal hover:bg-teal/90 text-white">
-                    Get a Shipping Quote <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link href="/tools/3d-visualizer">
-                  <Button size="lg" variant="outline" className="border-teal/50 text-teal hover:bg-teal/10">
-                    3D Container Visualizer <Package className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card className="bg-slate-800/80 border-slate-600">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base text-white flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-teal" /> AIS Technology
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-slate-300 space-y-3 leading-relaxed">
+                  <p>
+                    Modern vessel tracking relies on the <strong className="text-white">Automatic Identification System (AIS)</strong> —
+                    a transponder required on all commercial vessels over 300 gross tons. AIS broadcasts
+                    a ship&apos;s position, speed, course, and identity every few seconds via VHF radio.
+                  </p>
+                  <p>
+                    Every vessel has a unique <strong className="text-white">MMSI</strong> number for radio
+                    communications and an <strong className="text-white">IMO number</strong> for lifelong identification.
+                    Container ships typically travel at <strong className="text-white">12–25 knots</strong> (22–46 km/h).
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-slate-800/80 border-slate-600">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base text-white flex items-center gap-2">
+                    <Route className="h-4 w-4 text-teal" /> China → USA Routes
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm space-y-2">
+                  {[
+                    { route: "Shenzhen → Los Angeles", days: "14–18 days", type: "Trans-Pacific Direct" },
+                    { route: "Shenzhen → Seattle/Tacoma", days: "18–22 days", type: "Trans-Pacific PNW" },
+                    { route: "Shanghai → New York", days: "30–35 days", type: "Via Panama Canal" },
+                    { route: "Shanghai → Savannah", days: "28–33 days", type: "Via Suez Canal" },
+                  ].map((r) => (
+                    <div key={r.route} className="flex items-center justify-between py-1.5 border-b border-slate-700 last:border-0">
+                      <div>
+                        <p className="text-white font-medium">{r.route}</p>
+                        <p className="text-xs text-slate-400">{r.type}</p>
+                      </div>
+                      <Badge variant="outline" className="border-teal/30 text-teal text-xs">{r.days}</Badge>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card className="bg-slate-800/80 border-slate-600 md:col-span-2">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base text-white flex items-center gap-2">
+                    <Container className="h-4 w-4 text-teal" /> Common Container Types
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    {[
+                      { type: "20GP", vol: "33.2 CBM", desc: "Small shipments" },
+                      { type: "40GP", vol: "67.7 CBM", desc: "Most common" },
+                      { type: "40HC", vol: "76.3 CBM", desc: "Furniture / tall items" },
+                      { type: "45HC", vol: "86.0 CBM", desc: "Oversized cargo" },
+                      { type: "40RF", vol: "67.7 CBM", desc: "Refrigerated" },
+                    ].map((c) => (
+                      <div key={c.type} className="bg-slate-900/60 rounded-lg p-3 text-center border border-slate-700">
+                        <p className="text-teal font-bold text-lg">{c.type}</p>
+                        <p className="text-white text-sm font-medium mt-1">{c.vol}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{c.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link href="/quote">
+                <Button size="lg" className="bg-teal hover:bg-teal/90 text-white">
+                  Get a Shipping Quote <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/tools/cbm-calculator">
+                <Button size="lg" variant="outline" className="border-teal/50 text-teal hover:bg-teal/10">
+                  CBM Calculator <Package className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
         </motion.div>
       </div>
     </div>
