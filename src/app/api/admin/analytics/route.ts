@@ -25,7 +25,9 @@ export async function GET(request: NextRequest) {
     const uniqueSessions = new Set<string>();
 
     for (const pv of pageViews) {
-      const day = pv.createdAt.toISOString().split("T")[0];
+      // Handle createdAt as Date or string (SQLite adapter may return either)
+      const dt = pv.createdAt instanceof Date ? pv.createdAt : new Date(pv.createdAt as unknown as string);
+      const day = dt.toISOString().split("T")[0];
       viewsByDay[day] = (viewsByDay[day] || 0) + 1;
 
       if (pv.sessionId) {
@@ -75,7 +77,8 @@ export async function GET(request: NextRequest) {
 
     const customersByDay: Record<string, number> = {};
     for (const u of users) {
-      const day = u.createdAt.toISOString().split("T")[0];
+      const dt = u.createdAt instanceof Date ? u.createdAt : new Date(u.createdAt as unknown as string);
+      const day = dt.toISOString().split("T")[0];
       customersByDay[day] = (customersByDay[day] || 0) + 1;
     }
 
@@ -91,9 +94,11 @@ export async function GET(request: NextRequest) {
     const subscribersByDay: Record<string, number> = {};
     const subscriberLanguages: Record<string, number> = {};
     for (const s of subscribers) {
-      const day = s.createdAt.toISOString().split("T")[0];
+      const dt = s.createdAt instanceof Date ? s.createdAt : new Date(s.createdAt as unknown as string);
+      const day = dt.toISOString().split("T")[0];
       subscribersByDay[day] = (subscribersByDay[day] || 0) + 1;
-      subscriberLanguages[s.language] = (subscriberLanguages[s.language] || 0) + 1;
+      const lang = s.language || "en";
+      subscriberLanguages[lang] = (subscriberLanguages[lang] || 0) + 1;
     }
 
     const totalSubscribers = await prisma.subscriber.count();
@@ -136,7 +141,12 @@ export async function GET(request: NextRequest) {
       subscriberLanguages,
     });
   } catch (e: unknown) {
+    console.error("Analytics API error:", e);
     const msg = e instanceof Error ? e.message : "Error";
-    return NextResponse.json({ error: msg }, { status: msg === "Unauthorized" || msg === "Forbidden" ? 403 : 500 });
+    const stack = e instanceof Error ? e.stack : undefined;
+    return NextResponse.json(
+      { error: msg, detail: process.env.NODE_ENV !== "production" ? stack : undefined },
+      { status: msg === "Unauthorized" || msg === "Forbidden" ? 403 : 500 }
+    );
   }
 }

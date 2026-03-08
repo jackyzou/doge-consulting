@@ -38,9 +38,19 @@ export default function AnalyticsPage() {
   useEffect(() => {
     setLoading(true);
     fetch(`/api/admin/analytics?days=${days}`)
-      .then((r) => r.json())
-      .then(setData)
-      .catch(console.error)
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((d) => {
+        // Validate the response has the expected structure
+        if (d && d.totals && d.timeSeries) {
+          setData(d);
+        } else {
+          console.error("Analytics API returned unexpected data:", d);
+        }
+      })
+      .catch((err) => console.error("Analytics fetch error:", err))
       .finally(() => setLoading(false));
   }, [days]);
 
