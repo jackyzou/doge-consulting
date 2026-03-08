@@ -1321,7 +1321,7 @@ const posts4 = [
     category: "Logistics",
     emoji: "📊",
     readTime: "15 min",
-    content: `![Container ships at Yantian port in Shenzhen](https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=1200&h=600&fit=crop)
+    content: `![Aerial view of a fully loaded container ship crossing the ocean](https://images.unsplash.com/photo-1605745341112-85968b19335b?w=1200&h=600&fit=crop)
 
 ## The State of Container Shipping in March 2026
 
