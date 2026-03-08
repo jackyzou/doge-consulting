@@ -2,72 +2,60 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, MapPin, Shield, Ship, Sparkles, Users } from "lucide-react";
+import { ArrowRight, CheckCircle2, MapPin, Shield, Sparkles, Users, Brain, Cpu, Globe, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useTranslation } from "@/lib/i18n";
 import GlobalPresenceMap from "@/components/home/GlobalPresenceMap";
 
 export default function AboutPage() {
-  const { t } = useTranslation();
-
   const values = [
-    { icon: Shield, title: t("about.val1Title"), desc: t("about.val1Desc") },
-    { icon: Users, title: t("about.val2Title"), desc: t("about.val2Desc") },
-    { icon: Ship, title: t("about.val3Title"), desc: t("about.val3Desc") },
-    { icon: MapPin, title: t("about.val4Title"), desc: t("about.val4Desc") },
+    { icon: Brain, title: "AI-First Thinking", desc: "We embed artificial intelligence into every step of the import process — from supplier discovery to tariff optimization — because the future of trade is algorithmic." },
+    { icon: Shield, title: "Trust & Transparency", desc: "Honest pricing, clear timelines, and no hidden fees. Our digital platform gives you real-time visibility into every dollar and every milestone." },
+    { icon: Users, title: "Customer Obsession", desc: "Your success is our business model. Bilingual support, dedicated account managers, and proactive communication at every step." },
+    { icon: Globe, title: "Global-Local Execution", desc: "Teams in Seattle, Hong Kong, and Shenzhen operate as one unit — combining North American market insight with on-the-ground China manufacturing expertise." },
   ];
 
   const locations = [
-    { city: t("about.loc1City"), flag: "🇺🇸", role: t("about.loc1Role"), desc: t("about.loc1Desc") },
-    { city: t("about.loc2City"), flag: "🇭🇰", role: t("about.loc2Role"), desc: t("about.loc2Desc") },
-    { city: t("about.loc3City"), flag: "🇨🇳", role: t("about.loc3Role"), desc: t("about.loc3Desc") },
+    { city: "Seattle, WA", flag: "🇺🇸", role: "Customer Relations, AI/Tech & Delivery", desc: "Our US hub for customer success, technology development, last-mile logistics, and strategic consulting. Where AI meets American market needs." },
+    { city: "Hong Kong SAR", flag: "🇭🇰", role: "Headquarters & Trade Operations", desc: "Registered HQ at China Resources Building, Wan Chai. International shipping, payments, contracts, and regulatory compliance." },
+    { city: "Shenzhen, Guangdong", flag: "🇨🇳", role: "Sourcing, QC & Manufacturing", desc: "Deep in China's manufacturing heartland. Direct factory relationships, quality inspection teams, and production monitoring across 12 manufacturing hubs." },
   ];
 
-  const highlights = [
-    { value: "Globally operated", label: "Across the US, Hong Kong, and Southern China" },
-    { value: "End-to-end", label: "Execution from sourcing and quality control through customs and last-mile delivery" },
-    { value: "Factory-direct", label: "Supplier relationships built around transparency, speed, and dependable communication" },
-  ];
-
-  const differentiators = [
-    {
-      title: "Cross-border coordination",
-      desc: "Our Seattle, Hong Kong, and Shenzhen teams work as one operating model so decisions move quickly and customers always know the next step.",
-    },
-    {
-      title: "Operational visibility",
-      desc: "We simplify factory communication, production follow-up, freight planning, customs clearance, and local delivery into one clear customer experience.",
-    },
-    {
-      title: "Quality with accountability",
-      desc: "We combine on-the-ground sourcing relationships with practical US-market expectations, helping customers buy with more confidence and fewer surprises.",
-    },
+  const timeline = [
+    { year: "The Problem", desc: "Importing from China has always been complex — language barriers, unreliable suppliers, confusing tariffs, opaque pricing, and slow logistics. Small businesses were locked out of the $308B China-US trade corridor." },
+    { year: "The Insight", desc: "We realized that AI and digital platforms could eliminate 80% of the friction in cross-border trade. The same intelligence that powers billion-dollar supply chains could be made accessible to everyone." },
+    { year: "The Solution", desc: "Doge Consulting was built to be the bridge — combining 15+ years of China sourcing expertise with AI-powered tools that make importing profitable, predictable, and accessible to businesses of any size." },
   ];
 
   const mapLocations = [
-    { city: "Seattle", role: t("about.loc1Role"), flag: "🇺🇸", x: 15, y: 22 },
-    { city: "Hong Kong", role: t("about.loc2Role"), flag: "🇭🇰", x: 79, y: 34 },
-    { city: "Shenzhen", role: t("about.loc3Role"), flag: "🇨🇳", x: 72, y: 24 },
+    { city: "Seattle", role: "Customer Relations, AI/Tech & Delivery", flag: "🇺🇸", x: 15, y: 22 },
+    { city: "Hong Kong", role: "Headquarters & Trade Operations", flag: "🇭🇰", x: 79, y: 34 },
+    { city: "Shenzhen", role: "Sourcing, QC & Manufacturing", flag: "🇨🇳", x: 72, y: 24 },
   ];
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#ffffff_28%,#f8fafc_100%)]">
+      {/* Hero */}
       <section className="gradient-hero relative overflow-hidden py-24 text-white lg:py-28">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.14),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(46,196,182,0.18),transparent_28%)]" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-12 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl">
-              <Badge className="mb-5 border-teal/30 bg-teal/15 text-teal-light">{t("about.badge")}</Badge>
+              <Badge className="mb-5 border-teal/30 bg-teal/15 text-teal-light">Our Story</Badge>
               <p className="mb-4 text-sm font-medium uppercase tracking-[0.28em] text-white/65">Doge Consulting Group Limited</p>
-              <h1 className="text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">{t("about.title")}</h1>
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-200/95">{t("about.subtitle")}</p>
+              <h1 className="text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
+                We&apos;re Building the <span className="text-teal">AI-Powered Future</span> of Global Trade
+              </h1>
+              <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-200/95">
+                Doge Consulting exists to make cross-border commerce as simple as local shopping.
+                We combine deep China manufacturing expertise with artificial intelligence to help
+                any business — from solo entrepreneurs to enterprises — build profitable, sustainable import operations.
+              </p>
               <div className="mt-8 flex flex-col gap-4 sm:flex-row">
                 <Link href="/quote">
                   <Button size="lg" className="bg-teal px-7 text-white hover:bg-teal/90">
-                    Get Quote
-                    <ArrowRight className="h-5 w-5" />
+                    Get Quote <ArrowRight className="h-5 w-5" />
                   </Button>
                 </Link>
                 <Link href="/contact">
@@ -79,7 +67,11 @@ export default function AboutPage() {
             </motion.div>
 
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="grid gap-4">
-              {highlights.map((item) => (
+              {[
+                { value: "AI + 15 Years Expertise", label: "Combining cutting-edge AI with deep China sourcing and logistics experience" },
+                { value: "3 Countries, 1 Team", label: "Seattle, Hong Kong, and Shenzhen working as a single operating model" },
+                { value: "$3K to Start", label: "AI-powered tools make profitable importing accessible to everyone" },
+              ].map((item) => (
                 <div key={item.label} className="rounded-2xl border border-white/12 bg-white/10 p-5 shadow-[0_18px_60px_rgba(15,43,70,0.22)] backdrop-blur-md">
                   <p className="text-2xl font-bold text-white">{item.value}</p>
                   <p className="mt-2 text-sm leading-6 text-slate-200/90">{item.label}</p>
@@ -90,41 +82,59 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Origin Story */}
       <section className="py-20 lg:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="space-y-5">
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-teal">Who we are</p>
-              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">A cross-border sourcing and shipping partner built for execution.</h2>
-              <p className="text-base leading-7 text-muted-foreground">We combine local market understanding in North America with on-the-ground execution in Greater China, helping customers move from idea to delivery with fewer handoffs and more visibility.</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-teal">Why We Exist</p>
+              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">AI will fundamentally reshape how the world trades. We&apos;re making sure you&apos;re on the winning side.</h2>
+              <p className="text-base leading-7 text-muted-foreground">The $308 billion China-to-US trade corridor has been dominated by large corporations with massive supply chain teams. We built Doge Consulting to change that — using AI to give every business the same competitive advantage.</p>
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="rounded-[28px] border border-border/70 bg-white p-8 shadow-[0_20px_80px_rgba(15,23,42,0.08)] sm:p-10">
-              <div className="space-y-5 text-base leading-8 text-muted-foreground">
-                <p><span className="font-semibold text-foreground">{t("about.storyP1a")}</span>{t("about.storyP1b")}</p>
-                <p>{t("about.storyP2")}</p>
-                <p>{t("about.storyP3")}</p>
-                <p>{t("about.storyP4")}</p>
+              <div className="space-y-6">
+                {timeline.map((item, i) => (
+                  <div key={item.year} className="flex gap-5">
+                    <div className="flex flex-col items-center">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-teal/10 text-teal font-bold text-sm shrink-0">
+                        {i + 1}
+                      </div>
+                      {i < timeline.length - 1 && <div className="w-0.5 flex-1 bg-teal/20 mt-2" />}
+                    </div>
+                    <div className="pb-6">
+                      <p className="font-bold text-foreground text-lg">{item.year}</p>
+                      <p className="mt-2 text-sm leading-7 text-muted-foreground">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </motion.div>
           </div>
         </div>
       </section>
 
+      {/* AI Strategic Advantage */}
       <section className="py-8 lg:py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="rounded-[32px] border border-slate-200 bg-slate-950 px-6 py-10 text-white shadow-[0_24px_80px_rgba(15,23,42,0.18)] sm:px-10 lg:px-12">
             <div className="grid gap-10 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-teal-light">How we work</p>
-                <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">One operating model across sourcing, freight, customs, and delivery.</h2>
-                <p className="mt-5 max-w-xl text-base leading-7 text-slate-300">This layout takes cues from premium consulting-firm overview pages: stronger hierarchy, stat-led framing, and cleaner capability storytelling without losing Doge Consulting’s operational focus.</p>
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-teal-light">Our Strategic Advantage</p>
+                <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">AI + Human Expertise = Unfair Advantage</h2>
+                <p className="mt-5 max-w-xl text-base leading-7 text-slate-300">
+                  Other freight forwarders move boxes. We build AI-powered systems that make your entire import business smarter, faster, and more profitable with every shipment.
+                </p>
               </div>
               <div className="grid gap-4 md:grid-cols-3">
-                {differentiators.map((item) => (
+                {[
+                  { icon: Brain, title: "AI Supplier Intelligence", desc: "Machine learning analyzes 50K+ manufacturers on price, quality, reliability, and capacity to find your perfect match in minutes." },
+                  { icon: Target, title: "Predictive Logistics", desc: "AI optimizes shipping routes, predicts delays, and dynamically selects carriers — saving 15–25% on freight costs." },
+                  { icon: Cpu, title: "Digital Transformation", desc: "We don't just ship your products — we build the IT systems, automations, and AI tools that let you scale without scaling headcount." },
+                ].map((item) => (
                   <div key={item.title} className="rounded-2xl border border-white/10 bg-white/5 p-5">
                     <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-teal/15 text-teal-light">
-                      <CheckCircle2 className="h-5 w-5" />
+                      <item.icon className="h-5 w-5" />
                     </div>
                     <h3 className="text-lg font-semibold">{item.title}</h3>
                     <p className="mt-3 text-sm leading-6 text-slate-300">{item.desc}</p>
@@ -136,24 +146,19 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Values */}
       <section className="gradient-mesh py-20 lg:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-12 max-w-3xl">
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-teal">What guides us</p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-              {t("about.valuesTitle")} <span className="text-teal">{t("about.valuesHighlight")}</span>
+              Our <span className="text-teal">Values</span>
             </h2>
-            <p className="mt-4 text-base leading-7 text-muted-foreground">Clear values make cross-border operations more dependable. We use them to shape communication, decision making, and customer experience from the first inquiry through final delivery.</p>
+            <p className="mt-4 text-base leading-7 text-muted-foreground">We believe AI should amplify human judgment, not replace it. Our values keep us grounded as we push the boundaries of what technology can do for global trade.</p>
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {values.map((val, i) => (
-              <motion.div
-                key={val.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-              >
+              <motion.div key={val.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
                 <Card className="h-full border-border/50 bg-white/85 text-left shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                   <CardContent className="pt-6">
                     <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-teal/10">
@@ -169,42 +174,33 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Locations */}
       <section className="py-20 lg:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-12 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-teal">Our footprint</p>
               <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                {t("about.locationsTitle")} <span className="text-teal">{t("about.locationsHighlight")}</span>
+                Our <span className="text-teal">Locations</span>
               </h2>
               <p className="mt-4 text-base leading-7 text-muted-foreground">We place teams where they can remove friction: close to customers in the US, close to trade infrastructure in Hong Kong, and close to factories in Shenzhen.</p>
             </div>
             <div className="rounded-2xl border border-border/60 bg-white px-5 py-4 shadow-sm">
               <div className="flex items-center gap-3">
                 <Sparkles className="h-5 w-5 text-teal" />
-                <p className="text-sm text-muted-foreground">Built to bridge manufacturing insight with North American execution.</p>
+                <p className="text-sm text-muted-foreground">AI + local expertise at every node in the supply chain.</p>
               </div>
             </div>
           </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-16 overflow-hidden rounded-[30px] border border-border/70 bg-white p-3 shadow-[0_20px_80px_rgba(15,23,42,0.08)]"
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            className="mb-16 overflow-hidden rounded-[30px] border border-border/70 bg-white p-3 shadow-[0_20px_80px_rgba(15,23,42,0.08)]">
             <GlobalPresenceMap locations={mapLocations} />
           </motion.div>
 
           <div className="grid gap-8 md:grid-cols-3">
             {locations.map((loc, i) => (
-              <motion.div
-                key={loc.city}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.15 }}
-              >
+              <motion.div key={loc.city} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.15 }}>
                 <Card className="h-full border-border/50 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
                   <CardContent className="pt-6 text-left">
                     <span className="text-5xl">{loc.flag}</span>
@@ -224,20 +220,24 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* CTA */}
       <section className="pb-24 pt-4">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="rounded-[32px] border border-teal/15 bg-gradient-to-br from-navy via-navy to-navy-light px-8 py-12 text-white shadow-[0_24px_80px_rgba(15,43,70,0.22)] sm:px-12">
             <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-teal-light">Let’s build your supply chain advantage</p>
-                <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">If you need a partner who can source, coordinate, and deliver, we’re ready.</h2>
-                <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">Whether you are furnishing a home, launching a product line, or scaling repeat imports, Doge Consulting can help you move faster with more confidence.</p>
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-teal-light">Ready to accelerate?</p>
+                <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Let AI and Doge Consulting build your next competitive advantage.</h2>
+                <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
+                  Whether you&apos;re launching your first product line, scaling an existing import business,
+                  or digitally transforming your supply chain — we have the AI tools, the expertise,
+                  and the on-the-ground teams to make it happen.
+                </p>
               </div>
               <div className="flex flex-col gap-4 sm:flex-row lg:flex-col">
                 <Link href="/quote">
                   <Button size="lg" className="w-full bg-teal text-white hover:bg-teal/90 lg:min-w-[220px]">
-                    Get Quote
-                    <ArrowRight className="h-5 w-5" />
+                    Get Quote <ArrowRight className="h-5 w-5" />
                   </Button>
                 </Link>
                 <Link href="/contact">

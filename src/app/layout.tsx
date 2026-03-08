@@ -17,6 +17,11 @@ export const metadata: Metadata = {
   description:
     "Ship high-quality products from mainland China to the USA. Door-to-door service with competitive pricing, full customs clearance, and real-time tracking.",
   keywords: ["product shipping", "China to USA", "commodity sourcing", "international shipping", "sea freight", "Chinese manufacturing"],
+  icons: {
+    icon: "/doge-logo.png",
+    shortcut: "/doge-logo.png",
+    apple: "/doge-logo.png",
+  },
 };
 
 export default function RootLayout({
