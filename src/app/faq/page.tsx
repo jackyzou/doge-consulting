@@ -50,6 +50,15 @@ export default function FAQPage() {
         { q: t("faqPage.cat4Q3"), a: t("faqPage.cat4A3") },
       ],
     },
+    {
+      title: t("faqPage.cat5Title"),
+      faqs: [
+        { q: t("faqPage.cat5Q1"), a: t("faqPage.cat5A1") },
+        { q: t("faqPage.cat5Q2"), a: t("faqPage.cat5A2") },
+        { q: t("faqPage.cat5Q3"), a: t("faqPage.cat5A3") },
+        { q: t("faqPage.cat5Q4"), a: t("faqPage.cat5A4") },
+      ],
+    },
   ];
 
   return (

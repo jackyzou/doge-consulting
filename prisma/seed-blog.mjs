@@ -1312,8 +1312,187 @@ Hangzhou is the headquarters of **Alibaba Group** and the birthplace of Chinese 
   },
 ];
 
+// ═══════════════ POST 18: FREIGHT RATE TRENDS 2026 ═══════════════
+const posts4 = [
+  {
+    slug: "freight-rate-trends-2026-iran-crisis",
+    title: "Freight Rate Trends in 2026: Iran Crisis, Tariff Shifts & What Smart Importers Are Doing",
+    excerpt: "Container shipping rates just spiked 40% in a week. Here's why, what's next, and 8 strategies to protect your margins as an importer from China.",
+    category: "Logistics",
+    emoji: "📊",
+    readTime: "15 min",
+    content: `![Container ships at Yantian port in Shenzhen](https://images.unsplash.com/photo-1494412574643-ff11b0a5eb19?w=1200&h=600&fit=crop)
+
+## The State of Container Shipping in March 2026
+
+If you import products from China, the last two weeks have been a wake-up call. On March 1–2, 2026, US and Israeli forces launched coordinated strikes on Iran, killing Supreme Leader Ayatollah Ali Khamenei and destroying key military infrastructure. The geopolitical shockwave sent container shipping rates surging **35–45% in a single week** — the fastest spike since the COVID freight crisis of 2021.
+
+As of March 8, 2026, here's where rates stand for a standard 40ft container (FEU) from Shenzhen:
+
+| Route | Feb 2026 Rate | March 2026 Rate | Change |
+|---|---|---|---|
+| Shenzhen → Los Angeles | $2,200 | $3,100 | +40.9% |
+| Shenzhen → Seattle | $1,900 | $2,800 | +47.4% |
+| Shenzhen → New York | $3,500 | $4,800 | +37.1% |
+
+> These are the highest rates we've seen since the Red Sea crisis peaked in Q3 2024. — Freightos Baltic Index, March 7, 2026
+
+This article breaks down what's driving rates, where they're headed, and — most importantly — what smart importers are doing right now to protect their margins.
+
+---
+
+## Why the Iran Conflict Matters for Shipping
+
+You might wonder: most China-to-US shipments cross the Pacific, not the Persian Gulf. So why does a Middle East war spike trans-Pacific rates? Three interconnected reasons:
+
+### 1. Oil Prices and Bunker Fuel
+
+The Strait of Hormuz handles **21% of the world's oil supply** — roughly 17 million barrels per day. Even the *threat* of disruption has pushed crude oil prices above **$105/barrel**, the highest since 2022. For container shipping lines, bunker fuel is 30–50% of operating costs. When fuel prices jump 18% in a week, those costs get passed directly to shippers.
+
+### 2. War Risk Insurance Premiums
+
+Marine insurers have immediately raised war risk premiums for any vessel transiting the Persian Gulf, Arabian Sea, or western Indian Ocean. For vessels that call at Middle Eastern ports en route (Dubai, Jeddah), the surcharges can add **$500–$1,500 per container**. Even trans-Pacific routes are affected because global fleet availability tightens when carriers reroute.
+
+### 3. Global Fleet Reallocation
+
+When a crisis hits one region, carriers pull vessels from other routes to meet demand or avoid risk zones. This creates a cascade: fewer ships on the trans-Pacific means tighter capacity, which means higher rates even for routes nowhere near the conflict zone. We saw this exact pattern during the 2024 Red Sea crisis, when Houthi attacks forced rerouting around the Cape of Good Hope.
+
+---
+
+## A Brief History of Freight Rate Shocks (2020–2026)
+
+To put the current spike in context, let's look at the six-year rollercoaster:
+
+### COVID-19 Pandemic (2020–2021)
+The pandemic created the most extreme freight rate environment in modern history. Shenzhen-to-LA rates surged from **$1,300/FEU in March 2020** to **$12,400/FEU by September 2021** — a staggering 10x increase. The causes were a perfect storm: surging consumer demand (stuck-at-home shoppers), port closures, container shortages, truck driver shortages, and a global supply chain that simply wasn't designed for this level of stress.
+
+### Suez Canal Blockage (March 2021)
+The Ever Given, a 20,000-TEU mega-ship, ran aground in the Suez Canal on March 23, 2021, blocking the waterway for six days. An estimated **$9.6 billion of trade per day** was held up. While the direct impact was temporary, it worsened an already strained supply chain and contributed to the peak rates later that year.
+
+### The Great Normalization (2022–2023)
+Rates collapsed as fast as they'd risen. By December 2022, Shenzhen-to-LA rates were back to **$1,750/FEU** — a 86% drop from the September 2021 peak. Two factors drove the correction: consumer spending shifted back to services (travel, dining), and a flood of new container ships ordered during the crisis began arriving, adding 7–8% to global fleet capacity.
+
+### Red Sea / Houthi Crisis (2024)
+In November 2023, Houthi rebels in Yemen began attacking commercial vessels in the Red Sea, forcing carriers to reroute around the Cape of Good Hope. This added **10–14 days to transit times** and approximately **$2,000+ per FEU** in additional costs. Rates surged again, with Shenzhen-to-LA hitting **$5,100/FEU** by September 2024.
+
+### IEEPA Tariffs & Trade Policy (2025)
+The International Emergency Economic Powers Act (IEEPA) tariffs, combined with a 15% global tariff under Section 122, created a new baseline of elevated shipping demand. Importers front-loaded inventory before tariffs took full effect, creating temporary spikes. The Supreme Court's February 2026 ruling upholding IEEPA authority has now locked these tariffs in as the new normal.
+
+### Iran Conflict (March 2026)
+And here we are. The US-Israeli strikes on Iran have created the third major geopolitical shipping shock in three years. Unlike the Red Sea crisis (which affected a specific chokepoint), the Iran conflict threatens the Strait of Hormuz — a far more critical global artery.
+
+---
+
+## Where Are Rates Headed? Three Scenarios
+
+Based on historical patterns and current intelligence, here are our three scenarios for Q2–Q3 2026:
+
+### Scenario 1: Quick De-escalation (30% probability)
+Iran's new leadership seeks diplomacy, Hormuz stays open, oil drops below $90. Rates would normalize to **$2,000–$2,800/FEU** on Shenzhen-to-West Coast routes within 6–8 weeks.
+
+### Scenario 2: Prolonged Tensions (50% probability)
+The conflict continues at low intensity. No Hormuz closure, but elevated insurance premiums and fuel costs persist. Rates stabilize at **$2,800–$3,500/FEU** — similar to mid-2024 levels. This is our base case.
+
+### Scenario 3: Major Escalation (20% probability)
+Hormuz is partially disrupted, oil spikes above $120/barrel, carriers significantly reroute. Rates could reach **$5,000–$8,000/FEU** — approaching 2024 Red Sea peak levels. This would be particularly painful for East Coast shipments via Suez.
+
+---
+
+## 8 Strategies Smart Importers Are Using Right Now
+
+Whether you're an established importer or just starting your China sourcing journey, here's what the most savvy operators are doing:
+
+### 1. Lock In Rates Now (Before They Rise Further)
+
+If you have shipments planned for Q2, book them **this week**. Carriers are still honoring existing contract rates, but spot rates are moving up daily. Work with your freight forwarder to secure space before capacity tightens further.
+
+💡 TIP: Contact Doge Consulting for our current contract rates from Shenzhen — we've pre-negotiated volume discounts with COSCO, Evergreen, and ONE that are below current spot market.
+
+### 2. Shift to West Coast Ports
+
+The Iran conflict primarily affects routes through the Suez Canal and Indian Ocean. Trans-Pacific routes (Shenzhen → Los Angeles/Seattle) are less directly impacted. If you've been routing through the East Coast via Suez, consider shifting to West Coast ports + intermodal rail to your final destination. You could save **$800–$1,500 per container**.
+
+### 3. Consolidate Shipments
+
+Instead of shipping multiple LCL (Less than Container Load) shipments, consolidate into fewer FCL (Full Container Load) containers. The per-CBM cost of LCL has surged even more than FCL because carriers prioritize full containers. Consolidation can save 20–30% on per-unit shipping costs.
+
+### 4. Use Our Revenue Calculator
+
+Before committing to any shipment, run the numbers through our [Revenue Calculator](/tools/revenue-calculator). Input your product cost, shipping rate, tariff rate, and target selling price to see your true landed cost and profit margin. In volatile markets, this discipline separates profitable importers from those who lose money.
+
+📊 INSIGHT: At current Shenzhen-to-LA rates of $3,100/FEU, a 40HC container with $25,000 worth of furniture still yields 45–55% gross margins if your retail markup is 3x or higher.
+
+### 5. Consider Air Freight for High-Value, Low-Volume Items
+
+For small, high-value products (electronics, fashion accessories, specialty goods), air freight may now be competitive. Air rates from Shenzhen to LAX are currently around **$4.50–$6.50/kg**, and with ocean rates elevated, the gap has narrowed significantly for lightweight, high-margin products.
+
+### 6. Pre-Pay Duties to Avoid Surprises
+
+With tariff rates now at ~40% effective rate on many Chinese goods (15% Section 122 + 25% Section 301), duties represent a huge cost. Use our [Duty Calculator](/tools/duty-calculator) to estimate your exact duty obligation before goods ship. Some importers are getting caught off guard by duty bills that wipe out their shipping savings.
+
+### 7. Track Your Shipments in Real Time
+
+In volatile markets, real-time visibility is crucial. We've just launched our **[Live Vessel Map](/tools/shipping-tracker)** — a free tool that shows:
+
+- **Real-time vessel positions** worldwide using AIS data
+- **Container and B/L tracking** — search by container number or bill of lading to see exactly where your cargo is
+- **Freight rate charts** from Shenzhen to LA, Seattle, and New York with 6-year price history
+- **Crisis event annotations** so you can correlate geopolitical events with rate movements
+
+You can also use our **[Container Tracking Tool](/tools/vessel-tracker)** to track specific shipments, view vessel details, and see port call timelines. It's completely free and works for any container shipped through Doge Consulting.
+
+### 8. Build Buffer Stock Now
+
+If you have the capital and warehouse space, the best hedge against further rate spikes is inventory. Order 2–3 months of extra stock now while rates are at $3,100/FEU — if they hit $5,000+ under our Scenario 3, you'll be glad you did. The carrying cost of extra inventory (warehouse rent + capital cost) is almost always less than a $2,000/container rate increase.
+
+---
+
+## How to Use Doge Consulting's Free Shipping Tools
+
+We've built a suite of free tools specifically for importers navigating this volatile market:
+
+### 🗺️ Live Vessel Map
+Visit [/tools/shipping-tracker](/tools/shipping-tracker) to see real-time vessel traffic, interactive freight rate charts, and crisis event annotations. The map shows every cargo ship on the planet, and you can zoom into key chokepoints like the Strait of Hormuz to see the current situation.
+
+### 🔍 Container Tracker
+Visit [/tools/vessel-tracker](/tools/vessel-tracker) to search for your container by number or bill of lading. See exactly where your cargo is, which vessel it's on, the full port call timeline, and ETA updates. Quick-zoom to 8 major shipping chokepoints including Suez, Panama, and Hormuz.
+
+### 📦 CBM Calculator
+Visit [/tools/cbm-calculator](/tools/cbm-calculator) to calculate your cargo volume and see how it fits in a container. This helps you decide between LCL and FCL and optimize your container utilization.
+
+### 💰 Revenue Calculator
+Visit [/tools/revenue-calculator](/tools/revenue-calculator) to model your import economics. Input product costs, shipping rates, duty rates, and selling prices to see real profit margins, ROI, and break-even points.
+
+### 🧮 Duty Calculator
+Visit [/tools/duty-calculator](/tools/duty-calculator) to estimate your import duties under current 2026 tariff rates including IEEPA, Section 301, and Section 122.
+
+---
+
+## The Bottom Line
+
+The March 2026 Iran conflict is the third major shipping disruption in three years, following the Red Sea crisis and COVID. Each time, rates have spiked violently and then normalized — but each "normal" is higher than the last. Pre-COVID, $1,500/FEU was standard; post-2026, we may see $2,500–$3,000/FEU become the new floor.
+
+For importers, the key lesson is clear: **freight volatility is the new normal.** The companies that thrive are those with real-time visibility, flexible logistics, and the financial modeling to adapt quickly.
+
+---
+
+## Have Questions? We're Here to Help
+
+Whether you're navigating this crisis with existing shipments or planning your first import from China, our team has 15+ years of Shenzhen-to-US logistics expertise.
+
+- **[Get a Free Shipping Quote](/quote)** — We'll give you current rates from Shenzhen to your destination with no obligation.
+- **[Contact Our Team](/contact)** — Talk to a logistics specialist about your specific situation.
+- **[Use Our Revenue Calculator](/tools/revenue-calculator)** — Model your import economics before you commit.
+- **[Track Your Shipments](/tools/vessel-tracker)** — Real-time container tracking with vessel details and port timelines.
+
+📧 Email us directly at **info@doge-consulting.com** or call us. We respond within 4 hours during business hours.
+
+💡 TIP: First-time importers get a free 30-minute consultation to walk through your product selection, landed cost estimates, and optimal shipping strategy for the current market. [Book yours today](/contact).`,
+  },
+];
+
 // ═══════════════ INSERT ALL POSTS ═══════════════
-const allPosts = [...posts, ...posts2, ...posts3];
+const allPosts = [...posts, ...posts2, ...posts3, ...posts4];
 
 console.log("🌱 Seeding blog posts...");
 
