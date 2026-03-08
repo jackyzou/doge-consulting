@@ -61,15 +61,24 @@ export default function FurniturePackages() {
             <button
               key={style.id}
               onClick={() => setSelectedStyle(style.id)}
-              className={`p-3 rounded-xl border text-left transition-all ${
+              className={`rounded-xl border text-left transition-all overflow-hidden ${
                 selectedStyle === style.id
-                  ? "border-teal bg-teal/5 shadow-md ring-2 ring-teal/20"
-                  : "border-border/50 hover:border-teal/30 hover:shadow-sm"
+                  ? "border-teal shadow-lg ring-2 ring-teal/20"
+                  : "border-border/50 hover:border-teal/30 hover:shadow-md hover:-translate-y-0.5"
               }`}
             >
-              <span className="text-2xl">{style.emoji}</span>
-              <p className="font-semibold text-sm mt-1">{style.label}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">{style.desc}</p>
+              <div className="relative h-28 w-full bg-slate-100">
+                <img src={style.image} alt={style.label} className="w-full h-full object-cover" loading="lazy" />
+                {selectedStyle === style.id && (
+                  <div className="absolute inset-0 bg-teal/20 flex items-center justify-center">
+                    <div className="bg-teal rounded-full p-1"><Check className="h-4 w-4 text-white" /></div>
+                  </div>
+                )}
+              </div>
+              <div className="p-2.5">
+                <p className="font-semibold text-sm">{style.label}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{style.desc}</p>
+              </div>
             </button>
           ))}
         </div>
@@ -86,15 +95,25 @@ export default function FurniturePackages() {
             <button
               key={size.id}
               onClick={() => setSelectedSize(size.id)}
-              className={`p-4 rounded-xl border text-left transition-all ${
+              className={`rounded-xl border text-left transition-all overflow-hidden ${
                 selectedSize === size.id
-                  ? "border-teal bg-teal/5 shadow-md ring-2 ring-teal/20"
-                  : "border-border/50 hover:border-teal/30 hover:shadow-sm"
+                  ? "border-teal shadow-lg ring-2 ring-teal/20"
+                  : "border-border/50 hover:border-teal/30 hover:shadow-md hover:-translate-y-0.5"
               }`}
             >
-              <p className="font-semibold text-sm">{size.rooms}</p>
-              <p className="text-xs text-muted-foreground">{size.label}</p>
-              <p className="text-[10px] text-muted-foreground mt-1">{size.sqft}</p>
+              <div className="relative h-24 w-full bg-slate-100">
+                <img src={size.image} alt={size.label} className="w-full h-full object-cover" loading="lazy" />
+                {selectedSize === size.id && (
+                  <div className="absolute inset-0 bg-teal/20 flex items-center justify-center">
+                    <div className="bg-teal rounded-full p-1"><Check className="h-4 w-4 text-white" /></div>
+                  </div>
+                )}
+              </div>
+              <div className="p-2.5">
+                <p className="font-semibold text-sm">{size.rooms}</p>
+                <p className="text-[10px] text-muted-foreground">{size.label}</p>
+                <p className="text-[10px] text-muted-foreground">{size.sqft}</p>
+              </div>
             </button>
           ))}
         </div>
