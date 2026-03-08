@@ -151,7 +151,7 @@ export default function ShippingTrackerPage() {
             <CardContent>
               <div className="rounded-xl overflow-hidden border" style={{ height: 500 }}>
                 <iframe
-                  src="https://www.marinetraffic.com/en/ais/embed/zoom:2/centery:20/centerx:110/maptype:0/shownames:0/mmsi:0/shipid:0/fleet:/fleet_id:/vtypes:7/showmenu:0/remember:no"
+                  src="https://www.marinetraffic.com/en/ais/embed/zoom:2/centery:20/centerx:110/maptype:4/shownames:0/mmsi:0/shipid:0/fleet:/fleet_id:/vtypes:7/showmenu:0/remember:no"
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}

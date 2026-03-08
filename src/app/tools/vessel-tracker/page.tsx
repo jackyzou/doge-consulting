@@ -112,10 +112,10 @@ export default function VesselTrackerPage() {
   const mapUrl = useMemo(() => {
     const cp = CHOKEPOINTS.find((c) => c.id === selectedChokepoint);
     if (cp) {
-      return `https://www.marinetraffic.com/en/ais/embed/zoom:${cp.zoom}/centery:${cp.lat}/centerx:${cp.lng}/maptype:0/shownames:0/mmsi:0/shipid:0/fleet:/fleet_id:/vtypes:7/showmenu:0/remember:no`;
+      return `https://www.marinetraffic.com/en/ais/embed/zoom:${cp.zoom}/centery:${cp.lat}/centerx:${cp.lng}/maptype:4/shownames:0/mmsi:0/shipid:0/fleet:/fleet_id:/vtypes:7/showmenu:0/remember:no`;
     }
     // Default: global view centered on Pacific
-    return `https://www.marinetraffic.com/en/ais/embed/zoom:3/centery:20/centerx:140/maptype:0/shownames:0/mmsi:0/shipid:0/fleet:/fleet_id:/vtypes:7/showmenu:0/remember:no`;
+    return `https://www.marinetraffic.com/en/ais/embed/zoom:3/centery:20/centerx:140/maptype:4/shownames:0/mmsi:0/shipid:0/fleet:/fleet_id:/vtypes:7/showmenu:0/remember:no`;
   }, [selectedChokepoint]);
 
   const handleTrack = useCallback(async () => {
