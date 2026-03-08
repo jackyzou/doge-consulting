@@ -59,7 +59,7 @@ const statusColors: Record<string, string> = {
   closed: "bg-gray-500/10 text-gray-600",
 };
 
-const statusIcons: Record<string, React.ElementType> = {
+const statusIcons: Record<string, any> = {
   pending: Clock,
   confirmed: Check,
   sourcing: Package,
@@ -220,7 +220,7 @@ export default function CustomerOrdersPage() {
                     <h4 className="font-medium mb-3">Shipment Timeline</h4>
                     <div className="space-y-0">
                       {showDetail.statusHistory.map((h, i) => {
-                        const Icon = statusIcons[h.status] || Clock;
+                        const Icon: React.ElementType<any> = statusIcons[h.status] || Clock;
                         return (
                           <div key={i} className="flex gap-3">
                             <div className="flex flex-col items-center">
