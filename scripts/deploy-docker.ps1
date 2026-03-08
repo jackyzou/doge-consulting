@@ -15,6 +15,22 @@ if (-not $ServicePath) { Write-Host "ERROR: Can't find doge-consulting directory
 Set-Location $ServicePath
 Write-Host "`n=== Doge Consulting Deploy ===" -ForegroundColor Cyan
 
+# Pre-check: .env file must exist with required vars
+if (-not (Test-Path ".env")) {
+    Write-Host "ERROR: .env file not found in $ServicePath" -ForegroundColor Red
+    Write-Host "Create .env with: JWT_SECRET, SMTP_*, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, CLOUDFLARE_TUNNEL_TOKEN"
+    exit 1
+}
+$envContent = Get-Content ".env" -Raw
+$missing = @()
+foreach ($key in @("JWT_SECRET", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "CLOUDFLARE_TUNNEL_TOKEN")) {
+    if ($envContent -notmatch "$key=\S+") { $missing += $key }
+}
+if ($missing.Count -gt 0) {
+    Write-Host "WARNING: Missing or empty in .env: $($missing -join ', ')" -ForegroundColor Yellow
+    Write-Host "  Google OAuth won't work without GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET" -ForegroundColor Yellow
+}
+
 # 1. Hard-reset to latest remote code
 Write-Host "`n[1/6] Fetching and hard-resetting to origin/master..." -ForegroundColor Yellow
 git fetch origin
