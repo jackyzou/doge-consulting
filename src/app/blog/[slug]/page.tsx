@@ -25,7 +25,7 @@ function renderMarkdown(md: string, stripFirstImage = false): string {
     const rows = tableBlock.trim().split("\n").filter(Boolean);
     if (rows.length < 2) return tableBlock;
 
-    let html = '<div class="overflow-x-auto my-6"><table class="w-full text-sm border-collapse">';
+    let html = '<div class="overflow-x-auto my-6 -mx-3 px-3"><table class="w-full text-sm border-collapse min-w-[400px]">';
 
     rows.forEach((row: string, idx: number) => {
       const cells = row.split("|").filter(Boolean).map((c: string) => c.trim());
@@ -104,12 +104,12 @@ export default function BlogPostPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      <section className="gradient-hero py-16 text-white">
+      <section className="gradient-hero py-10 sm:py-16 text-white">
         <div className="mx-auto max-w-4xl px-4">
-          <Link href="/blog" className="inline-flex items-center text-sm text-slate-300 hover:text-white mb-6 transition-colors"><ArrowLeft className="h-4 w-4 mr-1" /> Back to Blog</Link>
-          <Badge className="mb-4 bg-teal/20 text-teal-200 border-teal/30">{post.category}</Badge>
-          <h1 className="text-3xl sm:text-4xl font-bold mb-4 leading-tight">{post.title}</h1>
-          <div className="flex items-center gap-4 text-sm text-slate-300 flex-wrap">
+          <Link href="/blog" className="inline-flex items-center text-sm text-slate-300 hover:text-white mb-4 sm:mb-6 transition-colors"><ArrowLeft className="h-4 w-4 mr-1" /> Back to Blog</Link>
+          <Badge className="mb-3 sm:mb-4 bg-teal/20 text-teal-200 border-teal/30">{post.category}</Badge>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4 leading-tight">{post.title}</h1>
+          <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-slate-300 flex-wrap">
             <span className="flex items-center gap-1"><User className="h-4 w-4" />{post.authorName}</span>
             <span className="flex items-center gap-1"><Calendar className="h-4 w-4" />{new Date(post.createdAt).toLocaleDateString()}</span>
             <span className="flex items-center gap-1"><Clock className="h-4 w-4" />{post.readTime} read</span>
@@ -132,8 +132,8 @@ export default function BlogPostPage() {
         authorName: post.authorName,
       })} />
 
-      <div className="mx-auto max-w-5xl px-4 py-12">
-        <div className="grid lg:grid-cols-4 gap-8">
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:py-12 overflow-hidden">
+        <div className="grid lg:grid-cols-4 gap-6 lg:gap-8">
           {/* Sidebar */}
           <aside className="lg:col-span-1 order-2 lg:order-1">
             <div className="sticky top-24 space-y-4">
@@ -145,8 +145,8 @@ export default function BlogPostPage() {
           </aside>
 
           {/* Main */}
-          <div className="lg:col-span-3 order-1 lg:order-2">
-            <Card className="overflow-hidden"><CardContent className="p-4 sm:p-8 lg:p-12"><div className="prose prose-slate max-w-none [&_table]:w-full [&_table]:border-collapse [&_table]:my-6 [&_table]:text-sm [&_table]:rounded-lg [&_table]:overflow-hidden [&_table]:border [&_img]:rounded-xl [&_img]:shadow-md [&_figure]:my-8 [&_blockquote]:my-6 overflow-x-auto" dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content, !!coverImage) }} /></CardContent></Card>
+          <div className="lg:col-span-3 order-1 lg:order-2 min-w-0">
+            <Card className="overflow-hidden"><CardContent className="p-3 sm:p-6 lg:p-10"><div className="prose prose-slate max-w-none break-words [&_table]:w-full [&_table]:border-collapse [&_table]:my-6 [&_table]:text-sm [&_table]:rounded-lg [&_table]:overflow-hidden [&_table]:border [&_img]:rounded-xl [&_img]:shadow-md [&_img]:max-w-full [&_figure]:my-6 [&_blockquote]:my-6 [&_h2]:text-xl [&_h2]:sm:text-2xl [&_h3]:text-base [&_h3]:sm:text-lg [&_p]:text-sm [&_p]:sm:text-[15px] [&_li]:text-sm [&_li]:sm:text-[15px] overflow-x-auto" dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content, !!coverImage) }} /></CardContent></Card>
 
             {/* Author */}
             <Card className="mt-6"><CardContent className="p-6 flex items-start gap-4"><div className="h-16 w-16 rounded-full bg-gradient-to-br from-teal/20 to-gold/20 flex items-center justify-center text-3xl shrink-0 shadow-sm">🐕</div><div><p className="font-bold text-base">{post.authorName}</p><p className="text-xs text-teal font-medium mb-2">Sourcing & Logistics Experts</p><p className="text-sm text-muted-foreground leading-relaxed">Our team has helped hundreds of businesses and consumers import goods from China. We specialize in door-to-door shipping, customs clearance, and product sourcing from the Pearl River Delta and Yangtze River Delta manufacturing regions.</p></div></CardContent></Card>

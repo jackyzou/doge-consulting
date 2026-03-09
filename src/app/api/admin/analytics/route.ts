@@ -69,6 +69,16 @@ export async function GET(request: NextRequest) {
       visitorsByDay[day] = sessions.size;
     }
 
+    // Fill in all days in the range (so chart shows zeros for days with no data)
+    const allViewsByDay: Record<string, number> = {};
+    const allVisitorsByDay: Record<string, number> = {};
+    const msPerDay = 24 * 60 * 60 * 1000;
+    for (let d = new Date(since); d <= new Date(); d = new Date(d.getTime() + msPerDay)) {
+      const key = d.toISOString().split("T")[0];
+      allViewsByDay[key] = viewsByDay[key] || 0;
+      allVisitorsByDay[key] = visitorsByDay[key] || 0;
+    }
+
     // ── Customer growth ───────────────────────────────────────
     const users = await prisma.user.findMany({
       where: { createdAt: { gte: since } },
@@ -141,8 +151,8 @@ export async function GET(request: NextRequest) {
         newSubscribers: subscribers.length,
       },
       timeSeries: {
-        viewsByDay,
-        visitorsByDay,
+        viewsByDay: allViewsByDay,
+        visitorsByDay: allVisitorsByDay,
         customersByDay,
         subscribersByDay,
       },
