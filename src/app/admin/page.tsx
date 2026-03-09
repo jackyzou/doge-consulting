@@ -254,14 +254,18 @@ export default function AdminDashboard() {
           {data.monthlyRevenue.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">No revenue data yet</p>
           ) : (
-            <div className="flex items-end gap-2 h-48">
-              {data.monthlyRevenue.map((m) => (
-                <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
-                  <span className="text-xs font-medium text-muted-foreground">${(m.revenue / 1000).toFixed(1)}k</span>
-                  <div className="w-full bg-teal/80 rounded-t-md min-h-[4px] transition-all" style={{ height: `${(m.revenue / maxRevenue) * 160}px` }} />
-                  <span className="text-xs text-muted-foreground">{m.month}</span>
-                </div>
-              ))}
+            <div className="flex items-end gap-2" style={{ height: 192 }}>
+              {data.monthlyRevenue.map((m) => {
+                const pct = maxRevenue > 0 ? (m.revenue / maxRevenue) : 0;
+                const barH = Math.max(Math.round(pct * 160), 4);
+                return (
+                  <div key={m.month} className="flex-1 flex flex-col items-center justify-end gap-1" style={{ height: 192 }}>
+                    <span className="text-xs font-medium text-muted-foreground">${(m.revenue / 1000).toFixed(1)}k</span>
+                    <div className="w-full bg-teal/70 rounded-t-md transition-all" style={{ height: barH }} />
+                    <span className="text-xs text-muted-foreground">{m.month}</span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>

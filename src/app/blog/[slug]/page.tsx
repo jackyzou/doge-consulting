@@ -13,10 +13,15 @@ import { JsonLd, articleSchema } from "@/components/seo/JsonLd";
 interface Post { title: string; content: string; category: string; emoji: string; authorName: string; readTime: string; viewCount?: number; createdAt: string; }
 interface RelatedPost { slug: string; title: string; emoji: string; category: string; readTime: string; }
 
-function renderMarkdown(md: string): string {
+function renderMarkdown(md: string, stripFirstImage = false): string {
+  let content = md;
+  // Strip the first image if it's the cover image (avoid duplicate)
+  if (stripFirstImage) {
+    content = content.replace(/!\[[^\]]*\]\([^)]+\)/, "");
+  }
   // First, extract and convert markdown tables into HTML tables before other processing
   const tableRegex = /(?:^\|.+\|$\n?)+/gm;
-  const withTables = md.replace(tableRegex, (tableBlock: string) => {
+  const withTables = content.replace(tableRegex, (tableBlock: string) => {
     const rows = tableBlock.trim().split("\n").filter(Boolean);
     if (rows.length < 2) return tableBlock;
 
@@ -141,7 +146,7 @@ export default function BlogPostPage() {
 
           {/* Main */}
           <div className="lg:col-span-3 order-1 lg:order-2">
-            <Card className="overflow-hidden"><CardContent className="p-6 sm:p-10 lg:p-12"><div className="prose prose-slate max-w-none [&_table]:w-full [&_table]:border-collapse [&_table]:my-6 [&_table]:text-sm [&_table]:rounded-lg [&_table]:overflow-hidden [&_table]:border [&_img]:rounded-xl [&_img]:shadow-md [&_figure]:my-8 [&_blockquote]:my-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content) }} /></CardContent></Card>
+            <Card className="overflow-hidden"><CardContent className="p-4 sm:p-8 lg:p-12"><div className="prose prose-slate max-w-none [&_table]:w-full [&_table]:border-collapse [&_table]:my-6 [&_table]:text-sm [&_table]:rounded-lg [&_table]:overflow-hidden [&_table]:border [&_img]:rounded-xl [&_img]:shadow-md [&_figure]:my-8 [&_blockquote]:my-6 overflow-x-auto" dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content, !!coverImage) }} /></CardContent></Card>
 
             {/* Author */}
             <Card className="mt-6"><CardContent className="p-6 flex items-start gap-4"><div className="h-16 w-16 rounded-full bg-gradient-to-br from-teal/20 to-gold/20 flex items-center justify-center text-3xl shrink-0 shadow-sm">🐕</div><div><p className="font-bold text-base">{post.authorName}</p><p className="text-xs text-teal font-medium mb-2">Sourcing & Logistics Experts</p><p className="text-sm text-muted-foreground leading-relaxed">Our team has helped hundreds of businesses and consumers import goods from China. We specialize in door-to-door shipping, customs clearance, and product sourcing from the Pearl River Delta and Yangtze River Delta manufacturing regions.</p></div></CardContent></Card>

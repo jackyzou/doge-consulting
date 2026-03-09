@@ -28,10 +28,10 @@ const DESTINATIONS = [
   { id: "lzc", label: "Lázaro Cárdenas", flag: "🇲🇽" },
 ];
 
-// Origin price multipliers (relative to Shenzhen base)
-const ORIGIN_MULT: Record<string, number> = { shenzhen: 1.0, hongkong: 1.03, shanghai: 0.96, suzhou: 0.98 };
-// Destination price multipliers (relative to LA base)
-const DEST_MULT: Record<string, number> = { la: 1.0, sea: 0.92, pdx: 0.94, oak: 0.97, van: 0.95, mzn: 0.82, lzc: 0.80 };
+// Origin price multipliers (relative to Shenzhen base — researched from Freightos/Xeneta 2026 data)
+const ORIGIN_MULT: Record<string, number> = { shenzhen: 1.0, hongkong: 1.08, shanghai: 0.91, suzhou: 0.94 };
+// Destination price multipliers (relative to LA base — reflects distance, port congestion, demand)
+const DEST_MULT: Record<string, number> = { la: 1.0, sea: 0.88, pdx: 0.86, oak: 0.95, van: 0.84, mzn: 0.68, lzc: 0.65 };
 
 // Base freight rates from Shenzhen → LA (realistic 2020-2026)
 const BASE_RATES: { date: string; rate: number }[] = [

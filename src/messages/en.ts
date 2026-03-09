@@ -287,7 +287,7 @@ const messages = {
     phoneHKSubtitle: "Mon-Fri 9am-6pm HKT",
     wechat: "WeChat",
     wechatValue: "dogetech77",
-    wechatSubtitle: "Scan QR code to add us",
+    wechatSubtitle: "Add WeChat ID to contact us",
     officesTitle: "Our Offices",
     office1City: "Seattle, WA",
     office1Addr: "Greater Seattle Area, USA",

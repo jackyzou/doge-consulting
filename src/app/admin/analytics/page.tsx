@@ -29,6 +29,14 @@ const COUNTRY_FLAGS: Record<string, string> = {
   VN: "🇻🇳", TH: "🇹🇭", PH: "🇵🇭", ID: "🇮🇩", NL: "🇳🇱", ES: "🇪🇸", IT: "🇮🇹", SE: "🇸🇪",
 };
 
+const COUNTRY_NAMES: Record<string, string> = {
+  US: "United States", CN: "China", HK: "Hong Kong", TW: "Taiwan", CA: "Canada", GB: "United Kingdom", AU: "Australia", DE: "Germany",
+  FR: "France", JP: "Japan", KR: "South Korea", IN: "India", MX: "Mexico", BR: "Brazil", SG: "Singapore", MY: "Malaysia",
+  VN: "Vietnam", TH: "Thailand", PH: "Philippines", ID: "Indonesia", NL: "Netherlands", ES: "Spain", IT: "Italy", SE: "Sweden",
+  RU: "Russia", AE: "UAE", SA: "Saudi Arabia", IL: "Israel", NG: "Nigeria", ZA: "South Africa", PK: "Pakistan", BD: "Bangladesh",
+  IE: "Ireland", NZ: "New Zealand", CH: "Switzerland", AT: "Austria", BE: "Belgium", PT: "Portugal", PL: "Poland", CZ: "Czechia",
+};
+
 const DEVICE_ICONS: Record<string, typeof Monitor> = { desktop: Monitor, mobile: Smartphone, tablet: Tablet };
 
 export default function AnalyticsPage() {
@@ -143,15 +151,16 @@ export default function AnalyticsPage() {
             <p className="text-sm text-muted-foreground text-center py-8">No page view data yet. Views will appear after visitors browse the site.</p>
           ) : (
             <>
-              <div className="flex items-end gap-[2px]" style={{ height: 128 }}>
+              <div className="flex items-end gap-[2px]" style={{ height: 160 }}>
                 {viewDays.map((day) => {
                   const val = data.timeSeries.viewsByDay[day] || 0;
-                  const barH = Math.max(Math.round((val / maxDayViews) * 120), 3);
+                  const pct = maxDayViews > 0 ? (val / maxDayViews) : 0;
+                  const barH = Math.max(Math.round(pct * 140), 4);
                   const visitors = data.timeSeries.visitorsByDay[day] || 0;
                   return (
-                    <div key={day} className="flex-1 group relative flex items-end" style={{ height: 128 }}
+                    <div key={day} className="flex-1 group relative flex flex-col justify-end" style={{ height: 160 }}
                       title={`${day}: ${val} views, ${visitors} visitors`}>
-                      <div className="w-full bg-teal/80 hover:bg-teal rounded-t-sm transition-colors" style={{ height: barH }} />
+                      <div className="w-full bg-teal/70 hover:bg-teal rounded-t transition-colors" style={{ height: barH }} />
                       <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-navy text-white text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none z-10">
                         {day.slice(5)}: {val} views
                       </div>
@@ -200,7 +209,7 @@ export default function AnalyticsPage() {
             ) : data.countries.slice(0, 10).map((c) => (
               <div key={c.country} className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium">{COUNTRY_FLAGS[c.country] || "🌍"} {c.country}</span>
+                  <span className="font-medium">{COUNTRY_FLAGS[c.country] || "🌍"} {COUNTRY_NAMES[c.country] || c.country}</span>
                   <span className="text-muted-foreground">{c.views}</span>
                 </div>
                 <Progress value={(c.views / maxCountryViews) * 100} className="h-1.5 [&>div]:bg-navy-light" />

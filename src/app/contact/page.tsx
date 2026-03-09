@@ -14,29 +14,29 @@ import { toast } from "sonner";
 import { useTranslation } from "@/lib/i18n";
 
 const COUNTRY_CODES = [
-  { code: "+1", flag: "🇺🇸", label: "US +1" },
-  { code: "+1", flag: "🇨🇦", label: "CA +1" },
-  { code: "+86", flag: "🇨🇳", label: "CN +86" },
-  { code: "+852", flag: "🇭🇰", label: "HK +852" },
-  { code: "+886", flag: "🇹🇼", label: "TW +886" },
-  { code: "+44", flag: "🇬🇧", label: "UK +44" },
-  { code: "+61", flag: "🇦🇺", label: "AU +61" },
-  { code: "+81", flag: "🇯🇵", label: "JP +81" },
-  { code: "+82", flag: "🇰🇷", label: "KR +82" },
-  { code: "+91", flag: "🇮🇳", label: "IN +91" },
-  { code: "+49", flag: "🇩🇪", label: "DE +49" },
-  { code: "+33", flag: "🇫🇷", label: "FR +33" },
-  { code: "+34", flag: "🇪🇸", label: "ES +34" },
-  { code: "+52", flag: "🇲🇽", label: "MX +52" },
-  { code: "+55", flag: "🇧🇷", label: "BR +55" },
-  { code: "+65", flag: "🇸🇬", label: "SG +65" },
-  { code: "+971", flag: "🇦🇪", label: "AE +971" },
+  { code: "+1", flag: "🇺🇸", label: "US", id: "us" },
+  { code: "+1", flag: "🇨🇦", label: "CA", id: "ca" },
+  { code: "+86", flag: "🇨🇳", label: "CN", id: "cn" },
+  { code: "+852", flag: "🇭🇰", label: "HK", id: "hk" },
+  { code: "+886", flag: "🇹🇼", label: "TW", id: "tw" },
+  { code: "+44", flag: "🇬🇧", label: "UK", id: "uk" },
+  { code: "+61", flag: "🇦🇺", label: "AU", id: "au" },
+  { code: "+81", flag: "🇯🇵", label: "JP", id: "jp" },
+  { code: "+82", flag: "🇰🇷", label: "KR", id: "kr" },
+  { code: "+91", flag: "🇮🇳", label: "IN", id: "in" },
+  { code: "+49", flag: "🇩🇪", label: "DE", id: "de" },
+  { code: "+33", flag: "🇫🇷", label: "FR", id: "fr" },
+  { code: "+34", flag: "🇪🇸", label: "ES", id: "es" },
+  { code: "+52", flag: "🇲🇽", label: "MX", id: "mx" },
+  { code: "+55", flag: "🇧🇷", label: "BR", id: "br" },
+  { code: "+65", flag: "🇸🇬", label: "SG", id: "sg" },
+  { code: "+971", flag: "🇦🇪", label: "AE", id: "ae" },
 ];
 
 export default function ContactPage() {
   const { t } = useTranslation();
   const [sending, setSending] = useState(false);
-  const [countryCode, setCountryCode] = useState("+1");
+  const [countryCodeId, setCountryCodeId] = useState("us");
 
   const contactInfo = [
     { icon: Mail, title: t("contactPage.emailTitle"), value: "dogetech77@gmail.com", subtitle: t("contactPage.emailSubtitle") },
@@ -58,11 +58,12 @@ export default function ContactPage() {
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
 
+    const selectedCC = COUNTRY_CODES.find(c => c.id === countryCodeId);
     const payload = {
       name: formData.get("name") as string,
       email: formData.get("email") as string,
       phone: (formData.get("phone") as string) || "",
-      countryCode: (formData.get("phone") as string) ? countryCode : "",
+      countryCode: (formData.get("phone") as string) ? (selectedCC?.code || "+1") : "",
       subject: formData.get("subject") as string,
       message: formData.get("message") as string,
     };
@@ -127,14 +128,14 @@ export default function ContactPage() {
                 <div>
                   <Label htmlFor="phone">{t("contactPage.phone")}</Label>
                   <div className="flex gap-2 mt-1">
-                    <Select value={countryCode} onValueChange={setCountryCode}>
-                      <SelectTrigger className="w-[110px] shrink-0">
+                    <Select value={countryCodeId} onValueChange={setCountryCodeId}>
+                      <SelectTrigger className="w-[120px] shrink-0">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {COUNTRY_CODES.map((cc) => (
-                          <SelectItem key={cc.label} value={cc.code}>
-                            {cc.flag} {cc.code}
+                          <SelectItem key={cc.id} value={cc.id}>
+                            {cc.flag} {cc.label} {cc.code}
                           </SelectItem>
                         ))}
                       </SelectContent>
