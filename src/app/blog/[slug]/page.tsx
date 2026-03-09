@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, Calendar, Clock, User, Loader2, List, Share2, Eye } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
+import { JsonLd, articleSchema } from "@/components/seo/JsonLd";
 
 interface Post { title: string; content: string; category: string; emoji: string; authorName: string; readTime: string; viewCount?: number; createdAt: string; }
 interface RelatedPost { slug: string; title: string; emoji: string; category: string; readTime: string; }
@@ -115,6 +116,16 @@ export default function BlogPostPage() {
       </section>
 
       {coverImage && (<div className="mx-auto max-w-5xl px-4 -mt-8"><img src={coverImage} alt={post.title} className="w-full h-64 sm:h-80 object-cover rounded-xl shadow-lg" /></div>)}
+
+      {/* SEO: Article structured data */}
+      <JsonLd data={articleSchema({
+        title: post.title,
+        description: post.content.substring(0, 200).replace(/[#*!\[\]()]/g, "").trim(),
+        url: `https://doge-consulting.com/blog/${slug}`,
+        imageUrl: coverImage || undefined,
+        datePublished: post.createdAt,
+        authorName: post.authorName,
+      })} />
 
       <div className="mx-auto max-w-5xl px-4 py-12">
         <div className="grid lg:grid-cols-4 gap-8">
