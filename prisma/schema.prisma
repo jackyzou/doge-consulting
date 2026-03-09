@@ -498,3 +498,26 @@ model ProductMatchQuery {
   @@index([status])
   @@index([createdAt])
 }
+
+// ──────────────────────────────────────────
+// Contact Form Inquiries (CRM)
+// ──────────────────────────────────────────
+model ContactInquiry {
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  phone       String?
+  countryCode String?                      // "+1", "+86", "+852", etc.
+  subject     String
+  message     String
+  status      String   @default("new")     // new, contacted, qualified, closed
+  adminNotes  String?
+  source      String   @default("contact_form") // contact_form, quote, catalog_match
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([email])
+  @@index([createdAt])
+}

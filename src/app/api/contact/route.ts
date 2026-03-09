@@ -8,6 +8,7 @@ const contactSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   email: z.email("Invalid email address"),
   phone: z.string().max(30).optional().default(""),
+  countryCode: z.string().max(10).optional().default(""),
   subject: z.string().min(1, "Subject is required").max(200),
   message: z.string().min(1, "Message is required").max(5000),
 });
@@ -63,8 +64,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, email, phone, subject, message } = result.data;
+    const { name, email, phone, countryCode, subject, message } = result.data;
     const receiverEmail = await getReceiverEmail();
+    const fullPhone = phone ? `${countryCode || ""} ${phone}`.trim() : "";
+
+    // Save to CRM database
+    try {
+      await prisma.contactInquiry.create({
+        data: {
+          name,
+          email,
+          phone: phone || null,
+          countryCode: countryCode || null,
+          subject,
+          message,
+          source: "contact_form",
+          ipAddress: ip,
+        },
+      });
+    } catch (dbErr) {
+      console.error("Failed to save contact to CRM:", dbErr);
+      // Don't block the email — still try to send
+    }
 
     // Build the notification email
     const htmlBody = `
@@ -83,7 +104,7 @@ export async function POST(request: NextRequest) {
           </tr>
           <tr>
             <td style="padding: 8px 12px; font-weight: bold; color: #334155;">Phone</td>
-            <td style="padding: 8px 12px;">${phone ? escapeHtml(phone) : "—"}</td>
+            <td style="padding: 8px 12px;">${fullPhone ? escapeHtml(fullPhone) : "—"}</td>
           </tr>
           <tr style="background: #f8fafc;">
             <td style="padding: 8px 12px; font-weight: bold; color: #334155;">Subject</td>
@@ -111,7 +132,7 @@ export async function POST(request: NextRequest) {
         to: receiverEmail,
         subject: `[Contact Form] ${subject}`,
         html: htmlBody,
-        text: `Name: ${name}\nEmail: ${email}\nPhone: ${phone || "—"}\nSubject: ${subject}\n\n${message}`,
+        text: `Name: ${name}\nEmail: ${email}\nPhone: ${fullPhone || "—"}\nSubject: ${subject}\n\n${message}`,
       });
 
       console.log(`✅ Contact email sent to ${receiverEmail} from ${email}`);

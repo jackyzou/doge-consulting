@@ -286,7 +286,7 @@ const messages = {
     phoneHK: "Phone (HK)",
     phoneHKSubtitle: "Mon-Fri 9am-6pm HKT",
     wechat: "WeChat",
-    wechatValue: "DogeConsulting",
+    wechatValue: "dogetech77",
     wechatSubtitle: "Scan QR code to add us",
     officesTitle: "Our Offices",
     office1City: "Seattle, WA",

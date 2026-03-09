@@ -282,7 +282,7 @@ const messages = {
     phoneHK: "Téléphone (HK)",
     phoneHKSubtitle: "Mon-Fri 9am-6pm HKT",
     wechat: "WeChat",
-    wechatValue: "DogeConsulting",
+    wechatValue: "dogetech77",
     wechatSubtitle: "Scannez le QR code pour nous ajouter",
     officesTitle: "Nos bureaux",
     office1City: "Seattle, WA",
