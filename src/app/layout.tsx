@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { LiveChat } from "@/components/layout/LiveChat";
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/lib/i18n";
+import { JsonLd, organizationSchema, websiteSchema } from "@/components/seo/JsonLd";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -13,14 +14,58 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Doge Consulting | Product Shipping from China to USA",
+  metadataBase: new URL("https://doge-consulting.com"),
+  title: {
+    default: "Doge Consulting | AI-Powered Product Shipping from China to USA",
+    template: "%s | Doge Consulting",
+  },
   description:
-    "Ship high-quality products from mainland China to the USA. Door-to-door service with competitive pricing, full customs clearance, and real-time tracking.",
-  keywords: ["product shipping", "China to USA", "commodity sourcing", "international shipping", "sea freight", "Chinese manufacturing"],
+    "Ship high-quality products from China to the USA with AI-powered sourcing. Factory-direct pricing (save 40-60%), full customs clearance, real-time tracking, and door-to-door delivery. Free tools: CBM calculator, revenue calculator, vessel tracker.",
+  keywords: ["product shipping", "China to USA", "commodity sourcing", "international shipping", "sea freight", "Chinese manufacturing", "import from China", "freight rates", "customs clearance", "Shenzhen shipping", "AI sourcing", "container shipping"],
   icons: {
     icon: "/doge-logo.png",
     shortcut: "/doge-logo.png",
     apple: "/doge-logo.png",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://doge-consulting.com",
+    siteName: "Doge Consulting",
+    title: "Doge Consulting | AI-Powered Product Shipping from China to USA",
+    description: "Ship products from China to the USA with AI-powered sourcing. Save 40-60% with factory-direct pricing. Free CBM calculator, revenue calculator, and live vessel tracker.",
+    images: [
+      {
+        url: "/doge-logo.png",
+        width: 512,
+        height: 512,
+        alt: "Doge Consulting Logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Doge Consulting | AI-Powered Product Shipping from China to USA",
+    description: "Ship products from China to the USA with AI-powered sourcing. Save 40-60% with factory-direct pricing.",
+    images: ["/doge-logo.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: "https://doge-consulting.com",
+  },
+  verification: {
+    // Add Google Search Console verification code here when available
+    // google: "your-verification-code",
   },
 };
 
@@ -32,6 +77,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
+        <JsonLd data={organizationSchema()} />
+        <JsonLd data={websiteSchema()} />
         <I18nProvider>
           <Header />
           <main className="min-h-screen">{children}</main>

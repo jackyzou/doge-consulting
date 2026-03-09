@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { HeroSection } from "@/components/home/HeroSection";
 import { StatsBar } from "@/components/home/StatsBar";
 import { HowItWorks } from "@/components/home/HowItWorks";
@@ -8,6 +9,17 @@ import { NewsletterSection } from "@/components/home/NewsletterSection";
 import { FAQPreview } from "@/components/home/FAQPreview";
 import { CTABanner } from "@/components/home/CTABanner";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Doge Consulting | AI-Powered Product Shipping from China to USA",
+  description: "Ship products from China to the USA with AI-powered sourcing. Factory-direct pricing saves 40-60%. Full customs clearance, real-time tracking, door-to-door delivery. Free CBM calculator, revenue calculator, and live vessel tracker.",
+  openGraph: {
+    title: "Doge Consulting | AI-Powered Product Shipping from China to USA",
+    description: "Ship products from China to the USA with AI-powered sourcing. Save 40-60% with factory-direct pricing.",
+    url: "https://doge-consulting.com",
+  },
+  alternates: { canonical: "https://doge-consulting.com" },
+};
 
 export default function HomePage() {
   return (
