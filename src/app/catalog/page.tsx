@@ -14,6 +14,7 @@ import {
 import Link from "next/link";
 import ProductMatcher from "@/components/catalog/ProductMatcher";
 import FurniturePackages from "@/components/catalog/FurniturePackages";
+import { useTranslation } from "@/lib/i18n";
 
 interface Product {
   id: string;

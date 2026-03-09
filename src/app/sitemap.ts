@@ -3,43 +3,84 @@ import { prisma } from "@/lib/db";
 
 const BASE_URL = "https://doge-consulting.com";
 
+// Supported languages — must match src/lib/i18n.tsx LOCALES
+const LANGUAGES = {
+  en: "en",
+  "zh-CN": "zh-Hans",
+  "zh-TW": "zh-Hant",
+  es: "es",
+  fr: "fr",
+} as const;
+
+type LangMap = Record<string, string>;
+
+// Generate hreflang alternates for a given path
+function withAlternates(path: string): { languages: LangMap } {
+  const languages: LangMap = {};
+  for (const [locale, hreflang] of Object.entries(LANGUAGES)) {
+    // Since our site serves all languages on the same URL (client-side i18n),
+    // we point all hreflang entries to the same URL. This tells Google that
+    // the same URL serves multiple languages with client-side detection.
+    languages[hreflang] = `${BASE_URL}${path}`;
+  }
+  // x-default for language/region-unspecified users
+  languages["x-default"] = `${BASE_URL}${path}`;
+  return { languages };
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // Static public pages
+  const now = new Date();
+
+  // Static public pages with hreflang alternates
   const staticPages: MetadataRoute.Sitemap = [
-    { url: BASE_URL, lastModified: new Date(), changeFrequency: "weekly", priority: 1.0 },
-    { url: `${BASE_URL}/services`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
-    { url: `${BASE_URL}/catalog`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
-    { url: `${BASE_URL}/about`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE_URL}/contact`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE_URL}/quote`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
-    { url: `${BASE_URL}/faq`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
-    { url: `${BASE_URL}/blog`, lastModified: new Date(), changeFrequency: "daily", priority: 0.8 },
-    { url: `${BASE_URL}/glossary`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
-    { url: `${BASE_URL}/case-studies`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
-    { url: `${BASE_URL}/whitepaper`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
-    { url: `${BASE_URL}/privacy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
-    { url: `${BASE_URL}/track`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
-    // Tools
-    { url: `${BASE_URL}/tools/cbm-calculator`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE_URL}/tools/revenue-calculator`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE_URL}/tools/duty-calculator`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE_URL}/tools/shipping-tracker`, lastModified: new Date(), changeFrequency: "daily", priority: 0.8 },
-    { url: `${BASE_URL}/tools/vessel-tracker`, lastModified: new Date(), changeFrequency: "daily", priority: 0.7 },
-    { url: `${BASE_URL}/tools/3d-visualizer`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
+    { url: BASE_URL, lastModified: now, changeFrequency: "weekly", priority: 1.0, alternates: withAlternates("") },
+    { url: `${BASE_URL}/services`, lastModified: now, changeFrequency: "monthly", priority: 0.9, alternates: withAlternates("/services") },
+    { url: `${BASE_URL}/catalog`, lastModified: now, changeFrequency: "weekly", priority: 0.9, alternates: withAlternates("/catalog") },
+    { url: `${BASE_URL}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.8, alternates: withAlternates("/about") },
+    { url: `${BASE_URL}/contact`, lastModified: now, changeFrequency: "monthly", priority: 0.8, alternates: withAlternates("/contact") },
+    { url: `${BASE_URL}/quote`, lastModified: now, changeFrequency: "monthly", priority: 0.9, alternates: withAlternates("/quote") },
+    { url: `${BASE_URL}/faq`, lastModified: now, changeFrequency: "monthly", priority: 0.7, alternates: withAlternates("/faq") },
+    { url: `${BASE_URL}/blog`, lastModified: now, changeFrequency: "daily", priority: 0.8, alternates: withAlternates("/blog") },
+    { url: `${BASE_URL}/glossary`, lastModified: now, changeFrequency: "monthly", priority: 0.6, alternates: withAlternates("/glossary") },
+    { url: `${BASE_URL}/case-studies`, lastModified: now, changeFrequency: "monthly", priority: 0.7, alternates: withAlternates("/case-studies") },
+    { url: `${BASE_URL}/whitepaper`, lastModified: now, changeFrequency: "monthly", priority: 0.7, alternates: withAlternates("/whitepaper") },
+    { url: `${BASE_URL}/privacy`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${BASE_URL}/track`, lastModified: now, changeFrequency: "monthly", priority: 0.6, alternates: withAlternates("/track") },
+    // Tools — high SEO value
+    { url: `${BASE_URL}/tools/cbm-calculator`, lastModified: now, changeFrequency: "monthly", priority: 0.8, alternates: withAlternates("/tools/cbm-calculator") },
+    { url: `${BASE_URL}/tools/revenue-calculator`, lastModified: now, changeFrequency: "monthly", priority: 0.8, alternates: withAlternates("/tools/revenue-calculator") },
+    { url: `${BASE_URL}/tools/duty-calculator`, lastModified: now, changeFrequency: "monthly", priority: 0.8, alternates: withAlternates("/tools/duty-calculator") },
+    { url: `${BASE_URL}/tools/shipping-tracker`, lastModified: now, changeFrequency: "daily", priority: 0.8, alternates: withAlternates("/tools/shipping-tracker") },
+    { url: `${BASE_URL}/tools/vessel-tracker`, lastModified: now, changeFrequency: "daily", priority: 0.7, alternates: withAlternates("/tools/vessel-tracker") },
+    { url: `${BASE_URL}/tools/3d-visualizer`, lastModified: now, changeFrequency: "monthly", priority: 0.7, alternates: withAlternates("/tools/3d-visualizer") },
   ];
 
-  // Dynamic blog posts
+  // Dynamic blog posts (all languages that have published posts)
   let blogPages: MetadataRoute.Sitemap = [];
   try {
     const posts = await prisma.blogPost.findMany({
-      where: { published: true, language: "en" },
-      select: { slug: true, updatedAt: true },
+      where: { published: true },
+      select: { slug: true, language: true, updatedAt: true },
     });
-    blogPages = posts.map((post) => ({
-      url: `${BASE_URL}/blog/${post.slug}`,
-      lastModified: post.updatedAt,
+
+    // Group by slug — each slug may have multiple language versions
+    const slugMap = new Map<string, { updatedAt: Date; languages: string[] }>();
+    for (const post of posts) {
+      const existing = slugMap.get(post.slug);
+      if (existing) {
+        existing.languages.push(post.language);
+        if (post.updatedAt > existing.updatedAt) existing.updatedAt = post.updatedAt;
+      } else {
+        slugMap.set(post.slug, { updatedAt: post.updatedAt, languages: [post.language] });
+      }
+    }
+
+    blogPages = Array.from(slugMap.entries()).map(([slug, data]) => ({
+      url: `${BASE_URL}/blog/${slug}`,
+      lastModified: data.updatedAt,
       changeFrequency: "weekly" as const,
       priority: 0.7,
+      alternates: withAlternates(`/blog/${slug}`),
     }));
   } catch {
     // DB might not be available during build

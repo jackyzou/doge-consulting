@@ -62,6 +62,14 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: "https://doge-consulting.com",
+    languages: {
+      "en": "https://doge-consulting.com",
+      "zh-Hans": "https://doge-consulting.com",
+      "zh-Hant": "https://doge-consulting.com",
+      "es": "https://doge-consulting.com",
+      "fr": "https://doge-consulting.com",
+      "x-default": "https://doge-consulting.com",
+    },
   },
   verification: {
     // Add Google Search Console verification code here when available

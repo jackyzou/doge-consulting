@@ -29,7 +29,7 @@ function getCoverImage(content: string): string | null {
 }
 
 export default function BlogPage() {
-  const { locale } = useTranslation();
+  const { locale, t } = useTranslation();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);

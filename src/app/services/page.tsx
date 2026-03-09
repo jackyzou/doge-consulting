@@ -10,8 +10,10 @@ import {
   Sparkles, Code, LineChart, Rocket,
 } from "lucide-react";
 import Link from "next/link";
+import { useTranslation } from "@/lib/i18n";
 
 export default function ServicesPage() {
+  const { t } = useTranslation();
   const coreServices = [
     {
       icon: Brain,
@@ -98,15 +100,13 @@ export default function ServicesPage() {
       <section className="gradient-hero py-20 text-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-4xl text-center">
-            <Badge className="mb-4 bg-teal/20 text-teal border-teal/30">AI-Powered Import Solutions</Badge>
+            <Badge className="mb-4 bg-teal/20 text-teal border-teal/30">{t("servicesPage.badge")}</Badge>
             <h1 className="text-4xl font-bold sm:text-5xl lg:text-6xl">
-              AI Is Reshaping <span className="text-teal">Global Trade</span>.
-              <br />We Put You Ahead.
+              {t("servicesPage.title")} <span className="text-teal">{t("servicesPage.titleHighlight")}</span>
+              <br />{t("servicesPage.titleHighlight")}
             </h1>
             <p className="mt-6 text-lg text-slate-300 max-w-3xl mx-auto leading-relaxed">
-              Doge Consulting combines deep China manufacturing expertise with cutting-edge AI
-              to make importing profitable, predictable, and accessible to everyone — from first-time
-              entrepreneurs to established enterprises.
+              {t("servicesPage.subtitle")}
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/quote">
@@ -227,10 +227,9 @@ export default function ServicesPage() {
       <section className="gradient-hero py-20 text-center text-white">
         <div className="mx-auto max-w-3xl px-4">
           <Sparkles className="h-10 w-10 text-teal mx-auto mb-4" />
-          <h2 className="text-3xl font-bold sm:text-4xl">AI Makes Every Importer Dangerous.</h2>
+          <h2 className="text-3xl font-bold sm:text-4xl">{t("servicesPage.ctaTitle")}</h2>
           <p className="mt-4 text-lg text-slate-300 max-w-2xl mx-auto">
-            Whether you&apos;re importing your first container or your hundredth, our AI-powered platform
-            and expert team give you the edge to build a profitable, sustainable business.
+            {t("servicesPage.ctaSubtitle")}
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/quote">

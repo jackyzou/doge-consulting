@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DogeLogo } from "@/components/ui/doge-logo";
 import GlobalPresenceMap from "@/components/home/GlobalPresenceMap";
+import { useTranslation } from "@/lib/i18n";
 
 export default function AboutPage() {
+  const { t } = useTranslation();
   const values = [
     { icon: Brain, title: "AI-First Thinking", desc: "We embed artificial intelligence into every step of the import process — from supplier discovery to tariff optimization — because the future of trade is algorithmic." },
     { icon: Shield, title: "Trust & Transparency", desc: "Honest pricing, clear timelines, and no hidden fees. Our digital platform gives you real-time visibility into every dollar and every milestone." },
@@ -44,7 +46,7 @@ export default function AboutPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-12 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl">
-              <Badge className="mb-5 border-teal/30 bg-teal/15 text-teal-light">Our Story</Badge>
+              <Badge className="mb-5 border-teal/30 bg-teal/15 text-teal-light">{t("about.badge")}</Badge>
               <p className="mb-4 text-sm font-medium uppercase tracking-[0.28em] text-white/65">Doge Consulting Group Limited</p>
               <h1 className="text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
                 We&apos;re Building the <span className="text-teal">AI-Powered Future</span> of Global Trade
@@ -204,7 +206,7 @@ export default function AboutPage() {
           <div className="mb-12 max-w-3xl">
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-teal">What guides us</p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-              Our <span className="text-teal">Values</span>
+              {t("about.valuesTitle")} <span className="text-teal">{t("about.valuesHighlight")}</span>
             </h2>
             <p className="mt-4 text-base leading-7 text-muted-foreground">We believe AI should amplify human judgment, not replace it. Our values keep us grounded as we push the boundaries of what technology can do for global trade.</p>
           </div>
@@ -233,7 +235,7 @@ export default function AboutPage() {
             <div className="max-w-3xl">
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-teal">Our footprint</p>
               <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                Our <span className="text-teal">Locations</span>
+                {t("about.locationsTitle")} <span className="text-teal">{t("about.locationsHighlight")}</span>
               </h2>
               <p className="mt-4 text-base leading-7 text-muted-foreground">We place teams where they can remove friction: close to customers in the US, close to trade infrastructure in Hong Kong, and close to factories in Shenzhen.</p>
             </div>
