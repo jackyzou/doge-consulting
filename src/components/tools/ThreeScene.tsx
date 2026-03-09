@@ -221,7 +221,7 @@ const Scene = forwardRef<ThreeSceneHandle, ThreeSceneProps>(function Scene(props
 
   return (
     <Canvas
-      camera={{ position: [dist * 0.5, dist * 0.6, dist * 0.8], fov: 35, near: 0.01, far: 200 }}
+      camera={{ position: [dist * 0.7, dist * 0.8, dist * 0.9], fov: 35, near: 0.01, far: 200 }}
       style={{ width: "100%", height: "100%", background: bg }}
       gl={{ antialias: true, preserveDrawingBuffer: true, powerPreference: "default", failIfMajorPerformanceCaveat: false }}
     >

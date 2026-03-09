@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Upload, Link2, DollarSign, ArrowRight, Loader2, CheckCircle2,
@@ -45,6 +45,20 @@ export default function ProductMatcher() {
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+
+  // Prefill from logged-in user
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(data => {
+        if (data.user) {
+          if (data.user.name) setCustomerName(data.user.name);
+          if (data.user.email) setCustomerEmail(data.user.email);
+          if (data.user.phone) setCustomerPhone(data.user.phone);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleImageSelect = useCallback((file: File) => {
     if (file.size > 2 * 1024 * 1024) {

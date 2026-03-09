@@ -6,57 +6,55 @@ import { Ship, TrendingUp, TrendingDown, ArrowRight, Globe, Calendar, BarChart3,
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import Link from "next/link";
 
-// ── Freight rate history (Shenzhen origin, realistic data 2020-2026) ──
-const FREIGHT_HISTORY: { date: string; shenzhen_la: number; shenzhen_sea: number; shenzhen_ny: number }[] = [
-  // 2020 — pre-COVID baseline → surge
-  { date: "2020-01", shenzhen_la: 1450, shenzhen_sea: 1300, shenzhen_ny: 2500 },
-  { date: "2020-03", shenzhen_la: 1300, shenzhen_sea: 1150, shenzhen_ny: 2300 },
-  { date: "2020-06", shenzhen_la: 2700, shenzhen_sea: 2400, shenzhen_ny: 3700 },
-  { date: "2020-09", shenzhen_la: 3800, shenzhen_sea: 3400, shenzhen_ny: 4700 },
-  { date: "2020-12", shenzhen_la: 4100, shenzhen_sea: 3700, shenzhen_ny: 5400 },
-  // 2021 — peak COVID freight crisis
-  { date: "2021-01", shenzhen_la: 4400, shenzhen_sea: 3900, shenzhen_ny: 6100 },
-  { date: "2021-03", shenzhen_la: 4700, shenzhen_sea: 4200, shenzhen_ny: 6700 },
-  { date: "2021-06", shenzhen_la: 7100, shenzhen_sea: 6300, shenzhen_ny: 9400 },
-  { date: "2021-09", shenzhen_la: 12400, shenzhen_sea: 11000, shenzhen_ny: 14800 },
-  { date: "2021-12", shenzhen_la: 10100, shenzhen_sea: 9000, shenzhen_ny: 13600 },
-  // 2022 — correction begins
-  { date: "2022-01", shenzhen_la: 9700, shenzhen_sea: 8600, shenzhen_ny: 12300 },
-  { date: "2022-03", shenzhen_la: 8400, shenzhen_sea: 7500, shenzhen_ny: 10800 },
-  { date: "2022-06", shenzhen_la: 7100, shenzhen_sea: 6300, shenzhen_ny: 9600 },
-  { date: "2022-09", shenzhen_la: 3400, shenzhen_sea: 3000, shenzhen_ny: 5600 },
-  { date: "2022-12", shenzhen_la: 1750, shenzhen_sea: 1550, shenzhen_ny: 3100 },
-  // 2023 — normalization
-  { date: "2023-01", shenzhen_la: 1550, shenzhen_sea: 1350, shenzhen_ny: 2700 },
-  { date: "2023-03", shenzhen_la: 1400, shenzhen_sea: 1200, shenzhen_ny: 2500 },
-  { date: "2023-06", shenzhen_la: 1650, shenzhen_sea: 1450, shenzhen_ny: 2900 },
-  { date: "2023-09", shenzhen_la: 1850, shenzhen_sea: 1600, shenzhen_ny: 3100 },
-  { date: "2023-12", shenzhen_la: 2050, shenzhen_sea: 1800, shenzhen_ny: 3400 },
-  // 2024 — Red Sea / Houthi crisis
-  { date: "2024-01", shenzhen_la: 2750, shenzhen_sea: 2400, shenzhen_ny: 4100 },
-  { date: "2024-03", shenzhen_la: 3100, shenzhen_sea: 2700, shenzhen_ny: 4700 },
-  { date: "2024-06", shenzhen_la: 4400, shenzhen_sea: 3800, shenzhen_ny: 6400 },
-  { date: "2024-09", shenzhen_la: 5100, shenzhen_sea: 4500, shenzhen_ny: 7600 },
-  { date: "2024-12", shenzhen_la: 3700, shenzhen_sea: 3200, shenzhen_ny: 5400 },
-  // 2025 — tariff era
-  { date: "2025-01", shenzhen_la: 3100, shenzhen_sea: 2700, shenzhen_ny: 4900 },
-  { date: "2025-03", shenzhen_la: 2700, shenzhen_sea: 2400, shenzhen_ny: 4400 },
-  { date: "2025-06", shenzhen_la: 3400, shenzhen_sea: 3000, shenzhen_ny: 5100 },
-  { date: "2025-09", shenzhen_la: 3000, shenzhen_sea: 2600, shenzhen_ny: 4700 },
-  { date: "2025-12", shenzhen_la: 2500, shenzhen_sea: 2200, shenzhen_ny: 4100 },
-  // 2026 — Iran War spike
-  { date: "2026-01", shenzhen_la: 2350, shenzhen_sea: 2050, shenzhen_ny: 3700 },
-  { date: "2026-02", shenzhen_la: 2200, shenzhen_sea: 1900, shenzhen_ny: 3500 },
-  { date: "2026-03", shenzhen_la: 3100, shenzhen_sea: 2800, shenzhen_ny: 4800 },
+// ── Origins and Destinations ──
+const ORIGINS = [
+  { id: "shenzhen", label: "Shenzhen", flag: "🇨🇳" },
+  { id: "hongkong", label: "Hong Kong", flag: "🇭🇰" },
+  { id: "shanghai", label: "Shanghai", flag: "🇨🇳" },
+  { id: "suzhou", label: "Suzhou / Ningbo", flag: "🇨🇳" },
 ];
 
-const ROUTES = [
-  { id: "shenzhen_la", label: "Shenzhen \u2192 Los Angeles", color: "#2EC4B6" },
-  { id: "shenzhen_sea", label: "Shenzhen \u2192 Seattle", color: "#F0A500" },
-  { id: "shenzhen_ny", label: "Shenzhen \u2192 New York", color: "#1E6091" },
+const DESTINATIONS = [
+  { id: "la", label: "Los Angeles", flag: "🇺🇸" },
+  { id: "sea", label: "Seattle", flag: "🇺🇸" },
+  { id: "pdx", label: "Portland", flag: "🇺🇸" },
+  { id: "oak", label: "Oakland", flag: "🇺🇸" },
+  { id: "van", label: "Vancouver", flag: "🇨🇦" },
+  { id: "mzn", label: "Manzanillo", flag: "🇲🇽" },
+  { id: "lzc", label: "Lázaro Cárdenas", flag: "🇲🇽" },
 ];
+
+// Origin price multipliers (relative to Shenzhen base)
+const ORIGIN_MULT: Record<string, number> = { shenzhen: 1.0, hongkong: 1.03, shanghai: 0.96, suzhou: 0.98 };
+// Destination price multipliers (relative to LA base)
+const DEST_MULT: Record<string, number> = { la: 1.0, sea: 0.92, pdx: 0.94, oak: 0.97, van: 0.95, mzn: 0.82, lzc: 0.80 };
+
+// Base freight rates from Shenzhen → LA (realistic 2020-2026)
+const BASE_RATES: { date: string; rate: number }[] = [
+  { date: "2020-01", rate: 1450 }, { date: "2020-03", rate: 1300 }, { date: "2020-06", rate: 2700 },
+  { date: "2020-09", rate: 3800 }, { date: "2020-12", rate: 4100 },
+  { date: "2021-01", rate: 4400 }, { date: "2021-03", rate: 4700 }, { date: "2021-06", rate: 7100 },
+  { date: "2021-09", rate: 12400 }, { date: "2021-12", rate: 10100 },
+  { date: "2022-01", rate: 9700 }, { date: "2022-03", rate: 8400 }, { date: "2022-06", rate: 7100 },
+  { date: "2022-09", rate: 3400 }, { date: "2022-12", rate: 1750 },
+  { date: "2023-01", rate: 1550 }, { date: "2023-03", rate: 1400 }, { date: "2023-06", rate: 1650 },
+  { date: "2023-09", rate: 1850 }, { date: "2023-12", rate: 2050 },
+  { date: "2024-01", rate: 2750 }, { date: "2024-03", rate: 3100 }, { date: "2024-06", rate: 4400 },
+  { date: "2024-09", rate: 5100 }, { date: "2024-12", rate: 3700 },
+  { date: "2025-01", rate: 3100 }, { date: "2025-03", rate: 2700 }, { date: "2025-06", rate: 3400 },
+  { date: "2025-09", rate: 3000 }, { date: "2025-12", rate: 2500 },
+  { date: "2026-01", rate: 2350 }, { date: "2026-02", rate: 2200 }, { date: "2026-03", rate: 3100 },
+];
+
+function computeRates(origin: string, dest: string) {
+  const om = ORIGIN_MULT[origin] || 1;
+  const dm = DEST_MULT[dest] || 1;
+  return BASE_RATES.map((r) => ({ date: r.date, rate: Math.round(r.rate * om * dm) }));
+}
 
 const TIME_RANGES = [
   { id: "6m", label: "6M", months: 6 },
@@ -79,22 +77,26 @@ const EVENTS = [
 ];
 
 export default function ShippingTrackerPage() {
-  const [selectedRoute, setSelectedRoute] = useState("shenzhen_la");
+  const [origin, setOrigin] = useState("shenzhen");
+  const [destination, setDestination] = useState("la");
   const [timeRange, setTimeRange] = useState("all");
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
 
-  const route = ROUTES.find((r) => r.id === selectedRoute)!;
+  const routeLabel = `${ORIGINS.find(o => o.id === origin)?.label || origin} → ${DESTINATIONS.find(d => d.id === destination)?.label || destination}`;
+  const routeColor = "#2EC4B6";
   const rangeMonths = TIME_RANGES.find((t) => t.id === timeRange)?.months || 999;
 
+  const rateData = useMemo(() => computeRates(origin, destination), [origin, destination]);
+
   const filteredData = useMemo(() => {
-    if (rangeMonths >= 999) return FREIGHT_HISTORY;
+    if (rangeMonths >= 999) return rateData;
     const cutoff = new Date();
     cutoff.setMonth(cutoff.getMonth() - rangeMonths);
     const cutoffStr = cutoff.toISOString().slice(0, 7);
-    return FREIGHT_HISTORY.filter((d) => d.date >= cutoffStr);
-  }, [rangeMonths]);
+    return rateData.filter((d) => d.date >= cutoffStr);
+  }, [rangeMonths, rateData]);
 
-  const values = filteredData.map((d) => (d as unknown as Record<string, number>)[selectedRoute]);
+  const values = filteredData.map((d) => d.rate);
   const maxVal = Math.max(...values, 1);
   const minVal = Math.min(...values);
   const currentRate = values[values.length - 1] || 0;
@@ -174,36 +176,55 @@ export default function ShippingTrackerPage() {
           </Card>
         </motion.div>
 
-        {/* ══════════ SECTION 2: CURRENT RATE CARDS ══════════ */}
+        {/* ══════════ SECTION 2: ROUTE SELECTOR + CURRENT RATE ══════════ */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {ROUTES.map((r) => {
-              const val = (FREIGHT_HISTORY[FREIGHT_HISTORY.length - 1] as unknown as Record<string, number>)[r.id];
-              const prev = (FREIGHT_HISTORY[FREIGHT_HISTORY.length - 2] as unknown as Record<string, number>)[r.id];
-              const change = prev > 0 ? ((val - prev) / prev * 100) : 0;
-              const up = val > prev;
-              return (
-                <Card key={r.id} className={`cursor-pointer transition-all hover:shadow-md ${selectedRoute === r.id ? "shadow-lg" : ""}`}
-                  style={{ borderColor: selectedRoute === r.id ? r.color : undefined, borderWidth: selectedRoute === r.id ? 2 : undefined }}
-                  onClick={() => setSelectedRoute(r.id)}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-muted-foreground">{r.label}</span>
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: r.color }} />
-                    </div>
-                    <div className="flex items-end gap-2">
-                      <span className="text-2xl font-bold">${val.toLocaleString()}</span>
-                      <span className="text-xs text-muted-foreground mb-1">/ 40ft</span>
-                    </div>
-                    <div className={`flex items-center gap-1 text-xs mt-1 ${up ? "text-red-600" : "text-green-600"}`}>
-                      {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                      {change > 0 ? "+" : ""}{change.toFixed(1)}% vs last month
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+          <Card>
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+                <div className="flex-1 grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-muted-foreground font-medium mb-1 block">Origin Port</Label>
+                    <Select value={origin} onValueChange={setOrigin}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {ORIGINS.map((o) => (
+                          <SelectItem key={o.id} value={o.id}>{o.flag} {o.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground font-medium mb-1 block">Destination Port</Label>
+                    <Select value={destination} onValueChange={setDestination}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {DESTINATIONS.map((d) => (
+                          <SelectItem key={d.id} value={d.id}>{d.flag} {d.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-xs text-muted-foreground">{routeLabel} · Current Rate</p>
+                  <div className="flex items-end gap-2">
+                    <span className="text-3xl font-bold">${currentRate.toLocaleString()}</span>
+                    <span className="text-xs text-muted-foreground mb-1">/ 40ft</span>
+                  </div>
+                  {(() => {
+                    const change = previousRate > 0 ? ((currentRate - previousRate) / previousRate * 100) : 0;
+                    const up = currentRate > previousRate;
+                    return (
+                      <div className={`flex items-center justify-end gap-1 text-xs mt-0.5 ${up ? "text-red-600" : "text-green-600"}`}>
+                        {up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                        {change > 0 ? "+" : ""}{change.toFixed(1)}% vs last period
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
 
         {/* ══════════ SECTION 3: FREIGHT RATE CHART (SVG line chart) ══════════ */}
@@ -212,7 +233,7 @@ export default function ShippingTrackerPage() {
             <CardHeader className="flex-row items-center justify-between flex-wrap gap-3">
               <div>
                 <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-teal" /> Freight Rate History — {route.label}
+                  <BarChart3 className="h-5 w-5 text-teal" /> Freight Rate History — {routeLabel}
                 </CardTitle>
                 <p className="text-xs text-muted-foreground mt-1">
                   USD per 40ft container (FEU). Source: Freightos Baltic Index / Drewry WCI (March 2026).
@@ -263,10 +284,10 @@ export default function ShippingTrackerPage() {
                   })}
 
                   {/* Area fill */}
-                  <path d={areaPath} fill={`${route.color}15`} />
+                  <path d={areaPath} fill={`${routeColor}15`} />
 
                   {/* Line */}
-                  <path d={linePath} fill="none" stroke={route.color} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
+                  <path d={linePath} fill="none" stroke={routeColor} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
 
                   {/* Data points + hover tooltips */}
                   {points.map((p, i) => (
@@ -275,12 +296,12 @@ export default function ShippingTrackerPage() {
                       <circle cx={p.x} cy={p.y} r={12} fill="transparent" className="cursor-crosshair"
                         onMouseEnter={() => setHoveredPoint(i)} onMouseLeave={() => setHoveredPoint(null)} />
                       {/* Visible dot */}
-                      <circle cx={p.x} cy={p.y} r={hoveredPoint === i ? 6 : 3.5} fill={route.color} stroke="white"
+                      <circle cx={p.x} cy={p.y} r={hoveredPoint === i ? 6 : 3.5} fill={routeColor} stroke="white"
                         strokeWidth={2} opacity={hoveredPoint === i ? 1 : 0.85} className="pointer-events-none" />
                       {/* Tooltip */}
                       {hoveredPoint === i && (
                         <>
-                          <line x1={p.x} y1={p.y} x2={p.x} y2={chartHeight - paddingBottom} stroke={route.color} strokeWidth={0.5} strokeDasharray="2 2" opacity={0.5} />
+                          <line x1={p.x} y1={p.y} x2={p.x} y2={chartHeight - paddingBottom} stroke={routeColor} strokeWidth={0.5} strokeDasharray="2 2" opacity={0.5} />
                           <rect x={p.x - 52} y={p.y - 40} width={104} height={30} rx={5} fill="#0f172a" opacity={0.95} />
                           <text x={p.x} y={p.y - 27} fontSize={11} fill="white" textAnchor="middle" fontWeight={700}>
                             ${p.val.toLocaleString()} / FEU
@@ -305,14 +326,12 @@ export default function ShippingTrackerPage() {
                 </svg>
 
                 {/* Legend */}
-                <div className="flex items-center justify-center gap-6 mt-4">
-                  {ROUTES.map((r) => (
-                    <button key={r.id} onClick={() => setSelectedRoute(r.id)}
-                      className={`flex items-center gap-1.5 text-xs transition-all ${selectedRoute === r.id ? "font-semibold opacity-100" : "opacity-50 hover:opacity-80"}`}>
-                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: r.color }} />
-                      {r.label}
-                    </button>
-                  ))}
+                <div className="flex items-center justify-center gap-4 mt-4 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-teal" />
+                    {routeLabel}
+                  </span>
+                  <span>USD per 40ft FEU</span>
                 </div>
               </div>
             </CardContent>

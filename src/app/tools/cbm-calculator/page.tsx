@@ -30,11 +30,11 @@ interface Item {
 let nextId = 1;
 
 const UNIT_OPTIONS: { value: LengthUnit; label: string; abbr: string }[] = [
-  { value: "cm", label: "Centimeters", abbr: "cm" },
-  { value: "mm", label: "Millimeters", abbr: "mm" },
-  { value: "in", label: "Inches", abbr: "in" },
-  { value: "ft", label: "Feet", abbr: "ft" },
-  { value: "m", label: "Meters", abbr: "m" },
+  { value: "cm", label: "Centimeters (cm)", abbr: "cm" },
+  { value: "mm", label: "Millimeters (mm)", abbr: "mm" },
+  { value: "in", label: "Inches (in)", abbr: "in" },
+  { value: "ft", label: "Feet (ft)", abbr: "ft" },
+  { value: "m", label: "Meters (m)", abbr: "m" },
 ];
 
 const PRESETS = [
@@ -179,12 +179,12 @@ export default function CBMCalculatorPage() {
             <Ruler className="h-4 w-4 text-teal" />
             <Label className="text-sm font-medium">Unit</Label>
             <Select value={unit} onValueChange={(v) => setUnit(v as LengthUnit)}>
-              <SelectTrigger className="w-36">
+              <SelectTrigger className="w-44">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {UNIT_OPTIONS.map((u) => (
-                  <SelectItem key={u.value} value={u.value}>{u.label} ({u.abbr})</SelectItem>
+                  <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

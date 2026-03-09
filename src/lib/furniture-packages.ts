@@ -30,7 +30,7 @@ export const STYLES = [
   { id: "farmhouse", label: "Farmhouse", emoji: "🏡", desc: "Rustic wood, warm textures, country living", image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&h=300&fit=crop" },
   { id: "contemporary", label: "Contemporary", emoji: "✨", desc: "Trendy, mixed materials, current design", image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&h=300&fit=crop" },
   { id: "midcentury", label: "Mid-Century Modern", emoji: "🪑", desc: "Tapered legs, organic shapes, retro cool", image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400&h=300&fit=crop" },
-  { id: "industrial", label: "Industrial", emoji: "🏭", desc: "Metal accents, raw wood, urban loft", image: "https://images.unsplash.com/photo-1536437075651-01d675529a3b?w=400&h=300&fit=crop" },
+  { id: "industrial", label: "Industrial", emoji: "🏭", desc: "Metal accents, raw wood, urban loft", image: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=400&h=300&fit=crop" },
   { id: "coastal", label: "Coastal", emoji: "🌊", desc: "White & blue, natural textures, beach vibe", image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=400&h=300&fit=crop" },
 ];
 
