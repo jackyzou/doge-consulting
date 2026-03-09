@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { ArrowRight, Calendar, Clock, Filter } from "lucide-react";
+import { ArrowRight, Calendar, Clock, Filter, Eye } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 
 interface BlogPost {
@@ -19,6 +19,7 @@ interface BlogPost {
   emoji: string;
   authorName: string;
   readTime: string;
+  viewCount?: number;
   createdAt: string;
 }
 
@@ -105,6 +106,9 @@ export default function BlogPage() {
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(featured.createdAt).toLocaleDateString()}</span>
                           <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{featured.readTime}</span>
+                          {featured.viewCount !== undefined && featured.viewCount > 0 && (
+                            <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{featured.viewCount.toLocaleString()} views</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -129,6 +133,9 @@ export default function BlogPage() {
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(post.createdAt).toLocaleDateString()}</span>
                           <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{post.readTime}</span>
+                          {post.viewCount !== undefined && post.viewCount > 0 && (
+                            <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{post.viewCount.toLocaleString()}</span>
+                          )}
                         </div>
                       </CardContent>
                     </Card>

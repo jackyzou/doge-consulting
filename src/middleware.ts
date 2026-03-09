@@ -79,9 +79,10 @@ export function middleware(request: NextRequest) {
   const language = request.headers.get("accept-language")?.split(",")[0]?.trim() || null;
 
   // Fire-and-forget: POST to internal tracking API
-  const origin = request.nextUrl.origin;
+  // Use localhost directly (request.nextUrl.origin resolves to 0.0.0.0 in Docker)
+  const trackingOrigin = `http://localhost:${process.env.PORT || 3000}`;
   try {
-    fetch(`${origin}/api/track-view`, {
+    fetch(`${trackingOrigin}/api/track-view`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-internal": "1" },
       body: JSON.stringify({

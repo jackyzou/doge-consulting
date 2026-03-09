@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, ArrowRight, Calendar, Clock, User, Loader2, List, Share2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, Clock, User, Loader2, List, Share2, Eye } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 
-interface Post { title: string; content: string; category: string; emoji: string; authorName: string; readTime: string; createdAt: string; }
+interface Post { title: string; content: string; category: string; emoji: string; authorName: string; readTime: string; viewCount?: number; createdAt: string; }
 interface RelatedPost { slug: string; title: string; emoji: string; category: string; readTime: string; }
 
 function renderMarkdown(md: string): string {
@@ -107,6 +107,9 @@ export default function BlogPostPage() {
             <span className="flex items-center gap-1"><User className="h-4 w-4" />{post.authorName}</span>
             <span className="flex items-center gap-1"><Calendar className="h-4 w-4" />{new Date(post.createdAt).toLocaleDateString()}</span>
             <span className="flex items-center gap-1"><Clock className="h-4 w-4" />{post.readTime} read</span>
+            {post.viewCount !== undefined && post.viewCount > 0 && (
+              <span className="flex items-center gap-1"><Eye className="h-4 w-4" />{post.viewCount.toLocaleString()} views</span>
+            )}
           </div>
         </div>
       </section>
