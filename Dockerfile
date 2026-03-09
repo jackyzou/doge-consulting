@@ -62,6 +62,9 @@ COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/prisma/seed.mjs ./prisma/seed.mjs
 COPY --from=builder /app/prisma/seed-blog.mjs ./prisma/seed-blog.mjs
 
+# Copy VERSION file for health endpoint
+COPY --from=builder /app/VERSION ./VERSION
+
 # Create data directory for SQLite
 RUN mkdir -p /app/data
 

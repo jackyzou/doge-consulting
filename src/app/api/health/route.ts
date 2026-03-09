@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { readFileSync } from "fs";
+
+function getVersion(): string {
+  try { return readFileSync("VERSION", "utf-8").trim(); } catch { return "dev"; }
+}
 
 export async function GET() {
   try {
@@ -8,6 +13,7 @@ export async function GET() {
 
     return NextResponse.json({
       status: "ok",
+      version: getVersion(),
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       node: process.version,
