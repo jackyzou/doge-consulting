@@ -521,3 +521,27 @@ model ContactInquiry {
   @@index([email])
   @@index([createdAt])
 }
+
+// ──────────────────────────────────────────
+// Agent Fleet — Decision & Activity Logs
+// ──────────────────────────────────────────
+model AgentLog {
+  id          String   @id @default(cuid())
+  agent       String                       // "alex", "amy", "seth", "rachel", "seto"
+  type        String   @default("note")    // decision, action, report, alert, meeting, kpi
+  priority    String   @default("normal")  // low, normal, high, critical
+  title       String
+  content     String                       // full log content (markdown)
+  tags        String?                      // comma-separated: "revenue,pricing,q2"
+  status      String   @default("open")    // open, in_progress, completed, escalated
+  assignedTo  String?                      // agent name or "jacky" for CEO escalation
+  relatedTo   String?                      // reference: "meeting:2026-03-09", "kpi:dau", etc.
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([agent])
+  @@index([type])
+  @@index([priority])
+  @@index([status])
+  @@index([createdAt])
+}
