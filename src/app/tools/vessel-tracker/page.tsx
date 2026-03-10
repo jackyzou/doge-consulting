@@ -142,10 +142,10 @@ export default function VesselTrackerPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
             <Badge className="mb-4 bg-teal/20 text-teal border-teal/30 text-sm">
-              <Ship className="mr-1.5 h-4 w-4" /> Live Vessel Tracker
+              <Ship className="mr-1.5 h-4 w-4" /> {t("headerTools.containerTracker")}
             </Badge>
             <h1 className="text-3xl font-bold sm:text-5xl tracking-tight">
-              Real-Time <span className="text-teal">Vessel Tracking</span> & Container Search
+              {t("headerTools.containerTracker")}
             </h1>
             <p className="mt-4 text-lg text-slate-300 max-w-2xl mx-auto">
               Track vessels worldwide, monitor key shipping chokepoints, and search your container

@@ -157,11 +157,10 @@ export default function CBMCalculatorPage() {
       <section className="gradient-hero py-16 text-white">
         <div className="mx-auto max-w-7xl px-4 text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <Badge className="mb-4 bg-teal/20 text-teal-200 border-teal/30">Free Professional Tool</Badge>
-            <h1 className="text-4xl font-bold mb-4">CBM Calculator — Cubic Meter &amp; Freight Volume</h1>
+            <Badge className="mb-4 bg-teal/20 text-teal-200 border-teal/30">{t("tools.badge")}</Badge>
+            <h1 className="text-4xl font-bold mb-4">{t("tools.cbmTitle")}</h1>
             <p className="text-lg text-slate-300 max-w-3xl mx-auto">
-              Calculate CBM (cubic meters), volumetric weight, chargeable weight, and container utilization for
-              international shipments. Supports cm, mm, inches, feet, and meters.
+              {t("tools.cbmDesc")}
             </p>
             <div className="flex flex-wrap justify-center gap-3 mt-6 text-sm">
               <Badge variant="outline" className="border-white/30 text-white/90">CBM Calculator</Badge>
@@ -179,7 +178,7 @@ export default function CBMCalculatorPage() {
         <div className="flex flex-wrap items-center gap-4 mb-6">
           <div className="flex items-center gap-2">
             <Ruler className="h-4 w-4 text-teal" />
-            <Label className="text-sm font-medium">Unit</Label>
+            <Label className="text-sm font-medium">{t("tools.unit")}</Label>
             <Select value={unit} onValueChange={(v) => setUnit(v as LengthUnit)}>
               <SelectTrigger className="w-44">
                 <SelectValue />
@@ -192,7 +191,7 @@ export default function CBMCalculatorPage() {
             </Select>
           </div>
           <Button variant="outline" size="sm" onClick={resetAll} className="gap-1">
-            <RefreshCw className="h-3.5 w-3.5" /> Reset
+            <RefreshCw className="h-3.5 w-3.5" /> {t("tools.reset")}
           </Button>
         </div>
 
@@ -203,7 +202,7 @@ export default function CBMCalculatorPage() {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-sm">
-                  <Box className="h-4 w-4 text-gold" /> Quick-Add Product Presets
+                  <Box className="h-4 w-4 text-gold" /> {t("tools.presets")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -483,38 +482,38 @@ export default function CBMCalculatorPage() {
             <Card className="sticky top-24 border-teal/20">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Calculator className="h-5 w-5 text-teal" /> Summary
+                  <Calculator className="h-5 w-5 text-teal" /> {t("tools.summary")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-sm text-muted-foreground">Total Items</span>
+                    <span className="text-sm text-muted-foreground">{t("tools.totalItems")}</span>
                     <span className="font-semibold">{totals.items}</span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-sm text-muted-foreground">Total CBM</span>
+                    <span className="text-sm text-muted-foreground">{t("tools.totalCbm")}</span>
                     <span className="font-semibold text-teal">{round(totals.cbm, 4)} m³</span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-sm text-muted-foreground">Cubic Feet</span>
+                    <span className="text-sm text-muted-foreground">{t("tools.cubicFeet")}</span>
                     <span className="font-semibold">{round(cbmToCubicFeet(totals.cbm), 2)} ft³</span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-sm text-muted-foreground">Liters</span>
+                    <span className="text-sm text-muted-foreground">{t("tools.liters")}</span>
                     <span className="font-semibold">{round(cbmToLiters(totals.cbm), 1)} L</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-sm text-muted-foreground">Actual Weight</span>
+                    <span className="text-sm text-muted-foreground">{t("tools.actualWeight")}</span>
                     <span className="font-semibold">{round(totals.actualWeight, 1)} kg</span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-sm text-muted-foreground">Volumetric Weight</span>
+                    <span className="text-sm text-muted-foreground">{t("tools.volWeight")}</span>
                     <span className="font-semibold">{round(totals.volWeight, 1)} kg</span>
                   </div>
                   <div className="flex justify-between items-center py-3 bg-teal/5 rounded-lg px-3 -mx-1">
-                    <span className="text-sm font-medium flex items-center gap-1"><Scale className="h-3.5 w-3.5" /> Chargeable Weight</span>
+                    <span className="text-sm font-medium flex items-center gap-1"><Scale className="h-3.5 w-3.5" /> {t("tools.chargeableWeight")}</span>
                     <span className="text-lg font-bold text-teal">{round(chargeableWt, 1)} kg</span>
                   </div>
                 </div>

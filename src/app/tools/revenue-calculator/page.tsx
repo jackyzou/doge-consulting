@@ -100,7 +100,7 @@ export default function RevenueCalculatorPage() {  const { t } = useTranslation(
       <section className="gradient-hero py-16 text-white">
         <div className="mx-auto max-w-7xl px-4 text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <Badge className="mb-4 bg-teal/20 text-teal-200 border-teal/30">Most Comprehensive Free Tool</Badge>
+            <Badge className="mb-4 bg-teal/20 text-teal-200 border-teal/30">{t("tools.badge")}</Badge>
             <h1 className="text-4xl font-bold mb-4">Import Revenue &amp; Landed Cost Calculator</h1>
             <p className="text-lg text-slate-300 max-w-3xl mx-auto">
               Calculate the true landed cost of importing products — including duties, tariffs, taxes, compliance fees, and shipping.

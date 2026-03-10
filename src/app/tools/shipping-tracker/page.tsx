@@ -128,8 +128,8 @@ export default function ShippingTrackerPage() {
       <section className="gradient-hero py-14 text-white">
         <div className="mx-auto max-w-7xl px-4 text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <Badge className="mb-4 bg-teal/20 text-teal-200 border-teal/30">Live Shipping Intelligence</Badge>
-            <h1 className="text-4xl font-bold mb-4">Live Vessel Map & Freight Rates</h1>
+            <Badge className="mb-4 bg-teal/20 text-teal-200 border-teal/30">{t("headerTools.vesselMap")}</Badge>
+            <h1 className="text-4xl font-bold mb-4">{t("headerTools.vesselMap")} & {t("headerTools.revenueCalc")}</h1>
             <p className="text-lg text-slate-300 max-w-3xl mx-auto">
               Track global vessel traffic in real time. Monitor container shipping costs from Shenzhen to major US ports.
               See how COVID, the Suez blockage, Red Sea crisis, tariffs, and the 2026 Iran conflict have impacted freight rates.
