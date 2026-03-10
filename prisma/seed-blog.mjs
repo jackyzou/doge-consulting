@@ -1955,7 +1955,156 @@ Freight rates are a lagging indicator — by the time the news cycle catches up,
   },
 ];
 
-const allPosts = [...posts, ...posts2, ...posts3, ...posts4, ...posts5, ...posts6];
+const posts7 = [
+  {
+    slug: "tariff-impact-spring-2026-inventory-strategy",
+    title: "New Tariffs Are Coming in April — Here's How Smart Retailers Are Preparing",
+    excerpt: "With Section 301 tariff increases on Chinese goods expected as early as April 2026, retailers are front-loading inventory to beat the price hikes. A practical guide to protecting your margins.",
+    category: "Trade Policy",
+    emoji: "🛡️",
+    readTime: "9 min",
+    content: `# New Tariffs Are Coming in April — Here's How Smart Retailers Are Preparing
+
+*Published March 10, 2026 · By Seto Nakamura, Trade Intelligence*
+
+---
+
+If you import consumer goods from China, you've probably been hearing the same rumor for weeks: **another round of tariff increases is likely coming in April 2026**.
+
+It's not just a rumor anymore. The Office of the United States Trade Representative (USTR) completed its four-year review of Section 301 tariffs in September 2024, and the phased increases from that review are still rolling out. The next wave — covering electronics accessories, textiles, and certain furniture components — is scheduled for **Q2 2026**.
+
+Here's what we know, what we don't, and exactly what you should be doing right now.
+
+---
+
+## What's Actually Changing?
+
+The September 2024 USTR review increased tariffs across several categories. Some took effect immediately; others were phased. The Q2 2026 phase targets:
+
+| Product Category | Current Rate | Expected Rate (April 2026) | Change |
+|---|---|---|---|
+| Lithium-ion batteries | 7.5% | 25% | +17.5% |
+| Semiconductors/chips | 25% | 50% | +25% |
+| Solar cells | 25% | 50% | +25% |
+| Ship-to-shore cranes | 0% | 25% | +25% |
+| Medical gloves | 7.5% | 25% | +17.5% |
+| Certain steel/aluminum products | 0-7.5% | 25% | Varies |
+| EV components (non-battery) | 25% | 100% | +75% |
+
+**Critical note:** Even if your specific HTS code isn't on this list, retaliatory tariffs and general trade friction tend to create *ripple effects*. Packaging materials, shipping costs, and component prices all adjust upward when tariffs increase on adjacent categories.
+
+---
+
+## The Front-Loading Strategy
+
+This is the play that sophisticated importers are already executing:
+
+### 1. Accelerate Q2 and Q3 Orders to March
+
+If you normally place summer inventory orders in April-May, **move them to March**. Even if it means carrying extra inventory for 4-6 weeks, the math works overwhelmingly in your favor.
+
+**Example:** A mid-size home goods retailer we work with orders ~$200K of product per quarter from Shenzhen factories. If tariffs increase 7.5% on their category:
+
+- **Order in March (current rate):** $200,000 + $15,000 tariff = $215,000
+- **Order in May (new rate):** $200,000 + $30,000 tariff = $230,000
+- **Savings from front-loading:** $15,000
+
+That $15,000 easily covers 4-6 weeks of warehousing ($0.50-1.00/sq ft/month for most 3PLs).
+
+### 2. Book Freight Now — Rates Are Rising Anyway
+
+As we covered in our [freight rate analysis](/blog/freight-rate-trends-2026-iran-crisis), shipping rates from China to the US West Coast are climbing due to the Iran-Israel conflict rerouting vessels. Current Shenzhen-to-LA rates sit around **$2,900-3,100/FEU**. By April, they could hit $3,500-4,000.
+
+Front-loading lets you lock in both the lower tariff rate AND the lower freight rate. It's a double win.
+
+### 3. Negotiate Volume Discounts
+
+If you're pulling forward 2-3 months of orders, you have leverage. Chinese manufacturers love large, immediate orders — it helps their cash flow and factory utilization. We're seeing clients negotiate:
+
+- **3-5% unit price reductions** on orders 2× their normal quarterly volume
+- **Extended payment terms** (Net 60 instead of Net 30)
+- **Free inland transport** to the port of loading
+
+---
+
+## What If You Can't Afford to Front-Load?
+
+Not every business has the cash flow or warehouse space to double their inventory overnight. Here are alternative strategies:
+
+### Bonded Warehousing
+
+Import goods into a **Foreign Trade Zone (FTZ)** or bonded warehouse. Goods in an FTZ don't incur tariffs until they enter US commerce. This lets you:
+
+- Import at current freight rates
+- Store without paying tariffs
+- Release inventory as needed, paying the tariff rate applicable at the time of entry
+
+**Caveat:** If tariffs go up while goods are in the FTZ, you pay the higher rate when you release them. FTZs protect against freight rate increases, not tariff increases. However, they give you flexibility on *timing*.
+
+### Supplier Diversification
+
+This is a medium-term play, not a March solution. But if tariffs make China-sourced goods uneconomical, consider:
+
+- **Vietnam** — Strong in textiles, footwear, electronics assembly. 18-24 month lead time to establish supplier relationships.
+- **India** — Growing in pharmaceuticals, chemicals, auto parts. Quality consistency is improving but requires more oversight.
+- **Mexico** — Nearshoring boom. USMCA advantages. Lead times drop from 30-45 days to 5-10 days.
+
+We help clients evaluate alternative sourcing — [contact our team](/contact) for a free supplier diversification assessment.
+
+### First Sale Valuation
+
+If your supply chain involves a middleman (trading company → factory → you), you may be paying tariffs on the trading company's price rather than the factory's price. **First sale valuation** lets you declare the lower factory price as the customs value, reducing your tariff base by 15-30%.
+
+This requires documentation (proof of the first sale price, arm's-length transaction evidence), but it's a perfectly legal strategy endorsed by US Customs and Border Protection.
+
+---
+
+## The Timeline: What to Do This Week
+
+Here's our recommended action plan:
+
+| This Week | By March 20 | By March 31 |
+|---|---|---|
+| Audit your HTS codes — which of your products face increases? | Place accelerated Q2 orders with suppliers | Confirm all shipments booked and containers loaded |
+| Get updated freight quotes for March shipment | Book freight (don't wait — carriers are filling up) | Verify customs documentation is complete |
+| Calculate the tariff delta to justify front-loading spend | Arrange domestic warehousing for early arrivals | Brief your accounting team on the accelerated spend |
+| Call your customs broker to discuss first sale valuation | Negotiate volume discounts with suppliers | Review insurance coverage for larger shipments |
+
+---
+
+## What We're Telling Our Clients
+
+At Doge Consulting, we've been advising clients to act since February. The importers who moved early are already seeing containers loaded in Shenzhen. Those who are still "waiting for confirmation" from USTR will likely face:
+
+1. **Higher tariffs** (if the April timeline holds)
+2. **Higher freight rates** (Iran crisis + seasonal demand)
+3. **Longer lead times** (factories are getting slammed with front-loaded orders)
+4. **Reduced carrier availability** (capacity is being absorbed)
+
+The cost of being wrong about front-loading (carrying extra inventory for a few weeks) is dramatically lower than the cost of being wrong about waiting (paying 10-25% more per unit indefinitely).
+
+---
+
+## The Bottom Line
+
+Tariff policy is unpredictable, but the direction is clear: trade friction between the US and China is increasing, not decreasing. Every major trade analyst — from S&P Global to Flexport's research team — is forecasting higher costs for China-sourced goods through 2027.
+
+**The best time to optimize your import strategy was last year. The second-best time is this week.**
+
+---
+
+## Next Steps
+
+- **[Get a Free Quote](/quote)** — We'll calculate your landed cost under current vs. projected tariff rates
+- **[Use Our Freight Calculator](/tools/freight-calculator)** — Compare rates across 4 origin ports and 7 US destinations
+- **[Read: Why Importers Are Locking In Rates Now](/blog/lock-in-freight-rates-iran-crisis-march-2026)** — Freight rate context for the current market
+- **[Contact Us](/contact)** — Talk to a logistics specialist about your spring inventory strategy
+
+📧 Subscribe to our newsletter for weekly trade policy updates and freight rate alerts.`,
+  },
+];
+
+const allPosts = [...posts, ...posts2, ...posts3, ...posts4, ...posts5, ...posts6, ...posts7];
 
 console.log("🌱 Seeding blog posts...");
 
