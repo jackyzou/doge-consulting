@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "@/lib/i18n";
 import { Ship, TrendingUp, TrendingDown, ArrowRight, Globe, Calendar, BarChart3, Info, Anchor } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -77,6 +78,7 @@ const EVENTS = [
 ];
 
 export default function ShippingTrackerPage() {
+  const { t } = useTranslation();
   const [origin, setOrigin] = useState("shenzhen");
   const [destination, setDestination] = useState("la");
   const [timeRange, setTimeRange] = useState("all");

@@ -1,19 +1,11 @@
-import { Metadata } from "next";
+"use client";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight, Quote, CheckCircle2, MapPin, Calendar, Package, Star, TrendingUp, Ship, Shield } from "lucide-react";
-
-export const metadata: Metadata = {
-  title: "Case Studies — Real Customer Success Stories",
-  description: "See how real customers saved 40-60% on furniture, electronics, and home goods sourced from China. Door-to-door from Shenzhen to the US Pacific Northwest.",
-  openGraph: {
-    title: "Case Studies — Real Customer Success Stories | Doge Consulting",
-    description: "Real customers, real savings. Furniture, electronics, and home goods from China at 40-60% off US retail.",
-    url: "https://doge-consulting.com/case-studies",
-  },
-};
+import { useTranslation } from "@/lib/i18n";
 
 const caseStudies = [
   {
@@ -152,6 +144,7 @@ const STATS = [
 ];
 
 export default function CaseStudiesPage() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Hero */}

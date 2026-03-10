@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "@/lib/i18n";
 import {
   Ship, Search, MapPin, Globe, Anchor, Navigation, ArrowRight, Clock,
   Package, ChevronDown, ChevronUp, ExternalLink, Loader2,
@@ -68,6 +69,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 export default function VesselTrackerPage() {
+  const { t } = useTranslation();
   const [selectedChokepoint, setSelectedChokepoint] = useState<string | null>(null);
   const [trackingQuery, setTrackingQuery] = useState("");
   const [trackingResults, setTrackingResults] = useState<TrackResult[] | null>(null);

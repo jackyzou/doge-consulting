@@ -1,14 +1,11 @@
-import { Metadata } from "next";
+"use client";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight, BookOpen } from "lucide-react";
-
-export const metadata: Metadata = {
-  title: "Freight & Shipping Glossary | Doge Consulting",
-  description: "Comprehensive glossary of 60+ freight, shipping, customs, and international trade terms for importers and businesses.",
-};
+import { useTranslation } from "@/lib/i18n";
 
 const glossary: { term: string; definition: string; category: string }[] = [
   // Documents
@@ -85,15 +82,16 @@ const glossary: { term: string; definition: string; category: string }[] = [
 ];
 
 export default function GlossaryPage() {
+  const { t } = useTranslation();
   const categories = [...new Set(glossary.map((g) => g.category))].sort();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <section className="gradient-hero py-16 text-white">
         <div className="mx-auto max-w-7xl px-4 text-center">
-          <Badge className="mb-4 bg-teal/20 text-teal-200 border-teal/30"><BookOpen className="h-3 w-3 mr-1" /> Resource</Badge>
-          <h1 className="text-4xl font-bold mb-4">Freight & Shipping Glossary</h1>
-          <p className="text-lg text-slate-300 max-w-2xl mx-auto">60+ essential terms for international shipping, customs, sourcing, and import/export business.</p>
+          <Badge className="mb-4 bg-teal/20 text-teal-200 border-teal/30"><BookOpen className="h-3 w-3 mr-1" /> {t("headerTools.glossary")}</Badge>
+          <h1 className="text-4xl font-bold mb-4">{t("headerTools.glossary")}</h1>
+          <p className="text-lg text-slate-300 max-w-2xl mx-auto">{t("headerTools.glossaryDesc")}</p>
         </div>
       </section>
 
@@ -125,8 +123,8 @@ export default function GlossaryPage() {
         </div>
 
         <div className="mt-16 text-center p-8 rounded-2xl bg-gradient-to-r from-teal/5 to-gold/5 border">
-          <h2 className="text-2xl font-bold mb-3">Need Help With Your Shipment?</h2>
-          <p className="text-muted-foreground mb-6">Don&apos;t worry about memorizing these terms — our team handles everything for you.</p>
+          <h2 className="text-2xl font-bold mb-3">{t("servicesPage.ctaTitle")}</h2>
+          <p className="text-muted-foreground mb-6">{t("servicesPage.ctaSubtitle")}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/quote"><Button size="lg" className="bg-teal hover:bg-teal/90">Get Free Quote <ArrowRight className="ml-2 h-5 w-5" /></Button></Link>
             <Link href="/whitepaper"><Button size="lg" variant="outline">Download Free Guide 📘</Button></Link>

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "@/lib/i18n";
 import { Calculator, Plus, Trash2, Box, ArrowRight, Ruler, Scale, Ship, Info, BarChart3, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,6 +51,7 @@ const PRESETS = [
 ];
 
 export default function CBMCalculatorPage() {
+  const { t } = useTranslation();
   const [items, setItems] = useState<Item[]>([]);
   const [unit, setUnit] = useState<LengthUnit>("cm");
   const unitLabel = UNIT_OPTIONS.find((u) => u.value === unit)?.abbr || "cm";

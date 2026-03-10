@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
+import { useTranslation } from "@/lib/i18n";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Box, Ruler, Ship, ArrowRight, BarChart3, Calculator, Eye, Package, User, ShoppingCart,
@@ -55,8 +56,7 @@ interface CatalogProduct { id: string; name: string; category: string; unitPrice
 const FREE_ITEM_LIMIT = 6;
 let nextItemId = 1;
 
-export default function ThreeDVisualizerPage() {
-  // ── Items list ──────────────────────────────────────────────
+export default function ThreeDVisualizerPage() {  const { t } = useTranslation();  // ── Items list ──────────────────────────────────────────────
   const [items, setItems] = useState<CargoItem[]>([]);
   const [containerType, setContainerType] = useState("20gp");
   const [showContainer, setShowContainer] = useState(true);

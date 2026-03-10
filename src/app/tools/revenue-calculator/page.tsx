@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "@/lib/i18n";
 import {
   Calculator, Globe, Package, Shield, DollarSign, TrendingUp, TrendingDown, ArrowRight, Info,
   AlertTriangle, BarChart3, Ship, Box, FileText, CheckCircle2, Sparkles,
@@ -32,8 +33,7 @@ import { fmtCurrency, fmtPct, round } from "@/lib/unit-conversions";
 
 const toNum = (s: string) => parseFloat(s) || 0;
 
-export default function RevenueCalculatorPage() {
-  // ── Form state ──────────────────────────────────────────────
+export default function RevenueCalculatorPage() {  const { t } = useTranslation();  // ── Form state ──────────────────────────────────────────────
   const [sourceCountryId, setSourceCountryId] = useState("cn");
   const [destinationId, setDestinationId] = useState("us");
   const [categoryId, setCategoryId] = useState("electronics");
