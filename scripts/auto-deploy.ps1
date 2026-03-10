@@ -108,8 +108,24 @@ function Send-DeployEmail($version, $commit, $title, $success, $duration) {
             type = "deployment"
         } | ConvertTo-Json
 
-        Invoke-RestMethod -Uri "http://localhost:3000/api/admin/deploy-notify" -Method POST -ContentType "application/json" -Body $body -TimeoutSec 15 2>$null
-        Write-Log "  Deployment email sent to dogetech77@gmail.com" "Green"
+        # Wait a moment for the app to be fully ready, then send via API
+        Start-Sleep -Seconds 5
+        $sent = $false
+        for ($attempt = 1; $attempt -le 3; $attempt++) {
+            try {
+                Invoke-RestMethod -Uri "http://localhost:3000/api/deploy-notify" -Method POST -ContentType "application/json" -Body $body -TimeoutSec 15 2>$null
+                $sent = $true
+                break
+            } catch {
+                Write-Log "  Email attempt $attempt/3 failed: $_" "Yellow"
+                Start-Sleep -Seconds 5
+            }
+        }
+        if ($sent) {
+            Write-Log "  Deployment email sent to dogetech77@gmail.com" "Green"
+        } else {
+            Write-Log "  Warning: Could not send deploy email after 3 attempts" "Yellow"
+        }
     } catch {
         Write-Log "  Warning: Could not send deploy email: $_" "Yellow"
     }
