@@ -1868,7 +1868,94 @@ CXMT offers a legitimate, JEDEC-compliant alternative at a fraction of the cost 
   },
 ];
 
-const allPosts = [...posts, ...posts2, ...posts3, ...posts4, ...posts5];
+// ═══════════════ POST 21: SETO'S NEWS BRIEF ═══════════════
+const posts6 = [
+  {
+    slug: "lock-in-freight-rates-iran-crisis-march-2026",
+    title: "Why Smart Importers Are Locking In Freight Rates Right Now (March 2026)",
+    excerpt: "Strait of Hormuz insurance premiums up 12% this week. Bunker fuel surging. Carriers withdrawing capacity. Here's why you should book your Q2 shipments today.",
+    category: "Logistics",
+    emoji: "⚡",
+    readTime: "8 min",
+    content: `![Container ship navigating through open ocean](https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=1200&h=600&fit=crop)
+
+## Freight Rates Are Climbing Again — Here's What You Need to Know
+
+**March 10, 2026** — If you're importing products from China, this week matters. Three converging forces are pushing container shipping rates up 15-20% from their February lows, and the window to lock in favorable rates is narrowing.
+
+### What's Happening Right Now
+
+**1. Strait of Hormuz War Risk Insurance Surged 12% This Week**
+
+The ongoing US-Israeli military operations against Iran continue to rattle shipping markets. While the Strait of Hormuz hasn't been physically blocked, marine insurers have raised war risk premiums for any vessel transiting the Persian Gulf or western Indian Ocean by another 12% this week alone. Since February, total war risk surcharges have increased over 40%.
+
+Even if your cargo doesn't pass through Hormuz (most China-to-US shipments cross the Pacific), the ripple effects hit every route: higher fuel costs, fleet reallocation, and general risk aversion.
+
+**2. Bunker Fuel Prices Hit $680/Metric Ton**
+
+Crude oil remains elevated above $98/barrel. Bunker fuel — the heavy fuel oil that powers container ships — is now at $680/metric ton, up from $580 in January. Since fuel is 30-50% of a carrier's operating cost, these increases get passed directly to shippers.
+
+**3. Carriers Are Withdrawing Capacity**
+
+MSC, Maersk, and CMA CGM have all announced "blank sailings" (cancelled departures) for late March and early April on trans-Pacific routes. This is a deliberate move to tighten supply and support rate increases. When capacity drops and demand stays constant, rates go up.
+
+---
+
+## Current Rates (March 10, 2026)
+
+| Route | Rate (40ft) | vs. February | Trend |
+|---|---|---|---|
+| Shenzhen → Los Angeles | $3,100 | +41% | 📈 Rising |
+| Shenzhen → Seattle | $2,800 | +47% | 📈 Rising |
+| Shanghai → Los Angeles | $2,820 | +38% | 📈 Rising |
+| Hong Kong → Vancouver | $2,520 | +35% | 📈 Rising |
+
+📊 INSIGHT: These rates are still well below the 2021 peak ($12,400 Shenzhen→LA) but significantly above the February 2026 low ($2,200). The trend is clearly upward.
+
+---
+
+## What Smart Importers Are Doing
+
+### 1. Booking Q2 Shipments Now
+
+Contract rates are still available at current levels, but carriers are signaling April rate increases. If you have shipments planned for April-June, book space this week. A $300-500/container increase is likely within 2-3 weeks.
+
+### 2. Front-Loading Inventory
+
+Businesses that can absorb extra inventory are ordering 2-3 months ahead of normal. The carrying cost of warehouse space (~$8-12/sq ft/month) is a fraction of the potential $500-1,000/container rate increase.
+
+### 3. Using the Right Tools
+
+- **[Live Vessel Map](/tools/shipping-tracker)** — Monitor real-time rate changes across 4 origins and 7 destinations
+- **[Revenue Calculator](/tools/revenue-calculator)** — Model your landed cost at current vs. projected rates
+- **[Duty Calculator](/tools/duty-calculator)** — Factor in the full tariff picture (IEEPA + Section 301 + Section 122)
+- **[CBM Calculator](/tools/cbm-calculator)** — Optimize your container utilization to maximize value per shipment
+
+### 4. Considering West Coast Ports
+
+The Iran conflict primarily affects Suez/Indian Ocean routes. Trans-Pacific routes (Shenzhen → LA/Seattle) are less directly impacted. If you've been routing through the East Coast via Suez, shifting to West Coast + intermodal rail could save $800-1,500 per container.
+
+---
+
+## The Bottom Line
+
+Freight rates are a lagging indicator — by the time the news cycle catches up, the rate increases have already been locked in. The importers who act now will pay $2,800-3,100 per container. Those who wait until April may pay $3,500-4,000.
+
+**Lock in your rates today.** [Get a free shipping quote](/quote) and our team will negotiate the best available carrier rate for your route.
+
+---
+
+## Questions?
+
+- **[Get a Free Quote](/quote)** — Current rates from Shenzhen/Shanghai/Hong Kong to any US port
+- **[Contact Our Team](/contact)** — Talk to a logistics specialist about your Q2 shipping plan
+- **[Read our full freight rate analysis](/blog/freight-rate-trends-2026-iran-crisis)** — Deep-dive into the 6-year rate history and 3 scenarios for 2026
+
+💡 TIP: First-time importers get a free 30-minute consultation to discuss timing, routing, and rate optimization. [Book yours today](/contact).`,
+  },
+];
+
+const allPosts = [...posts, ...posts2, ...posts3, ...posts4, ...posts5, ...posts6];
 
 console.log("🌱 Seeding blog posts...");
 
