@@ -18,24 +18,28 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "`n🐕 Doge Consulting — Agent Fleet Scheduler Setup" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Doge Consulting - Agent Fleet Scheduler Setup" -ForegroundColor Cyan
 Write-Host "================================================" -ForegroundColor Cyan
 Write-Host "Project path: $ProjectPath" -ForegroundColor Gray
 
 # Verify node and project exist
-if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-    Write-Host "❌ Node.js not found. Install Node.js first." -ForegroundColor Red
+$nodeCmd = Get-Command node -ErrorAction SilentlyContinue
+if (-not $nodeCmd) {
+    Write-Host "ERROR: Node.js not found. Install Node.js first." -ForegroundColor Red
     exit 1
 }
+$nodePath = $nodeCmd.Source
+Write-Host "Node.js: $nodePath" -ForegroundColor Gray
+
 if (-not (Test-Path (Join-Path $ProjectPath "agents\run-fleet.mjs"))) {
-    Write-Host "❌ agents/run-fleet.mjs not found at $ProjectPath" -ForegroundColor Red
+    Write-Host "ERROR: agents/run-fleet.mjs not found at $ProjectPath" -ForegroundColor Red
     exit 1
 }
 
-$nodePath = (Get-Command node).Source
-
-# ── Task 1: Morning Brief (8:00 AM) ──
-Write-Host "`n📅 Creating Morning Brief task (8:00 AM daily)..." -ForegroundColor Yellow
+# -- Task 1: Morning Brief (8:00 AM) --
+Write-Host ""
+Write-Host "Creating Morning Brief task at 8 AM daily..." -ForegroundColor Yellow
 
 $morningAction = New-ScheduledTaskAction `
     -Execute $nodePath `
@@ -55,13 +59,13 @@ Register-ScheduledTask `
     -Action $morningAction `
     -Trigger $morningTrigger `
     -Settings $morningSettings `
-    -Description "Doge Consulting Agent Fleet — Morning standup and daily brief email to dogetech77@gmail.com" `
+    -Description "Doge Consulting Agent Fleet - Morning standup and daily brief email" `
     -Force | Out-Null
 
-Write-Host "  ✅ Morning Brief: 8:00 AM daily" -ForegroundColor Green
+Write-Host "  OK: Morning Brief: 8:00 AM daily" -ForegroundColor Green
 
-# ── Task 2: Evening Summary (5:00 PM) ──
-Write-Host "📅 Creating Evening Summary task (5:00 PM daily)..." -ForegroundColor Yellow
+# -- Task 2: Evening Summary (5:00 PM) --
+Write-Host "Creating Evening Summary task at 5 PM daily..." -ForegroundColor Yellow
 
 $eveningAction = New-ScheduledTaskAction `
     -Execute $nodePath `
@@ -81,17 +85,21 @@ Register-ScheduledTask `
     -Action $eveningAction `
     -Trigger $eveningTrigger `
     -Settings $eveningSettings `
-    -Description "Doge Consulting Agent Fleet — End-of-day summary and decision log" `
+    -Description "Doge Consulting Agent Fleet - End-of-day summary and decision log" `
     -Force | Out-Null
 
-Write-Host "  ✅ Evening Summary: 5:00 PM daily" -ForegroundColor Green
+Write-Host "  OK: Evening Summary: 5:00 PM daily" -ForegroundColor Green
 
-# ── Verify ──
-Write-Host "`n📋 Scheduled Tasks Created:" -ForegroundColor Cyan
+# -- Verify --
+Write-Host ""
+Write-Host "Scheduled Tasks Created:" -ForegroundColor Cyan
 Get-ScheduledTask -TaskName "Doge Fleet*" | Format-Table TaskName, State, @{N='NextRun';E={($_ | Get-ScheduledTaskInfo).NextRunTime}} -AutoSize
 
-Write-Host "`n✅ Setup complete! The agent fleet will run automatically." -ForegroundColor Green
-Write-Host "   Morning brief:   8:00 AM daily → email to dogetech77@gmail.com" -ForegroundColor Gray
-Write-Host "   Evening summary: 5:00 PM daily → decision log" -ForegroundColor Gray
-Write-Host "`n💡 To remove: Unregister-ScheduledTask -TaskName 'Doge Fleet*' -Confirm" -ForegroundColor Gray
-Write-Host "💡 To test now: node agents\run-fleet.mjs`n" -ForegroundColor Gray
+Write-Host ""
+Write-Host "Setup complete! The agent fleet will run automatically." -ForegroundColor Green
+Write-Host "   Morning brief:   8:00 AM daily" -ForegroundColor Gray
+Write-Host "   Evening summary: 5:00 PM daily" -ForegroundColor Gray
+Write-Host ""
+Write-Host "To remove: Unregister-ScheduledTask -TaskName 'Doge Fleet*' -Confirm" -ForegroundColor Gray
+Write-Host "To test now: node agents\run-fleet.mjs" -ForegroundColor Gray
+Write-Host ""
