@@ -38,7 +38,7 @@ export function Footer() {
   return (
     <footer className="border-t bg-navy text-white">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-5">
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -73,10 +73,27 @@ export function Footer() {
             </h3>
             <ul className="space-y-2 text-sm text-slate-300">
               <li><Link href="/about" className="hover:text-white transition-colors">{t("footer.aboutUs")}</Link></li>
+              <li><Link href="/blog" className="hover:text-white transition-colors">Blog</Link></li>
               <li><Link href="/faq" className="hover:text-white transition-colors">{t("footer.faqLink")}</Link></li>
               <li><Link href="/contact" className="hover:text-white transition-colors">{t("footer.contactLink")}</Link></li>
               <li><Link href="/quote" className="hover:text-white transition-colors">{t("footer.getQuote")}</Link></li>
               <li><Link href="/privacy" className="hover:text-white transition-colors">{t("footer.privacyPolicy")}</Link></li>
+            </ul>
+          </div>
+
+          {/* Free Tools */}
+          <div className="md:col-span-1">
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gold">
+              Free Tools
+            </h3>
+            <ul className="space-y-2 text-sm text-slate-300">
+              <li><Link href="/tools" className="hover:text-white transition-colors">All Tools</Link></li>
+              <li><Link href="/tools/cbm-calculator" className="hover:text-white transition-colors">CBM Calculator</Link></li>
+              <li><Link href="/tools/duty-calculator" className="hover:text-white transition-colors">Duty Calculator</Link></li>
+              <li><Link href="/tools/revenue-calculator" className="hover:text-white transition-colors">Revenue Calculator</Link></li>
+              <li><Link href="/tools/vessel-tracker" className="hover:text-white transition-colors">Live Vessel Map</Link></li>
+              <li><Link href="/tools/shipping-tracker" className="hover:text-white transition-colors">Container Tracker</Link></li>
+              <li><Link href="/tools/3d-visualizer" className="hover:text-white transition-colors">3D Room Visualizer</Link></li>
             </ul>
           </div>
 
