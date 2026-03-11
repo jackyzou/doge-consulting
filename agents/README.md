@@ -39,8 +39,8 @@ agents/
 │
 │   ⬇ LOCAL ONLY — not tracked in git ⬇
 │
+├── CODE-OF-CONDUCT.md        # THE operating document (consolidated from ARCHITECTURE + SKILLS)
 ├── config.mjs                # Team roster, KPIs, email config
-├── SKILLS.md                 # Agent skills matrix & behavior rules
 ├── profiles/                 # Agent persona definitions
 ├── logs/                     # Daily logs, outreach plans, calendars
 └── templates/                # Meeting & report templates
@@ -48,6 +48,8 @@ agents/
 
 ## Confidentiality
 
-Agent profiles, skills definitions, operational logs, outreach strategies, and internal configurations are **local-only** and excluded from version control via `.gitignore`. These files contain business intelligence and should be treated with the same sensitivity as API keys.
+The **Code of Conduct** (`CODE-OF-CONDUCT.md`) is the single operating document for the fleet. It consolidates all agent definitions, behavioral rules, decision authority, channel strategy, and operational procedures.
 
-If you're setting up a new development machine, these files must be copied manually from an existing environment — they are never pulled from the repo.
+All confidential files (Code of Conduct, agent profiles, skills, logs, strategies, configurations) are **local-only** and excluded from version control. They contain business intelligence and must be treated with the same sensitivity as API keys.
+
+New machine setup: copy these files manually from an existing environment.

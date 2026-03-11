@@ -10,7 +10,7 @@
  *   node agents/run-fleet.mjs --list           # List all agents
  *
  * This script:
- *   1. Loads agent profiles and SKILLS.md
+ *   1. Loads agent profiles and CODE-OF-CONDUCT.md
  *   2. Gathers context (analytics, financials, recent logs)
  *   3. Produces a structured brief/report
  *   4. Logs decisions to the database (AgentLog model)
@@ -54,7 +54,7 @@ function loadFile(path) {
   return null;
 }
 
-const skills = loadFile("agents/SKILLS.md") || "";
+const skills = loadFile("agents/CODE-OF-CONDUCT.md") || loadFile("agents/SKILLS.md") || "";
 const readme = loadFile("agents/README.md") || "";
 
 // Load specific agent profile or all

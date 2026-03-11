@@ -61,8 +61,11 @@ nssm/
 /agents/profiles/
 /agents/logs/
 /agents/SKILLS.md
+/agents/CODE-OF-CONDUCT.md
 /agents/config.mjs
 /agents/templates/
+/agents/prompts/
+/agents/lib/
 
 # Temp / debug output
 test-out.txt
