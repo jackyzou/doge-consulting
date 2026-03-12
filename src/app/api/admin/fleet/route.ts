@@ -1,94 +1,140 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { readFileSync, readdirSync, existsSync } from "fs";
 import { join } from "path";
 
-// GET /api/admin/fleet — list standup logs + extract pending decisions
-export async function GET() {
+// Agent roster (public info only — no secrets)
+const AGENTS = [
+  { id: "alex", name: "Alex Chen", role: "Co-CEO / COO", skills: ["Strategy", "Operations", "Team Management", "Business Development", "Revenue Ops", "Quality Assurance"] },
+  { id: "amy", name: "Amy Lin", role: "CFO", skills: ["Accounting", "Pricing Strategy", "Tax Planning", "Cash Flow", "Financial Reporting", "Sales Ops"] },
+  { id: "seth", name: "Seth Parker", role: "CTO", skills: ["Next.js", "DevOps", "Database", "Security", "SEO Technical", "Frontend Design"] },
+  { id: "rachel", name: "Rachel Morales", role: "CMO", skills: ["SEO Content", "Reddit Community", "Channel Strategy", "Conversion", "Analytics", "Newsletter"] },
+  { id: "seto", name: "Seto Nakamura", role: "PRO / Editor-in-Chief", skills: ["News Monitoring", "Content Creation", "PR", "Legal", "Industry Analysis"] },
+  { id: "tiffany", name: "Tiffany Wang", role: "CSO", skills: ["Customer Support", "Quote Management", "Order Tracking", "Pricing", "CRM", "Bilingual EN/ZH"] },
+];
+
+// GET /api/admin/fleet — agents, logs (file + DB), decisions
+export async function GET(request: NextRequest) {
   try {
     await requireAdmin();
+    const { searchParams } = request.nextUrl;
+    const section = searchParams.get("section"); // "agents" | "decisions" | "logs" | null (all)
 
-    const logsDir = join(process.cwd(), "agents", "logs");
-    if (!existsSync(logsDir)) {
-      return NextResponse.json({ logs: [], decisions: [] });
+    const result: Record<string, unknown> = {};
+
+    // ── Agents ────────────────────────────────────────────
+    if (!section || section === "agents") {
+      result.agents = AGENTS;
     }
 
-    // Read all daily log files (YYYY-MM-DD.md)
-    const files = readdirSync(logsDir)
-      .filter((f) => /^\d{4}-\d{2}-\d{2}\.md$/.test(f))
-      .sort()
-      .reverse();
+    // ── Decisions from DB (AgentLog where type="decision") ──
+    if (!section || section === "decisions") {
+      const dbDecisions = await prisma.agentLog.findMany({
+        where: { type: "decision" },
+        orderBy: { createdAt: "desc" },
+        take: 100,
+      });
+      result.decisions = dbDecisions;
+    }
 
-    const logs = files.slice(0, 30).map((file) => {
-      const content = readFileSync(join(logsDir, file), "utf-8");
-      const date = file.replace(".md", "");
+    // ── Standup logs from local files ─────────────────────
+    if (!section || section === "logs") {
+      const logsDir = join(process.cwd(), "agents", "logs");
+      const fileLogs: { date: string; agents: string[]; decisionCount: number; hasCeoItems: boolean; sizeKB: number; content: string }[] = [];
 
-      // Count agents mentioned
-      const agentMatches = content.match(/\*\*(Alex|Amy|Seth|Rachel|Seto|Tiffany|Jacky)\b/g);
-      const agents = [...new Set((agentMatches || []).map((m) => m.replace(/\*\*/g, "")))];
+      if (existsSync(logsDir)) {
+        const files = readdirSync(logsDir)
+          .filter((f) => /^\d{4}-\d{2}-\d{2}\.md$/.test(f))
+          .sort()
+          .reverse()
+          .slice(0, 30);
 
-      // Count decisions
-      const decisionMatches = content.match(/\[DECISION\]/g);
-      const decisionCount = decisionMatches ? decisionMatches.length : 0;
+        for (const file of files) {
+          const content = readFileSync(join(logsDir, file), "utf-8");
+          const date = file.replace(".md", "");
+          const agentMatches = content.match(/\*\*(Alex|Amy|Seth|Rachel|Seto|Tiffany|Jacky)\b/g);
+          const agents = [...new Set((agentMatches || []).map((m) => m.replace(/\*\*/g, "")))];
+          const decisionCount = (content.match(/\[DECISION\]/g) || []).length;
+          const hasCeoItems = content.includes("NEEDS_CEO") || content.includes("Carry forward") || content.includes("BLOCKED");
 
-      // Check for CEO items
-      const hasCeoItems = content.includes("NEEDS_CEO") || content.includes("Carry forward");
-
-      // Extract summary lines (first meaningful heading + first paragraph)
-      const lines = content.split("\n").filter((l) => l.trim().length > 0);
-      const firstHeading = lines.find((l) => l.startsWith("## ")) || "";
-      
-      return {
-        date,
-        file,
-        agents,
-        decisionCount,
-        hasCeoItems,
-        firstHeading: firstHeading.replace(/^#+\s*/, ""),
-        sizeKB: Math.round(content.length / 1024 * 10) / 10,
-        content,
-      };
-    });
-
-    // Extract ALL pending decisions (NEEDS_CEO + PROPOSED + carry forward)
-    const decisions: { date: string; text: string; status: string; owner: string }[] = [];
-    for (const log of logs) {
-      const lines = log.content.split("\n");
-      for (const line of lines) {
-        const trimmed = line.trim();
-        // Match [DECISION] lines
-        const decMatch = trimmed.match(/\[DECISION\]\s*(.+?)\s*—\s*(NEEDS_CEO|PROPOSED)/i);
-        if (decMatch) {
-          decisions.push({
-            date: log.date,
-            text: decMatch[1].trim(),
-            status: decMatch[2],
-            owner: "CEO",
+          fileLogs.push({
+            date,
+            agents,
+            decisionCount,
+            hasCeoItems,
+            sizeKB: Math.round(content.length / 1024 * 10) / 10,
+            content,
           });
         }
-        // Match carry forward items
-        if (trimmed.includes("Carry forward") || trimmed.includes("carry forward")) {
-          const cleanText = trimmed.replace(/^\|?\s*\d*\s*\|?\s*/, "").replace(/\|.*$/, "").replace(/[🔴🟡🟢🔵⏸️]/g, "").trim();
-          if (cleanText.length > 10 && !decisions.some((d) => d.text === cleanText)) {
-            decisions.push({
-              date: log.date,
-              text: cleanText,
-              status: "CARRY_FORWARD",
-              owner: "CEO",
-            });
-          }
-        }
       }
+
+      // Also get standup logs from DB (AgentLog type="standup")
+      const dbStandups = await prisma.agentLog.findMany({
+        where: { type: "standup" },
+        orderBy: { createdAt: "desc" },
+        take: 30,
+        select: { id: true, title: true, content: true, createdAt: true, agent: true },
+      });
+
+      result.logs = fileLogs;
+      result.dbStandups = dbStandups;
     }
 
-    // Return logs without full content for the list view, include content for detail view
-    return NextResponse.json({
-      logs: logs.map(({ content: _content, ...rest }) => rest),
-      decisions,
-      logContents: Object.fromEntries(logs.map((l) => [l.date, l.content])),
-    });
+    return NextResponse.json(result);
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Error";
     return NextResponse.json({ error: msg }, { status: 401 });
+  }
+}
+
+// POST /api/admin/fleet — create a decision item or standup log
+export async function POST(request: NextRequest) {
+  try {
+    await requireAdmin();
+    const body = await request.json();
+
+    const log = await prisma.agentLog.create({
+      data: {
+        agent: body.agent || "alex",
+        type: body.type || "decision",
+        priority: body.priority || "normal",
+        title: body.title,
+        content: body.content || "",
+        tags: body.tags || null,
+        status: body.status || "open",
+        assignedTo: body.assignedTo || null,
+        relatedTo: body.relatedTo || null,
+      },
+    });
+
+    return NextResponse.json(log, { status: 201 });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Error";
+    return NextResponse.json({ error: msg }, { status: 400 });
+  }
+}
+
+// PATCH /api/admin/fleet — update decision status (approve/reject/defer)
+export async function PATCH(request: NextRequest) {
+  try {
+    await requireAdmin();
+    const body = await request.json();
+    const { id, status, content } = body;
+
+    if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+
+    const updated = await prisma.agentLog.update({
+      where: { id },
+      data: {
+        ...(status && { status }),
+        ...(content && { content }),
+      },
+    });
+
+    return NextResponse.json(updated);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Error";
+    return NextResponse.json({ error: msg }, { status: 400 });
   }
 }

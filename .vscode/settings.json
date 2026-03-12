@@ -4,6 +4,10 @@
         "/^node -e \"fetch\\('http://localhost:3000/'\\)\\.then\\(r=>console\\.log\\(r\\.status\\)\\)\\.catch\\(\\(\\)=>console\\.log\\('down'\\)\\)\"$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "/^node agents/watch-issues\\.mjs --once$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }
