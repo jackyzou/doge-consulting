@@ -50,22 +50,13 @@ export async function GET(request: NextRequest) {
     }
 
     if (!section || section === "agents") {
-      // Include per-agent decision counts
-      const agentStats = await prisma.agentLog.groupBy({
-        by: ["agent"],
-        where: { type: "decision" },
-        _count: true,
-      });
+      const agentStats = await prisma.agentLog.groupBy({ by: ["agent"], where: { type: "decision" }, _count: true });
       const statsMap = Object.fromEntries(agentStats.map(s => [s.agent, s._count]));
       result.agents = AGENTS.map(a => ({ ...a, decisionCount: statsMap[a.id] || 0 }));
     }
 
     if (!section || section === "decisions") {
-      const dbDecisions = await prisma.agentLog.findMany({
-        where: { type: "decision" },
-        orderBy: { createdAt: "desc" },
-        take: 200,
-      });
+      const dbDecisions = await prisma.agentLog.findMany({ where: { type: "decision" }, orderBy: { createdAt: "desc" }, take: 200 });
       result.decisions = dbDecisions;
     }
 
@@ -73,9 +64,7 @@ export async function GET(request: NextRequest) {
       const logs: LogEntry[] = [];
       const logsDir = join(process.cwd(), "agents", "logs");
       if (existsSync(logsDir)) {
-        const files = readdirSync(logsDir)
-          .filter((f: string) => /^\d{4}-\d{2}-\d{2}\.md$/.test(f))
-          .sort().reverse().slice(0, 30);
+        const files = readdirSync(logsDir).filter((f: string) => /^\d{4}-\d{2}-\d{2}\.md$/.test(f)).sort().reverse().slice(0, 30);
         for (const file of files) {
           const content = readFileSync(join(logsDir, file), "utf-8");
           const date = file.replace(".md", "");
@@ -86,12 +75,7 @@ export async function GET(request: NextRequest) {
           logs.push({ date, agents, decisionCount, hasCeoItems, sizeKB: Math.round(content.length / 1024 * 10) / 10, content });
         }
       }
-      const dbStandups = await prisma.agentLog.findMany({
-        where: { type: "standup" },
-        orderBy: { createdAt: "desc" },
-        take: 30,
-        select: { id: true, content: true, createdAt: true, tags: true, relatedTo: true },
-      });
+      const dbStandups = await prisma.agentLog.findMany({ where: { type: "standup" }, orderBy: { createdAt: "desc" }, take: 30, select: { id: true, content: true, createdAt: true, tags: true, relatedTo: true } });
       for (const dbs of dbStandups) {
         const dateMatch = dbs.relatedTo?.match(/standup:(\d{4}-\d{2}-\d{2})/);
         const date = dateMatch ? dateMatch[1] : new Date(dbs.createdAt).toISOString().split("T")[0];
@@ -104,6 +88,42 @@ export async function GET(request: NextRequest) {
       }
       logs.sort((a, b) => b.date.localeCompare(a.date));
       result.logs = logs;
+    }
+
+    // Code of Conduct
+    if (!section || section === "coc") {
+      const cocPath = join(process.cwd(), "agents", "CODE-OF-CONDUCT.md");
+      if (existsSync(cocPath)) {
+        const raw = readFileSync(cocPath, "utf-8");
+        // Split into sections by ## Part headers
+        const sections: { title: string; content: string }[] = [];
+        const parts = raw.split(/^## (Part \d+ — .+)$/gm);
+        if (parts.length > 1) {
+          for (let i = 1; i < parts.length; i += 2) {
+            sections.push({ title: parts[i], content: parts[i + 1]?.trim() || "" });
+          }
+        }
+        // Also grab appendix
+        const appendixMatch = raw.match(/^## (Appendix .+)$/gm);
+        if (appendixMatch) {
+          for (const header of appendixMatch) {
+            const idx = raw.indexOf(header);
+            const nextSection = raw.indexOf("\n## ", idx + 1);
+            sections.push({ title: header.replace("## ", ""), content: raw.substring(idx + header.length, nextSection > 0 ? nextSection : undefined).trim() });
+          }
+        }
+        result.coc = { sections, updatedAt: raw.match(/Last updated: (.+)/)?.[1] || "Unknown" };
+      }
+    }
+
+    // Timeline data
+    if (!section || section === "timeline") {
+      const allLogs = await prisma.agentLog.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 50,
+        select: { id: true, agent: true, type: true, title: true, status: true, priority: true, createdAt: true },
+      });
+      result.timeline = allLogs;
     }
 
     return NextResponse.json(result);
