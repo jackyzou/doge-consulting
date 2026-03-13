@@ -8,7 +8,7 @@
  *   node agents/sync-fleet.mjs --dry-run          # Preview without sending
  */
 
-import { readFileSync, readdirSync, existsSync } from "fs";
+import { readFileSync, readdirSync, existsSync, writeFileSync } from "fs";
 import { join } from "path";
 import { config } from "dotenv";
 
@@ -112,3 +112,38 @@ try {
   console.error(`❌ Network error: ${err.message}`);
   process.exit(1);
 }
+
+// ── Bidirectional: Pull CEO decisions/feedback from production ──
+console.log("📥 Pulling CEO decisions from production...");
+try {
+  const pullUrl = targetUrl.replace("/sync", "/sync");
+  const pullRes = await fetch(pullUrl, {
+    method: "GET",
+    headers: { "x-fleet-secret": syncSecret },
+  });
+  const pullData = await pullRes.json();
+  if (pullRes.ok && pullData.decisions) {
+    const ceoFeedback = pullData.decisions.filter(d => d.content && d.content.includes("CEO Feedback"));
+    const openItems = pullData.decisions.filter(d => d.status === "open");
+    const inProgress = pullData.decisions.filter(d => d.status === "in_progress");
+    const completed = pullData.decisions.filter(d => d.status === "completed");
+    console.log(`   📊 ${pullData.count} total decisions on production`);
+    console.log(`      Open: ${openItems.length} | In Progress: ${inProgress.length} | Completed: ${completed.length}`);
+    if (ceoFeedback.length > 0) {
+      console.log(`   💬 ${ceoFeedback.length} decisions have CEO feedback`);
+      for (const d of ceoFeedback.slice(0, 5)) {
+        console.log(`      → ${d.title} (${d.status})`);
+      }
+    }
+    // Write a summary for the next standup context
+    const summaryPath = join(ROOT, "agents", "logs", ".last-sync-pull.json");
+    writeFileSync(summaryPath, JSON.stringify({ pulledAt: new Date().toISOString(), openItems: openItems.length, inProgress: inProgress.length, completed: completed.length, ceoFeedback: ceoFeedback.map(d => ({ title: d.title, status: d.status, feedback: d.content.split("CEO Feedback")[1]?.substring(0, 200) || "" })) }, null, 2));
+    console.log(`   💾 Saved pull summary to agents/logs/.last-sync-pull.json`);
+  } else {
+    console.log(`   ⚠️  Pull returned ${pullRes.status}: ${pullData.error || "unknown"}`);
+  }
+} catch (err) {
+  console.log(`   ⚠️  Pull failed (non-critical): ${err.message}`);
+}
+
+console.log("\n🏁 Sync complete. Run fleet standup to incorporate CEO feedback.\n");

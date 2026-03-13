@@ -4,13 +4,26 @@ import { requireAdmin } from "@/lib/auth";
 import { readFileSync, readdirSync, existsSync } from "fs";
 import { join } from "path";
 
+// Full agent profiles with descriptions (synced from local Code of Conduct)
 const AGENTS = [
-  { id: "alex", name: "Alex Chen", role: "Co-CEO / COO", skills: ["Strategy", "Operations", "Team Management", "Business Development", "Revenue Ops", "Quality Assurance"] },
-  { id: "amy", name: "Amy Lin", role: "CFO", skills: ["Accounting", "Pricing Strategy", "Tax Planning", "Cash Flow", "Financial Reporting", "Sales Ops"] },
-  { id: "seth", name: "Seth Parker", role: "CTO", skills: ["Next.js", "DevOps", "Database", "Security", "SEO Technical", "Frontend Design"] },
-  { id: "rachel", name: "Rachel Morales", role: "CMO", skills: ["SEO Content", "Reddit Community", "Channel Strategy", "Conversion", "Analytics", "Newsletter"] },
-  { id: "seto", name: "Seto Nakamura", role: "PRO / Editor-in-Chief", skills: ["News Monitoring", "Content Creation", "PR", "Legal", "Industry Analysis"] },
-  { id: "tiffany", name: "Tiffany Wang", role: "CSO", skills: ["Customer Support", "Quote Management", "Order Tracking", "Pricing", "CRM", "Bilingual EN/ZH"] },
+  { id: "alex", name: "Alex Chen", role: "Co-CEO / COO", avatar: "AC", color: "#0F2B46",
+    skills: ["Strategy", "Operations", "Team Management", "Business Development", "Revenue Ops", "Quality Assurance"],
+    bio: "20+ years scaling businesses from $0 to $10M+. Orchestrates the team, synthesizes all reports, and makes decisions within scope. Reports to Jacky." },
+  { id: "amy", name: "Amy Lin", role: "CFO", avatar: "AL", color: "#059669",
+    skills: ["Accounting", "Pricing Strategy", "Tax Planning", "Cash Flow", "Financial Reporting", "Sales Ops"],
+    bio: "15 years in finance, SMB accounting, international trade. Conservative, numbers-focused. Manages pricing, outreach pipeline, and financial reporting." },
+  { id: "seth", name: "Seth Parker", role: "CTO", avatar: "SP", color: "#2563EB",
+    skills: ["Next.js", "DevOps", "Database", "Security", "SEO Technical", "Frontend Design"],
+    bio: "12 years full-stack engineering, DevOps, cloud infra. Methodical, security-conscious. Owns the tech stack, deploys, and SEO technical implementation." },
+  { id: "rachel", name: "Rachel Morales", role: "CMO", avatar: "RM", color: "#D97706",
+    skills: ["SEO Content", "Reddit Community", "Channel Strategy", "Conversion", "Analytics", "Newsletter"],
+    bio: "14 years digital marketing, B2B/B2C. Creative, data-informed. Owns channel strategy (SEO, Reddit, YouTube), content distribution, and conversion optimization." },
+  { id: "seto", name: "Seto Nakamura", role: "PRO / Editor-in-Chief", avatar: "SN", color: "#7C3AED",
+    skills: ["News Monitoring", "Content Creation", "PR", "Legal", "Industry Analysis"],
+    bio: "10 years journalism, PR, international trade media. Always-on, analytical. Writes all blog content, monitors global trade news, builds credibility." },
+  { id: "tiffany", name: "Tiffany Wang", role: "CSO", avatar: "TW", color: "#EC4899",
+    skills: ["Customer Support", "Quote Management", "Order Tracking", "Pricing", "CRM", "Bilingual EN/ZH"],
+    bio: "8 years customer success, e-commerce ops. Warm, proactive. First point of contact, tracks quotes/orders, coordinates with Rachel on customer relationships." },
 ];
 
 interface LogEntry {
@@ -27,30 +40,42 @@ export async function GET(request: NextRequest) {
     await requireAdmin();
     const { searchParams } = request.nextUrl;
     const section = searchParams.get("section");
+    const id = searchParams.get("id");
     const result: Record<string, unknown> = {};
 
+    // Single decision detail
+    if (id) {
+      const decision = await prisma.agentLog.findUnique({ where: { id } });
+      return NextResponse.json(decision);
+    }
+
     if (!section || section === "agents") {
-      result.agents = AGENTS;
+      // Include per-agent decision counts
+      const agentStats = await prisma.agentLog.groupBy({
+        by: ["agent"],
+        where: { type: "decision" },
+        _count: true,
+      });
+      const statsMap = Object.fromEntries(agentStats.map(s => [s.agent, s._count]));
+      result.agents = AGENTS.map(a => ({ ...a, decisionCount: statsMap[a.id] || 0 }));
     }
 
     if (!section || section === "decisions") {
       const dbDecisions = await prisma.agentLog.findMany({
         where: { type: "decision" },
         orderBy: { createdAt: "desc" },
-        take: 100,
+        take: 200,
       });
       result.decisions = dbDecisions;
     }
 
     if (!section || section === "logs") {
       const logs: LogEntry[] = [];
-
       const logsDir = join(process.cwd(), "agents", "logs");
       if (existsSync(logsDir)) {
         const files = readdirSync(logsDir)
           .filter((f: string) => /^\d{4}-\d{2}-\d{2}\.md$/.test(f))
           .sort().reverse().slice(0, 30);
-
         for (const file of files) {
           const content = readFileSync(join(logsDir, file), "utf-8");
           const date = file.replace(".md", "");
@@ -61,14 +86,12 @@ export async function GET(request: NextRequest) {
           logs.push({ date, agents, decisionCount, hasCeoItems, sizeKB: Math.round(content.length / 1024 * 10) / 10, content });
         }
       }
-
       const dbStandups = await prisma.agentLog.findMany({
         where: { type: "standup" },
         orderBy: { createdAt: "desc" },
         take: 30,
-        select: { id: true, title: true, content: true, createdAt: true, tags: true, relatedTo: true },
+        select: { id: true, content: true, createdAt: true, tags: true, relatedTo: true },
       });
-
       for (const dbs of dbStandups) {
         const dateMatch = dbs.relatedTo?.match(/standup:(\d{4}-\d{2}-\d{2})/);
         const date = dateMatch ? dateMatch[1] : new Date(dbs.createdAt).toISOString().split("T")[0];
@@ -79,7 +102,6 @@ export async function GET(request: NextRequest) {
           logs.push({ date, agents, decisionCount, hasCeoItems, sizeKB: Math.round(dbs.content.length / 1024 * 10) / 10, content: dbs.content });
         }
       }
-
       logs.sort((a, b) => b.date.localeCompare(a.date));
       result.logs = logs;
     }
@@ -97,7 +119,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const log = await prisma.agentLog.create({
       data: {
-        agent: body.agent || "alex",
+        agent: body.agent || "jacky",
         type: body.type || "decision",
         priority: body.priority || "normal",
         title: body.title,
@@ -119,11 +141,15 @@ export async function PATCH(request: NextRequest) {
   try {
     await requireAdmin();
     const body = await request.json();
-    const { id, status, content } = body;
+    const { id, status, content, tags } = body;
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
     const updated = await prisma.agentLog.update({
       where: { id },
-      data: { ...(status && { status }), ...(content && { content }) },
+      data: {
+        ...(status && { status }),
+        ...(content !== undefined && { content }),
+        ...(tags !== undefined && { tags }),
+      },
     });
     return NextResponse.json(updated);
   } catch (e) {

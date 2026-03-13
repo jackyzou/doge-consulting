@@ -85,3 +85,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
+
+// GET /api/admin/fleet/sync — pull CEO decisions/feedback back to dev machine
+export async function GET(request: NextRequest) {
+  try {
+    const secret = request.headers.get("x-fleet-secret") || "";
+    const expected = process.env.FLEET_SYNC_SECRET || process.env.JWT_SECRET || "";
+    if (!expected || secret !== expected) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Return all decisions with CEO feedback (updated since last sync)
+    const decisions = await prisma.agentLog.findMany({
+      where: { type: "decision" },
+      orderBy: { updatedAt: "desc" },
+      take: 100,
+    });
+
+    return NextResponse.json({ ok: true, decisions, count: decisions.length });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Error";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
