@@ -1963,7 +1963,9 @@ const posts7 = [
     category: "Trade Policy",
     emoji: "🛡️",
     readTime: "9 min",
-    content: `# New Tariffs Are Coming in April — Here's How Smart Retailers Are Preparing
+    content: `![Stacked shipping containers at a commercial port under dramatic sky](https://images.unsplash.com/photo-1494412574643-ff11b0a5eb19?w=1200&h=630&fit=crop&q=80)
+
+# New Tariffs Are Coming in April — Here's How Smart Retailers Are Preparing
 
 *Published March 10, 2026 · By Seto Nakamura, Trade Intelligence*
 
@@ -2112,7 +2114,9 @@ const posts8 = [
     category: "E-Commerce",
     emoji: "🛍️",
     readTime: "10 min",
-    content: `# TikTok Shop Is Creating a New Wave of China Importers — Here's How to Ride It
+    content: `![TikTok Shop e-commerce products being packed for shipping](https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=1200&h=630&fit=crop&q=80)
+
+# TikTok Shop Is Creating a New Wave of China Importers — Here's How to Ride It
 
 *Published March 12, 2026 · By Seto Nakamura, Trade Intelligence*
 
