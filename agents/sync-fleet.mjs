@@ -148,21 +148,35 @@ try {
   });
   const pullData = await pullRes.json();
   if (pullRes.ok && pullData.decisions) {
-    const ceoFeedback = pullData.decisions.filter(d => d.content && d.content.includes("CEO Feedback"));
+    const ceoActions = pullData.decisions.filter(d => d.content && (d.content.includes("CEO") || d.content.includes("APPROVED") || d.content.includes("REJECTED")));
     const openItems = pullData.decisions.filter(d => d.status === "open");
     const inProgress = pullData.decisions.filter(d => d.status === "in_progress");
     const completed = pullData.decisions.filter(d => d.status === "completed");
+    const rejected = pullData.decisions.filter(d => d.status === "rejected");
     console.log(`   📊 ${pullData.count} total decisions on production`);
+    console.log(`      Open: ${openItems.length} | In Progress: ${inProgress.length} | Approved: ${completed.length} | Rejected: ${rejected.length}`);
     console.log(`      Open: ${openItems.length} | In Progress: ${inProgress.length} | Completed: ${completed.length}`);
-    if (ceoFeedback.length > 0) {
-      console.log(`   💬 ${ceoFeedback.length} decisions have CEO feedback`);
-      for (const d of ceoFeedback.slice(0, 5)) {
-        console.log(`      → ${d.title} (${d.status})`);
+    if (ceoActions.length > 0) {
+      console.log(`   💬 ${ceoActions.length} decisions have CEO actions`);
+      for (const d of ceoActions.slice(0, 5)) {
+        console.log(`      → [${d.status.toUpperCase()}] ${d.title}`);
       }
     }
-    // Write a summary for the next standup context
+    // Write summary for next standup context
     const summaryPath = join(ROOT, "agents", "logs", ".last-sync-pull.json");
-    writeFileSync(summaryPath, JSON.stringify({ pulledAt: new Date().toISOString(), openItems: openItems.length, inProgress: inProgress.length, completed: completed.length, ceoFeedback: ceoFeedback.map(d => ({ title: d.title, status: d.status, feedback: d.content.split("CEO Feedback")[1]?.substring(0, 200) || "" })) }, null, 2));
+    writeFileSync(summaryPath, JSON.stringify({
+      pulledAt: new Date().toISOString(),
+      openItems: openItems.length,
+      inProgress: inProgress.length,
+      completed: completed.length,
+      rejected: rejected.length,
+      ceoActions: ceoActions.map(d => ({
+        title: d.title,
+        status: d.status,
+        agent: d.agent,
+        action: d.content.split("---").pop()?.trim().substring(0, 300) || ""
+      }))
+    }, null, 2));
     console.log(`   💾 Saved pull summary to agents/logs/.last-sync-pull.json`);
   } else {
     console.log(`   ⚠️  Pull returned ${pullRes.status}: ${pullData.error || "unknown"}`);

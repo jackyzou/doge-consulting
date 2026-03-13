@@ -128,6 +128,7 @@ export default function OperationsPage() {
   const openDecisions = decisions.filter(d => d.status === "open" || d.status === "escalated");
   const inProgressDecisions = decisions.filter(d => d.status === "in_progress");
   const completedDecisions = decisions.filter(d => d.status === "completed");
+  const rejectedDecisions = decisions.filter(d => d.status === "rejected");
 
   const timelineByDate: Record<string, TimelineItem[]> = {};
   for (const item of timeline) {
@@ -230,7 +231,7 @@ export default function OperationsPage() {
         <div className="space-y-4">
           <div className="flex gap-2">
             <Button onClick={() => setShowNewDecision(true)} className="bg-navy hover:bg-navy/90"><Plus className="h-4 w-4 mr-2" /> New Task</Button>
-            <Button variant="outline" onClick={() => setShowArchive(!showArchive)}><Archive className="h-4 w-4 mr-2" /> Archive ({completedDecisions.length})</Button>
+            <Button variant="outline" onClick={() => setShowArchive(!showArchive)}><Archive className="h-4 w-4 mr-2" /> Archive ({completedDecisions.length + rejectedDecisions.length})</Button>
           </div>
           {openDecisions.length > 0 && (
             <div className="space-y-2">
@@ -269,8 +270,11 @@ export default function OperationsPage() {
           {openDecisions.length === 0 && inProgressDecisions.length === 0 && (
             <Card><CardContent className="py-12 text-center"><Sparkles className="h-12 w-12 text-teal/40 mx-auto mb-3" /><p className="text-lg font-medium">All clear!</p></CardContent></Card>
           )}
-          {showArchive && completedDecisions.length > 0 && (
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground"><Archive className="h-4 w-4 inline mr-2" />Resolved ({completedDecisions.length})</CardTitle></CardHeader><CardContent><div className="space-y-1">{completedDecisions.slice(0, 30).map(d => (<div key={d.id} className="flex items-center gap-2 py-1.5 text-sm cursor-pointer hover:bg-muted/50 rounded px-2 -mx-2" onClick={() => { setSelectedDecision(d); setFeedback(""); }}><Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" /><span className="line-through text-muted-foreground flex-1 truncate">{d.title}</span><span className="text-[10px] text-muted-foreground shrink-0">{d.agent}</span></div>))}</div></CardContent></Card>
+          {showArchive && (completedDecisions.length > 0 || rejectedDecisions.length > 0) && (
+            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground"><Archive className="h-4 w-4 inline mr-2" />Resolved ({completedDecisions.length + rejectedDecisions.length})</CardTitle></CardHeader><CardContent><div className="space-y-1">
+              {completedDecisions.slice(0, 20).map(d => (<div key={d.id} className="flex items-center gap-2 py-1.5 text-sm cursor-pointer hover:bg-muted/50 rounded px-2 -mx-2" onClick={() => { setSelectedDecision(d); setFeedback(""); }}><Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" /><span className="line-through text-muted-foreground flex-1 truncate">{d.title}</span><span className="text-[10px] text-muted-foreground shrink-0">{d.agent}</span></div>))}
+              {rejectedDecisions.slice(0, 20).map(d => (<div key={d.id} className="flex items-center gap-2 py-1.5 text-sm cursor-pointer hover:bg-muted/50 rounded px-2 -mx-2" onClick={() => { setSelectedDecision(d); setFeedback(""); }}><span className="text-red-500 shrink-0 text-xs">✕</span><span className="line-through text-red-400 flex-1 truncate">{d.title}</span><span className="text-[10px] text-muted-foreground shrink-0">{d.agent}</span></div>))}
+            </div></CardContent></Card>
           )}
         </div>
       )}
@@ -404,22 +408,101 @@ export default function OperationsPage() {
       {/* ═══ DECISION DETAIL DIALOG ═══ */}
       <Dialog open={!!selectedDecision} onOpenChange={() => setSelectedDecision(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          {selectedDecision && (() => { const agent = agents.find(a => a.id === selectedDecision.agent); const p = priorityConfig[selectedDecision.priority] || priorityConfig.normal; return (<>
-            <DialogHeader><div className="flex items-center gap-2 mb-2"><Badge className={`${p.color} border`}>{p.label}</Badge><Badge variant="outline">{selectedDecision.status}</Badge></div><DialogTitle className="text-lg leading-snug">{selectedDecision.title}</DialogTitle></DialogHeader>
-            <div className="space-y-4">
-              {agent && (<div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg"><div className="w-8 h-8 rounded-full text-white text-xs font-bold flex items-center justify-center" style={{ background: agent.color }}>{agent.avatar}</div><div><p className="text-sm font-medium">{agent.name}</p><p className="text-xs text-muted-foreground">{agent.role} · {new Date(selectedDecision.createdAt).toLocaleString()}</p></div></div>)}
-              {selectedDecision.content && (<div className="prose prose-sm max-w-none bg-slate-50 p-4 rounded-lg border max-h-48 overflow-y-auto"><ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedDecision.content}</ReactMarkdown></div>)}
-              {selectedDecision.assignedTo && (<div className="text-sm"><span className="text-muted-foreground">Assigned to:</span> <strong>{selectedDecision.assignedTo}</strong></div>)}
-              {selectedDecision.status !== "completed" && (<div className="space-y-2"><label className="text-sm font-medium">Your Feedback</label><textarea className="w-full rounded-lg border p-3 text-sm min-h-[80px] resize-none focus:ring-2 focus:ring-teal/50 focus:border-teal" placeholder="Add feedback, comments, or instructions..." value={feedback} onChange={e => setFeedback(e.target.value)} /></div>)}
-              <div className="flex gap-2 pt-2">
-                {selectedDecision.status !== "completed" ? (<>
-                  <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700" onClick={() => updateDecision(selectedDecision.id, "completed", feedback || undefined)}><Check className="h-4 w-4 mr-2" /> Approve</Button>
-                  <Button variant="outline" className="flex-1" onClick={() => updateDecision(selectedDecision.id, "in_progress", feedback || undefined)}><ArrowRight className="h-4 w-4 mr-2" /> In Progress</Button>
-                  {feedback && <Button variant="outline" onClick={() => updateDecision(selectedDecision.id, selectedDecision.status, feedback)}><Send className="h-4 w-4" /></Button>}
-                </>) : <Button variant="outline" className="flex-1" onClick={() => updateDecision(selectedDecision.id, "open")}>Reopen</Button>}
+          {selectedDecision && (() => {
+            const agent = agents.find(a => a.id === selectedDecision.agent);
+            const p = priorityConfig[selectedDecision.priority] || priorityConfig.normal;
+            const isResolved = selectedDecision.status === "completed" || selectedDecision.status === "rejected";
+            return (<>
+              <DialogHeader>
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge className={`${p.color} border`}>{p.label}</Badge>
+                  <Badge variant={selectedDecision.status === "completed" ? "default" : selectedDecision.status === "rejected" ? "destructive" : "outline"}>
+                    {selectedDecision.status === "completed" ? "✅ Approved" : selectedDecision.status === "rejected" ? "❌ Rejected" : selectedDecision.status === "in_progress" ? "🔄 In Progress" : "⏳ Open"}
+                  </Badge>
+                </div>
+                <DialogTitle className="text-lg leading-snug">{selectedDecision.title}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                {/* Proposer info */}
+                {agent && (
+                  <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                    <div className="w-8 h-8 rounded-full text-white text-xs font-bold flex items-center justify-center" style={{ background: agent.color }}>{agent.avatar}</div>
+                    <div>
+                      <p className="text-sm font-medium">Proposed by {agent.name}</p>
+                      <p className="text-xs text-muted-foreground">{agent.role} · {new Date(selectedDecision.createdAt).toLocaleString()}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Content with history */}
+                {selectedDecision.content && (
+                  <div className="bg-slate-50 p-4 rounded-lg border max-h-60 overflow-y-auto">
+                    <div className="prose prose-sm max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedDecision.content}</ReactMarkdown>
+                    </div>
+                  </div>
+                )}
+
+                {selectedDecision.assignedTo && (
+                  <div className="text-sm"><span className="text-muted-foreground">Assigned to:</span> <strong>{selectedDecision.assignedTo}</strong></div>
+                )}
+
+                {/* Feedback input — always visible for non-resolved items */}
+                {!isResolved && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Message / Feedback <span className="text-muted-foreground font-normal">(recorded for next standup)</span></label>
+                    <textarea
+                      className="w-full rounded-lg border p-3 text-sm min-h-[80px] resize-none focus:ring-2 focus:ring-teal/50 focus:border-teal"
+                      placeholder="Add your feedback, instructions, or reasoning..."
+                      value={feedback}
+                      onChange={e => setFeedback(e.target.value)}
+                    />
+                  </div>
+                )}
+
+                {/* Action buttons */}
+                <div className="space-y-2 pt-2">
+                  {!isResolved ? (
+                    <>
+                      <div className="grid grid-cols-3 gap-2">
+                        <Button
+                          className="bg-emerald-600 hover:bg-emerald-700"
+                          onClick={() => updateDecision(selectedDecision.id, "completed", feedback ? `✅ APPROVED: ${feedback}` : "✅ APPROVED by CEO")}
+                        >
+                          <Check className="h-4 w-4 mr-1" /> Approve
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                          onClick={() => updateDecision(selectedDecision.id, "in_progress", feedback ? `🔄 IN PROGRESS: ${feedback}` : "🔄 Moved to in progress by CEO")}
+                        >
+                          <ArrowRight className="h-4 w-4 mr-1" /> In Progress
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="border-red-300 text-red-700 hover:bg-red-50"
+                          onClick={() => updateDecision(selectedDecision.id, "rejected", feedback ? `❌ REJECTED: ${feedback}` : "❌ REJECTED by CEO")}
+                        >
+                          <span className="mr-1">✕</span> Reject
+                        </Button>
+                      </div>
+                      {feedback && (
+                        <Button variant="ghost" className="w-full text-sm text-muted-foreground" onClick={() => updateDecision(selectedDecision.id, selectedDecision.status, `💬 CEO Comment: ${feedback}`)}>
+                          <Send className="h-3.5 w-3.5 mr-2" /> Send comment only (keep status)
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button variant="outline" className="flex-1" onClick={() => updateDecision(selectedDecision.id, "open", "♻️ Reopened by CEO")}>
+                        Reopen
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </>); })()}
+            </>);
+          })()}
         </DialogContent>
       </Dialog>
 
