@@ -1963,7 +1963,7 @@ const posts7 = [
     category: "Trade Policy",
     emoji: "🛡️",
     readTime: "9 min",
-    content: `![Stacked shipping containers at a commercial port under dramatic sky](https://images.unsplash.com/photo-1494412574643-ff11b0a5eb19?w=1200&h=630&fit=crop&q=80)
+    content: `![US trade policy and tariff documents on a desk](https://images.unsplash.com/photo-1590247813693-5541d1c609fd?w=1200&h=630&fit=crop&q=80)
 
 # New Tariffs Are Coming in April — Here's How Smart Retailers Are Preparing
 
