@@ -50,9 +50,23 @@ export async function GET(request: NextRequest) {
     }
 
     if (!section || section === "agents") {
-      const agentStats = await prisma.agentLog.groupBy({ by: ["agent"], where: { type: "decision" }, _count: true });
-      const statsMap = Object.fromEntries(agentStats.map(s => [s.agent, s._count]));
-      result.agents = AGENTS.map(a => ({ ...a, decisionCount: statsMap[a.id] || 0 }));
+      // Per-agent decision stats for performance tracking
+      const allDecisions = await prisma.agentLog.findMany({
+        where: { type: "decision" },
+        select: { agent: true, status: true },
+      });
+      const agentPerf: Record<string, { total: number; approved: number; rejected: number; open: number }> = {};
+      for (const d of allDecisions) {
+        if (!agentPerf[d.agent]) agentPerf[d.agent] = { total: 0, approved: 0, rejected: 0, open: 0 };
+        agentPerf[d.agent].total++;
+        if (d.status === "completed") agentPerf[d.agent].approved++;
+        else if (d.status === "rejected") agentPerf[d.agent].rejected++;
+        else agentPerf[d.agent].open++;
+      }
+      result.agents = AGENTS.map(a => ({
+        ...a,
+        stats: agentPerf[a.id] || { total: 0, approved: 0, rejected: 0, open: 0 },
+      }));
     }
 
     if (!section || section === "decisions") {

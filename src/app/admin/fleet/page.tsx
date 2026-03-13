@@ -11,13 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Users, AlertTriangle, CheckCircle, ChevronDown, ChevronRight,
-  Calendar, FileText, Loader2, Bot, Plus, Check, Clock,
+  Calendar, Loader2, Bot, Plus, Check, Clock,
   Send, Archive, ArrowRight, Star, Sparkles, BookOpen,
-  Activity, Circle,
+  Activity, Circle, TrendingUp, BarChart3,
 } from "lucide-react";
 
-// ── Types ──────────────────────────────────────────────
-interface Agent { id: string; name: string; role: string; avatar: string; color: string; skills: string[]; bio: string; decisionCount: number; }
+interface Agent { id: string; name: string; role: string; avatar: string; color: string; skills: string[]; bio: string; stats: { total: number; approved: number; rejected: number; open: number }; }
 interface Decision { id: string; agent: string; type: string; priority: string; title: string; content: string; status: string; assignedTo: string | null; tags: string | null; createdAt: string; updatedAt: string; }
 interface LogSummary { date: string; agents: string[]; decisionCount: number; hasCeoItems: boolean; sizeKB: number; content: string; }
 interface TimelineItem { id: string; agent: string; type: string; title: string; status: string; priority: string; createdAt: string; }
@@ -33,6 +32,24 @@ const priorityConfig: Record<string, { label: string; color: string; border: str
 const agentColors: Record<string, string> = { alex: "#0F2B46", amy: "#059669", seth: "#2563EB", rachel: "#D97706", seto: "#7C3AED", tiffany: "#EC4899", jacky: "#2EC4B6" };
 const typeIcons: Record<string, string> = { decision: "📋", standup: "🌅", action: "⚡", alert: "🚨", note: "📝" };
 
+// Prose classes for markdown rendering
+const mdClasses = `prose prose-sm sm:prose-base max-w-none
+  prose-headings:text-navy prose-headings:font-bold
+  prose-h2:text-lg sm:prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b prose-h2:border-teal/20
+  prose-h3:text-base sm:prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3
+  prose-h4:text-sm sm:prose-h4:text-base prose-h4:mt-4 prose-h4:mb-2
+  prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:text-sm
+  prose-li:text-muted-foreground prose-li:text-sm
+  prose-strong:text-foreground prose-strong:font-semibold
+  prose-blockquote:border-teal/40 prose-blockquote:bg-teal/5 prose-blockquote:rounded-r-lg prose-blockquote:py-1
+  prose-table:text-xs sm:prose-table:text-sm prose-th:text-left prose-th:font-semibold prose-th:text-navy prose-th:bg-muted/50
+  prose-td:py-1.5 prose-td:px-2 sm:prose-td:px-3 prose-th:py-1.5 prose-th:px-2 sm:prose-th:px-3
+  prose-hr:my-6 prose-hr:border-border/50
+  prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-normal
+  [&_table]:w-full [&_table]:border-collapse [&_table]:border [&_table]:border-border/30 [&_table]:rounded-lg [&_table]:overflow-hidden
+  [&_td]:border-b [&_td]:border-border/20 [&_th]:border-b-2 [&_th]:border-border/30
+  overflow-x-auto`;
+
 export default function OperationsPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [decisions, setDecisions] = useState<Decision[]>([]);
@@ -40,7 +57,7 @@ export default function OperationsPage() {
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [cocSections, setCocSections] = useState<CocSection[]>([]);
   const [cocUpdated, setCocUpdated] = useState("");
-  const [expandedLog, setExpandedLog] = useState<string | null>(null);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"overview" | "decisions" | "agents" | "standups" | "playbook">("overview");
   const [selectedDecision, setSelectedDecision] = useState<Decision | null>(null);
@@ -66,17 +83,20 @@ export default function OperationsPage() {
         setLogs(data.logs || []);
         setTimeline(data.timeline || []);
         if (data.coc) { setCocSections(data.coc.sections || []); setCocUpdated(data.coc.updatedAt || ""); }
+        // Auto-select latest day
+        if (data.logs?.length > 0 && !selectedDay) setSelectedDay(data.logs[0].date);
         setLoading(false);
       })
       .catch(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const updateDecision = async (id: string, status: string, extra?: string) => {
     const d = decisions.find(x => x.id === id);
-    const newContent = extra ? `${d?.content || ""}\n\n---\n**CEO Feedback (${new Date().toLocaleDateString()}):** ${extra}` : undefined;
-    await fetch("/api/admin/fleet", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status, ...(newContent && { content: newContent }) }) });
+    const nc = extra ? `${d?.content || ""}\n\n---\n**CEO Feedback (${new Date().toLocaleDateString()}):** ${extra}` : undefined;
+    await fetch("/api/admin/fleet", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status, ...(nc && { content: nc }) }) });
     setSelectedDecision(null); setFeedback(""); fetchData();
   };
 
@@ -102,7 +122,6 @@ export default function OperationsPage() {
   const inProgressDecisions = decisions.filter(d => d.status === "in_progress");
   const completedDecisions = decisions.filter(d => d.status === "completed");
 
-  // Group timeline by date
   const timelineByDate: Record<string, TimelineItem[]> = {};
   for (const item of timeline) {
     const date = new Date(item.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -110,9 +129,10 @@ export default function OperationsPage() {
     timelineByDate[date].push(item);
   }
 
+  const selectedLog = selectedDay ? logs.find(l => l.date === selectedDay) : null;
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-navy">Operations</h1>
@@ -135,35 +155,26 @@ export default function OperationsPage() {
         <Card><CardContent className="pt-5 pb-4"><div className="flex items-center gap-3"><div className="rounded-lg bg-teal/10 p-2"><Bot className="h-4 w-4 text-teal" /></div><div><p className="text-xl font-bold">{agents.length}</p><p className="text-[11px] text-muted-foreground">Agents</p></div></div></CardContent></Card>
       </div>
 
-      {/* ═══ OVERVIEW TAB ═══ */}
+      {/* ═══ OVERVIEW ═══ */}
       {tab === "overview" && (
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Activity Timeline */}
           <div className="lg:col-span-2">
             <Card>
               <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Activity className="h-4 w-4 text-teal" /> Activity Timeline</CardTitle></CardHeader>
               <CardContent>
                 {Object.keys(timelineByDate).length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">No activity yet. Run a fleet standup to begin.</p>
+                  <p className="text-sm text-muted-foreground text-center py-8">No activity yet.</p>
                 ) : (
                   <div className="space-y-6">
                     {Object.entries(timelineByDate).slice(0, 5).map(([date, items]) => (
                       <div key={date}>
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="h-px flex-1 bg-border" />
-                          <span className="text-xs font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{date}</span>
-                          <div className="h-px flex-1 bg-border" />
-                        </div>
+                        <div className="flex items-center gap-2 mb-3"><div className="h-px flex-1 bg-border" /><span className="text-xs font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{date}</span><div className="h-px flex-1 bg-border" /></div>
                         <div className="space-y-2 ml-4 border-l-2 border-border/50 pl-4">
                           {items.map(item => (
-                            <div key={item.id} className="flex items-start gap-3 group">
+                            <div key={item.id} className="flex items-start gap-3">
                               <div className="mt-1 -ml-[21px] w-3 h-3 rounded-full border-2 border-white shrink-0" style={{ background: agentColors[item.agent] || "#94a3b8" }} />
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="text-xs">{typeIcons[item.type] || "📄"}</span>
-                                  <span className="text-sm font-medium truncate">{item.title}</span>
-                                  <Badge variant={item.status === "completed" ? "default" : item.status === "open" ? "destructive" : "secondary"} className="text-[9px] px-1 py-0">{item.status}</Badge>
-                                </div>
+                                <div className="flex items-center gap-2 flex-wrap"><span className="text-xs">{typeIcons[item.type] || "📄"}</span><span className="text-sm font-medium truncate">{item.title}</span><Badge variant={item.status === "completed" ? "default" : item.status === "open" ? "destructive" : "secondary"} className="text-[9px] px-1 py-0">{item.status}</Badge></div>
                                 <p className="text-[11px] text-muted-foreground">{item.agent} · {new Date(item.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
                               </div>
                             </div>
@@ -176,8 +187,6 @@ export default function OperationsPage() {
               </CardContent>
             </Card>
           </div>
-
-          {/* Quick Actions + Agent Roster */}
           <div className="space-y-4">
             {openDecisions.length > 0 && (
               <Card className="border-amber-200 bg-amber-50/30">
@@ -189,7 +198,6 @@ export default function OperationsPage() {
                       <p className="text-[10px] text-muted-foreground">{d.agent} · {new Date(d.createdAt).toLocaleDateString()}</p>
                     </button>
                   ))}
-                  {openDecisions.length > 3 && <button className="text-xs text-amber-700 font-medium" onClick={() => setTab("decisions")}>+{openDecisions.length - 3} more →</button>}
                 </CardContent>
               </Card>
             )}
@@ -198,7 +206,7 @@ export default function OperationsPage() {
               <CardContent>
                 <div className="flex flex-wrap gap-2">
                   {agents.map(a => (
-                    <button key={a.id} className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-muted/50 hover:bg-muted transition-colors" onClick={() => setSelectedAgent(a)}>
+                    <button key={a.id} className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-muted/50 hover:bg-muted transition-colors" onClick={() => { setTab("agents"); setSelectedAgent(a); }}>
                       <div className="w-5 h-5 rounded-full text-[9px] text-white font-bold flex items-center justify-center" style={{ background: a.color }}>{a.avatar[0]}</div>
                       <span className="text-xs font-medium">{a.name.split(" ")[0]}</span>
                     </button>
@@ -206,22 +214,11 @@ export default function OperationsPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4 text-teal" /> Recent Standups</CardTitle></CardHeader>
-              <CardContent>
-                {logs.slice(0, 3).map(log => (
-                  <button key={log.date} className="w-full text-left p-2 rounded-lg hover:bg-muted/50 transition-colors flex items-center justify-between" onClick={() => { setTab("standups"); setExpandedLog(log.date); }}>
-                    <div><p className="text-sm font-medium">{log.date}</p><p className="text-[10px] text-muted-foreground">{log.agents.join(", ")}</p></div>
-                    {log.hasCeoItems && <Circle className="h-2 w-2 fill-red-500 text-red-500" />}
-                  </button>
-                ))}
-              </CardContent>
-            </Card>
           </div>
         </div>
       )}
 
-      {/* ═══ DECISIONS TAB ═══ */}
+      {/* ═══ DECISIONS ═══ */}
       {tab === "decisions" && (
         <div className="space-y-4">
           <div className="flex gap-2">
@@ -244,8 +241,8 @@ export default function OperationsPage() {
                       </div>
                     </div>
                     <div className="flex gap-1 shrink-0" onClick={e => e.stopPropagation()}>
-                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-50" onClick={() => updateDecision(d.id, "completed")} title="Approve"><Check className="h-4 w-4" /></Button>
-                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50" onClick={() => updateDecision(d.id, "in_progress")} title="In Progress"><ArrowRight className="h-4 w-4" /></Button>
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-50" onClick={() => updateDecision(d.id, "completed")}><Check className="h-4 w-4" /></Button>
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50" onClick={() => updateDecision(d.id, "in_progress")}><ArrowRight className="h-4 w-4" /></Button>
                     </div>
                   </div></CardContent>
                 </Card>
@@ -256,250 +253,144 @@ export default function OperationsPage() {
             <div className="space-y-2">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">In Progress</h3>
               {inProgressDecisions.map(d => { const agent = agents.find(a => a.id === d.agent); return (
-                <Card key={d.id} className="border-l-4 border-l-blue-400 cursor-pointer opacity-90 hover:shadow-md transition-shadow" onClick={() => { setSelectedDecision(d); setFeedback(""); }}>
-                  <CardContent className="p-3"><div className="flex items-center justify-between"><div className="flex items-center gap-3"><Loader2 className="h-4 w-4 animate-spin text-blue-500" /><div><h4 className="font-medium text-sm">{d.title}</h4><span className="text-[11px] text-muted-foreground">{agent?.name} · {new Date(d.createdAt).toLocaleDateString()}</span></div></div><Button size="sm" variant="ghost" className="h-8 text-emerald-600" onClick={e => { e.stopPropagation(); updateDecision(d.id, "completed"); }}><Check className="h-3.5 w-3.5 mr-1" /> Done</Button></div></CardContent>
+                <Card key={d.id} className="border-l-4 border-l-blue-400 cursor-pointer hover:shadow-md" onClick={() => { setSelectedDecision(d); setFeedback(""); }}>
+                  <CardContent className="p-3"><div className="flex items-center justify-between"><div className="flex items-center gap-3"><Loader2 className="h-4 w-4 animate-spin text-blue-500" /><div><h4 className="font-medium text-sm">{d.title}</h4><span className="text-[11px] text-muted-foreground">{agent?.name}</span></div></div><Button size="sm" variant="ghost" className="h-8 text-emerald-600" onClick={e => { e.stopPropagation(); updateDecision(d.id, "completed"); }}><Check className="h-3.5 w-3.5 mr-1" /> Done</Button></div></CardContent>
                 </Card>
               ); })}
             </div>
           )}
           {openDecisions.length === 0 && inProgressDecisions.length === 0 && (
-            <Card><CardContent className="py-12 text-center"><Sparkles className="h-12 w-12 text-teal/40 mx-auto mb-3" /><p className="text-lg font-medium">All clear!</p><p className="text-sm text-muted-foreground">No pending decisions.</p></CardContent></Card>
+            <Card><CardContent className="py-12 text-center"><Sparkles className="h-12 w-12 text-teal/40 mx-auto mb-3" /><p className="text-lg font-medium">All clear!</p></CardContent></Card>
           )}
           {showArchive && completedDecisions.length > 0 && (
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-2"><Archive className="h-4 w-4" /> Resolved ({completedDecisions.length})</CardTitle></CardHeader><CardContent><div className="space-y-1">{completedDecisions.slice(0, 30).map(d => (<div key={d.id} className="flex items-center gap-2 py-1.5 text-sm cursor-pointer hover:bg-muted/50 rounded px-2 -mx-2" onClick={() => { setSelectedDecision(d); setFeedback(""); }}><Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" /><span className="line-through text-muted-foreground flex-1 truncate">{d.title}</span><span className="text-[10px] text-muted-foreground shrink-0">{d.agent} · {new Date(d.createdAt).toLocaleDateString()}</span></div>))}</div></CardContent></Card>
+            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground"><Archive className="h-4 w-4 inline mr-2" />Resolved ({completedDecisions.length})</CardTitle></CardHeader><CardContent><div className="space-y-1">{completedDecisions.slice(0, 30).map(d => (<div key={d.id} className="flex items-center gap-2 py-1.5 text-sm cursor-pointer hover:bg-muted/50 rounded px-2 -mx-2" onClick={() => { setSelectedDecision(d); setFeedback(""); }}><Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" /><span className="line-through text-muted-foreground flex-1 truncate">{d.title}</span><span className="text-[10px] text-muted-foreground shrink-0">{d.agent}</span></div>))}</div></CardContent></Card>
           )}
         </div>
       )}
 
-      {/* ═══ AGENTS TAB ═══ */}
+      {/* ═══ AGENTS — Employee Central ═══ */}
       {tab === "agents" && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {agents.map(agent => (
-            <Card key={agent.id} className="hover:shadow-lg transition-all cursor-pointer group hover:border-teal/40" onClick={() => setSelectedAgent(agent)}>
-              <CardContent className="pt-6"><div className="flex items-start gap-4"><div className="rounded-full h-12 w-12 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-md" style={{ background: agent.color }}>{agent.avatar}</div><div className="min-w-0 flex-1"><h3 className="font-semibold text-navy group-hover:text-teal transition-colors">{agent.name}</h3><p className="text-sm text-teal font-medium">{agent.role}</p><p className="text-xs text-muted-foreground mt-1 line-clamp-2">{agent.bio}</p><div className="flex flex-wrap gap-1 mt-3">{agent.skills.slice(0, 4).map(s => <span key={s} className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full">{s}</span>)}{agent.skills.length > 4 && <span className="text-[10px] text-muted-foreground">+{agent.skills.length - 4}</span>}</div></div></div></CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* ═══ STANDUPS TAB — Structured View ═══ */}
-      {tab === "standups" && (() => {
-        // Parse logs into structured sections for better readability
-        function parseLogSections(content: string) {
-          const sections: { type: string; title: string; agent?: string; content: string; icon: string }[] = [];
-          // Split by ## headers
-          const parts = content.split(/^## /gm).filter(Boolean);
-          for (const part of parts) {
-            const firstLine = part.split("\n")[0].trim();
-            const body = part.substring(firstLine.length).trim();
-            if (!firstLine || body.length < 10) continue;
-
-            // Detect section type
-            if (firstLine.includes("Morning Standup") || firstLine.includes("🌅")) {
-              // Parse individual agent reports from #### headers
-              const agentParts = body.split(/^#### /gm).filter(Boolean);
-              // Intro section (Round 1 header etc)
-              if (agentParts.length > 1) {
-                for (const ap of agentParts) {
-                  const agentLine = ap.split("\n")[0].trim();
-                  const agentBody = ap.substring(agentLine.length).trim();
-                  // Detect if this is an agent report or a synthesis/summary section
-                  const agentMatch = agentLine.match(/^(Seth|Seto|Rachel|Amy|Tiffany|Alex)/);
-                  if (agentMatch) {
-                    sections.push({ type: "agent-report", title: agentLine, agent: agentMatch[1].toLowerCase(), content: agentBody, icon: "👤" });
-                  } else if (agentLine.includes("Synthesis") || agentLine.includes("Alex Chen")) {
-                    sections.push({ type: "synthesis", title: agentLine, content: agentBody, icon: "🎯" });
-                  }
-                }
-              }
-              // Look for ### sections within the standup
-              const subSections = body.split(/^### /gm).filter(Boolean);
-              for (const sub of subSections) {
-                const subTitle = sub.split("\n")[0].trim();
-                const subBody = sub.substring(subTitle.length).trim();
-                if (subTitle.includes("Round 2") || subTitle.includes("Synthesis")) {
-                  sections.push({ type: "synthesis", title: subTitle, content: subBody, icon: "🎯" });
-                } else if (subTitle.includes("🔴") || subTitle.includes("CEO")) {
-                  sections.push({ type: "ceo", title: subTitle, content: subBody, icon: "🔴" });
-                } else if (subTitle.includes("📊") || subTitle.includes("Summary")) {
-                  sections.push({ type: "summary", title: subTitle, content: subBody, icon: "📊" });
-                } else if (subTitle.includes("Round 1")) {
-                  // Skip — agent reports already parsed from ####
-                } else if (subBody.length > 20) {
-                  sections.push({ type: "section", title: subTitle, content: subBody, icon: "📋" });
-                }
-              }
-            } else if (firstLine.includes("Operations Summary") || firstLine.includes("📊")) {
-              sections.push({ type: "summary", title: firstLine, content: body, icon: "📊" });
-            } else if (firstLine.includes("Evening") || firstLine.includes("Morning Brief")) {
-              sections.push({ type: "brief", title: firstLine, content: body, icon: "📝" });
-            } else if (body.length > 50) {
-              sections.push({ type: "section", title: firstLine, content: body, icon: "📋" });
-            }
-          }
-          return sections;
-        }
-
-        const selectedLog = expandedLog ? logs.find(l => l.date === expandedLog) : null;
-        const parsedSections = selectedLog ? parseLogSections(selectedLog.content) : [];
-
-        const sectionColors: Record<string, string> = {
-          "agent-report": "border-l-blue-400",
-          synthesis: "border-l-teal",
-          ceo: "border-l-red-500",
-          summary: "border-l-amber-500",
-          brief: "border-l-slate-300",
-          section: "border-l-slate-300",
-        };
-
-        const mdClasses = "prose prose-sm max-w-none prose-headings:text-navy prose-headings:font-bold prose-h3:text-base prose-h3:mt-4 prose-h3:mb-2 prose-h4:text-sm prose-h4:mt-3 prose-h4:mb-1 prose-p:text-muted-foreground prose-p:text-sm prose-p:leading-relaxed prose-p:my-1.5 prose-li:text-muted-foreground prose-li:text-sm prose-li:my-0.5 prose-strong:text-foreground prose-strong:font-semibold prose-blockquote:border-teal/40 prose-blockquote:bg-teal/5 prose-blockquote:rounded-r prose-blockquote:py-0.5 prose-blockquote:my-2 prose-table:text-xs sm:prose-table:text-sm prose-th:text-left prose-th:font-semibold prose-th:text-navy prose-th:bg-muted/50 prose-td:py-1.5 prose-td:px-2 sm:prose-td:px-3 prose-th:py-1.5 prose-th:px-2 sm:prose-th:px-3 prose-hr:my-4 prose-code:bg-muted prose-code:px-1 prose-code:rounded prose-code:text-xs [&_table]:w-full [&_table]:border-collapse [&_table]:border [&_table]:border-border/30 [&_table]:rounded-lg [&_table]:overflow-hidden [&_table]:text-xs sm:[&_table]:text-sm [&_td]:border-b [&_td]:border-border/20 [&_th]:border-b-2 [&_th]:border-border/30 [&_table]:block sm:[&_table]:table [&_thead]:block sm:[&_thead]:table-header-group [&_tbody]:block sm:[&_tbody]:table-row-group [&_tr]:block sm:[&_tr]:table-row [&_td]:block sm:[&_td]:table-cell [&_th]:block sm:[&_th]:table-cell [&_td]:before:content-[attr(data-label)] [&_td]:before:font-semibold sm:[&_td]:before:content-none";
-
-        return (
-          <div className="space-y-4">
-            {/* Day selector — horizontal scroll on mobile */}
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-none">
-              {logs.map(log => (
-                <button key={log.date} onClick={() => setExpandedLog(expandedLog === log.date ? null : log.date)}
-                  className={`shrink-0 rounded-xl px-4 py-3 text-left border transition-all ${expandedLog === log.date ? "bg-navy text-white border-navy shadow-lg" : "bg-white hover:border-teal/40 hover:shadow-md"}`}>
-                  <div className="flex items-center gap-2">
-                    <span className={`font-semibold text-sm ${expandedLog === log.date ? "text-white" : "text-navy"}`}>{log.date}</span>
-                    {log.hasCeoItems && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className={`text-[10px] ${expandedLog === log.date ? "text-white/70" : "text-muted-foreground"}`}>{log.decisionCount} decisions · {log.agents.length} agents</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {/* No log selected */}
-            {!selectedLog && (
-              <Card><CardContent className="py-16 text-center">
-                <Calendar className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">Select a date above to view the standup log</p>
-              </CardContent></Card>
-            )}
-
-            {/* Selected log — structured sections */}
-            {selectedLog && (
-              <div className="space-y-3">
-                {/* Header card */}
-                <Card className="bg-gradient-to-r from-navy/5 to-teal/5 border-navy/10">
-                  <CardContent className="py-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div>
-                        <h3 className="font-bold text-navy text-lg">Standup — {selectedLog.date}</h3>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          {selectedLog.agents.map(a => {
-                            const agentData = agents.find(ag => ag.name.includes(a));
-                            return (
-                              <span key={a} className="inline-flex items-center gap-1 text-[11px] bg-white/80 px-2 py-0.5 rounded-full border">
-                                {agentData && <span className="w-3 h-3 rounded-full" style={{ background: agentData.color }} />}
-                                {a}
-                              </span>
-                            );
-                          })}
+        <div className="space-y-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {agents.map(agent => {
+              const approvalRate = agent.stats.total > 0 ? Math.round((agent.stats.approved / agent.stats.total) * 100) : 0;
+              return (
+                <Card key={agent.id} className="hover:shadow-lg transition-all cursor-pointer group hover:border-teal/40" onClick={() => setSelectedAgent(agent)}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-start gap-4">
+                      <div className="rounded-full h-12 w-12 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-md" style={{ background: agent.color }}>{agent.avatar}</div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-navy group-hover:text-teal transition-colors">{agent.name}</h3>
+                        <p className="text-sm text-teal font-medium">{agent.role}</p>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {agent.skills.slice(0, 3).map(s => <span key={s} className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full">{s}</span>)}
+                          {agent.skills.length > 3 && <span className="text-[10px] text-muted-foreground">+{agent.skills.length - 3}</span>}
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span>{selectedLog.decisionCount} decisions</span>
-                        <span>{selectedLog.sizeKB} KB</span>
-                      </div>
+                    </div>
+                    {/* Performance stats */}
+                    <div className="mt-4 pt-3 border-t grid grid-cols-3 gap-2 text-center">
+                      <div><p className="text-lg font-bold text-navy">{agent.stats.total}</p><p className="text-[10px] text-muted-foreground">Proposals</p></div>
+                      <div><p className="text-lg font-bold text-emerald-600">{agent.stats.approved}</p><p className="text-[10px] text-muted-foreground">Approved</p></div>
+                      <div><p className="text-lg font-bold" style={{ color: approvalRate >= 70 ? "#059669" : approvalRate >= 40 ? "#D97706" : "#DC2626" }}>{approvalRate}%</p><p className="text-[10px] text-muted-foreground">Rate</p></div>
                     </div>
                   </CardContent>
                 </Card>
-
-                {parsedSections.length > 0 ? (
-                  // Structured view — each section as a card
-                  parsedSections.map((section, idx) => {
-                    const agentData = section.agent ? agents.find(a => a.id === section.agent || a.name.toLowerCase().startsWith(section.agent || "")) : null;
-                    return (
-                      <Card key={idx} className={`border-l-4 ${sectionColors[section.type] || "border-l-slate-300"} overflow-hidden`}>
-                        <button className="w-full text-left p-3 sm:p-4 hover:bg-muted/20 transition-colors flex items-start gap-3"
-                          onClick={() => setExpandedLog(expandedLog === `${selectedLog.date}-${idx}` ? selectedLog.date : `${selectedLog.date}-${idx}`)}>
-                          <span className="text-lg shrink-0 mt-0.5">{section.icon}</span>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {agentData && (
-                                <span className="w-5 h-5 rounded-full text-[9px] text-white font-bold flex items-center justify-center shrink-0" style={{ background: agentData.color }}>{agentData.avatar[0]}</span>
-                              )}
-                              <h4 className="font-semibold text-sm text-navy">{section.title}</h4>
-                              {section.type === "ceo" && <Badge variant="destructive" className="text-[9px] px-1.5 py-0">CEO</Badge>}
-                              {section.type === "summary" && <Badge className="bg-amber-100 text-amber-700 text-[9px] px-1.5 py-0">Summary</Badge>}
-                            </div>
-                            {expandedLog !== `${selectedLog.date}-${idx}` && (
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                {section.content.replace(/[#*|\-\[\]]/g, " ").replace(/\s+/g, " ").substring(0, 150)}...
-                              </p>
-                            )}
-                          </div>
-                          {expandedLog === `${selectedLog.date}-${idx}` ? <ChevronDown className="h-4 w-4 shrink-0 text-teal mt-1" /> : <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground mt-1" />}
-                        </button>
-                        {expandedLog === `${selectedLog.date}-${idx}` && (
-                          <div className="border-t px-3 sm:px-5 py-3 sm:py-4 bg-white">
-                            <article className={mdClasses}>
-                              <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.content}</ReactMarkdown>
-                            </article>
-                          </div>
-                        )}
-                      </Card>
-                    );
-                  })
-                ) : (
-                  // Fallback: render full content if parsing yields nothing
-                  <Card>
-                    <CardContent className="p-3 sm:p-5">
-                      <article className={mdClasses}>
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedLog.content}</ReactMarkdown>
-                      </article>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            )}
+              );
+            })}
           </div>
-        );
-      })()}
+        </div>
+      )}
 
-      {/* ═══ PLAYBOOK (Code of Conduct) TAB ═══ */}
+      {/* ═══ STANDUPS — Day pages with inline render ═══ */}
+      {tab === "standups" && (
+        <div className="space-y-4">
+          {/* Day selector pills */}
+          <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-none">
+            {logs.map(log => (
+              <button key={log.date} onClick={() => setSelectedDay(log.date)}
+                className={`shrink-0 rounded-xl px-4 py-3 text-left border transition-all ${selectedDay === log.date ? "bg-navy text-white border-navy shadow-lg" : "bg-white hover:border-teal/40 hover:shadow-md"}`}>
+                <div className="flex items-center gap-2">
+                  <span className={`font-semibold text-sm ${selectedDay === log.date ? "text-white" : "text-navy"}`}>{log.date}</span>
+                  {log.hasCeoItems && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className={`text-[10px] ${selectedDay === log.date ? "text-white/70" : "text-muted-foreground"}`}>{log.decisionCount} decisions · {log.agents.length} agents</span>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Selected day — FULL inline render */}
+          {selectedLog ? (
+            <Card>
+              {/* Header */}
+              <div className="p-4 sm:p-6 border-b bg-gradient-to-r from-navy/5 to-teal/5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h3 className="font-bold text-navy text-lg">Standup — {selectedLog.date}</h3>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      {selectedLog.agents.map(a => {
+                        const agentData = agents.find(ag => ag.name.includes(a));
+                        return (
+                          <span key={a} className="inline-flex items-center gap-1 text-[11px] bg-white/80 px-2 py-0.5 rounded-full border">
+                            {agentData && <span className="w-3 h-3 rounded-full" style={{ background: agentData.color }} />}
+                            {a}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span>{selectedLog.decisionCount} decisions</span>
+                    <span>{selectedLog.sizeKB} KB</span>
+                  </div>
+                </div>
+              </div>
+              {/* Full content — rendered inline, no sub-dropdowns */}
+              <div className="p-4 sm:p-6 lg:p-8">
+                <article className={mdClasses}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedLog.content}</ReactMarkdown>
+                </article>
+              </div>
+            </Card>
+          ) : (
+            <Card><CardContent className="py-16 text-center">
+              <Calendar className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">Select a date above to view the standup log</p>
+            </CardContent></Card>
+          )}
+        </div>
+      )}
+
+      {/* ═══ PLAYBOOK ═══ */}
       {tab === "playbook" && (
         <div className="space-y-4">
           <Card className="bg-gradient-to-r from-navy/5 to-teal/5 border-navy/10">
             <CardContent className="py-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <BookOpen className="h-5 w-5 text-navy" />
-                  <div><h3 className="font-semibold text-navy">Code of Conduct</h3><p className="text-xs text-muted-foreground">The single operating document for the agent fleet</p></div>
-                </div>
+                <div className="flex items-center gap-3"><BookOpen className="h-5 w-5 text-navy" /><div><h3 className="font-semibold text-navy">Code of Conduct</h3><p className="text-xs text-muted-foreground">The single operating document for the agent fleet</p></div></div>
                 <Badge variant="outline" className="text-[10px]">Updated: {cocUpdated}</Badge>
               </div>
             </CardContent>
           </Card>
           {cocSections.length === 0 ? (
-            <Card><CardContent className="py-12 text-center"><BookOpen className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" /><p className="text-sm text-muted-foreground">Code of Conduct not found. Ensure <code className="bg-muted px-1.5 py-0.5 rounded text-xs">agents/CODE-OF-CONDUCT.md</code> exists.</p></CardContent></Card>
-          ) : (
-            <div className="space-y-2">
-              {cocSections.map((section, idx) => (
-                <Card key={idx} className="overflow-hidden">
-                  <button className="w-full text-left p-4 hover:bg-muted/30 transition-colors flex items-center gap-3" onClick={() => setExpandedCocSection(expandedCocSection === idx ? null : idx)}>
-                    {expandedCocSection === idx ? <ChevronDown className="h-4 w-4 shrink-0 text-teal" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
-                    <span className="font-semibold text-sm">{section.title}</span>
-                  </button>
-                  {expandedCocSection === idx && (
-                    <div className="border-t bg-white">
-                      <ScrollArea className="max-h-[70vh] sm:max-h-[500px]">
-                        <div className="p-4 sm:p-6">
-                          <article className="prose prose-sm max-w-none prose-headings:text-navy prose-h3:text-base prose-h3:mt-5 prose-h3:mb-2 prose-p:text-muted-foreground prose-p:text-sm prose-p:leading-relaxed prose-li:text-sm prose-li:text-muted-foreground prose-strong:text-foreground prose-code:bg-muted prose-code:px-1 prose-code:rounded prose-code:text-xs prose-table:text-sm [&_table]:w-full [&_table]:border-collapse [&_td]:py-1.5 [&_td]:px-2 [&_th]:py-1.5 [&_th]:px-2 [&_td]:border-b [&_td]:border-border/20 [&_th]:border-b [&_th]:font-semibold [&_th]:text-navy">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.content}</ReactMarkdown>
-                          </article>
-                        </div>
-                      </ScrollArea>
-                    </div>
-                  )}
-                </Card>
-              ))}
-            </div>
-          )}
+            <Card><CardContent className="py-12 text-center"><BookOpen className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" /><p className="text-sm text-muted-foreground">Code of Conduct not found. Run sync to push it to production.</p></CardContent></Card>
+          ) : cocSections.map((section, idx) => (
+            <Card key={idx}>
+              <button className="w-full text-left p-4 hover:bg-muted/30 transition-colors flex items-center gap-3" onClick={() => setExpandedCocSection(expandedCocSection === idx ? null : idx)}>
+                {expandedCocSection === idx ? <ChevronDown className="h-4 w-4 shrink-0 text-teal" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
+                <span className="font-semibold text-sm">{section.title}</span>
+              </button>
+              {expandedCocSection === idx && (
+                <div className="border-t p-4 sm:p-6">
+                  <article className={mdClasses}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.content}</ReactMarkdown>
+                  </article>
+                </div>
+              )}
+            </Card>
+          ))}
         </div>
       )}
 
@@ -548,7 +439,54 @@ export default function OperationsPage() {
       {/* ═══ AGENT DETAIL DIALOG ═══ */}
       <Dialog open={!!selectedAgent} onOpenChange={() => setSelectedAgent(null)}>
         <DialogContent className="max-w-md">
-          {selectedAgent && (<><DialogHeader><div className="flex items-center gap-4"><div className="w-14 h-14 rounded-full text-white text-lg font-bold flex items-center justify-center shadow-lg" style={{ background: selectedAgent.color }}>{selectedAgent.avatar}</div><div><DialogTitle>{selectedAgent.name}</DialogTitle><p className="text-sm text-teal font-medium">{selectedAgent.role}</p></div></div></DialogHeader><div className="space-y-4 mt-2"><p className="text-sm text-muted-foreground leading-relaxed">{selectedAgent.bio}</p><div><h4 className="text-sm font-semibold mb-2 flex items-center gap-2"><Star className="h-4 w-4 text-gold" /> Skills</h4><div className="flex flex-wrap gap-1.5">{selectedAgent.skills.map(s => <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>)}</div></div></div></>)}
+          {selectedAgent && (<>
+            <DialogHeader>
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full text-white text-lg font-bold flex items-center justify-center shadow-lg" style={{ background: selectedAgent.color }}>{selectedAgent.avatar}</div>
+                <div><DialogTitle>{selectedAgent.name}</DialogTitle><p className="text-sm text-teal font-medium">{selectedAgent.role}</p></div>
+              </div>
+            </DialogHeader>
+            <div className="space-y-4 mt-2">
+              <p className="text-sm text-muted-foreground leading-relaxed">{selectedAgent.bio}</p>
+              <div>
+                <h4 className="text-sm font-semibold mb-2 flex items-center gap-2"><Star className="h-4 w-4 text-gold" /> Skills</h4>
+                <div className="flex flex-wrap gap-1.5">{selectedAgent.skills.map(s => <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>)}</div>
+              </div>
+              {/* Performance breakdown */}
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-semibold mb-3 flex items-center gap-2"><BarChart3 className="h-4 w-4 text-teal" /> Performance</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-muted/50 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-navy">{selectedAgent.stats.total}</p>
+                    <p className="text-[11px] text-muted-foreground">Total Proposals</p>
+                  </div>
+                  <div className="bg-emerald-50 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-emerald-600">{selectedAgent.stats.approved}</p>
+                    <p className="text-[11px] text-muted-foreground">Approved</p>
+                  </div>
+                  <div className="bg-red-50 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-red-600">{selectedAgent.stats.rejected}</p>
+                    <p className="text-[11px] text-muted-foreground">Rejected</p>
+                  </div>
+                  <div className="bg-amber-50 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-amber-600">{selectedAgent.stats.open}</p>
+                    <p className="text-[11px] text-muted-foreground">Pending</p>
+                  </div>
+                </div>
+                {selectedAgent.stats.total > 0 && (
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-muted-foreground">Approval Rate</span>
+                      <span className="font-semibold">{Math.round((selectedAgent.stats.approved / selectedAgent.stats.total) * 100)}%</span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${(selectedAgent.stats.approved / selectedAgent.stats.total) * 100}%` }} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>)}
         </DialogContent>
       </Dialog>
     </div>
