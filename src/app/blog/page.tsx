@@ -1,161 +1,38 @@
-"use client";
+import type { Metadata } from "next";
+import { prisma } from "@/lib/db";
+import { BlogListClient } from "./BlogListClient";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import Link from "next/link";
-import { ArrowRight, Calendar, Clock, Filter, Eye } from "lucide-react";
-import { useTranslation } from "@/lib/i18n";
+export const metadata: Metadata = {
+  title: "Blog — Shipping & Import Insights | Doge Consulting",
+  description: "Expert guides, tariff updates, sourcing tips, and business strategies for importing from China to the USA. Free tools, cost breakdowns, and industry analysis.",
+  openGraph: {
+    title: "Blog — Shipping & Import Insights | Doge Consulting",
+    description: "Expert guides on importing from China. Tariff updates, sourcing tips, freight rate analysis.",
+    url: "https://doge-consulting.com/blog",
+  },
+  alternates: { canonical: "https://doge-consulting.com/blog" },
+};
 
-interface BlogPost {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string;
-  content: string;
-  category: string;
-  emoji: string;
-  authorName: string;
-  readTime: string;
-  viewCount?: number;
-  createdAt: string;
-}
+export const dynamic = "force-dynamic";
 
-function getCoverImage(content: string): string | null {
-  const match = content?.match(/!\[[^\]]*\]\(([^)]+)\)/);
-  return match ? match[1] : null;
-}
+export default async function BlogPage() {
+  const posts = await prisma.blogPost.findMany({
+    where: { published: true, language: "en" },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      excerpt: true,
+      content: true,
+      category: true,
+      emoji: true,
+      authorName: true,
+      readTime: true,
+      viewCount: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
 
-export default function BlogPage() {
-  const { locale, t } = useTranslation();
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch(`/api/blog?lang=${locale}`)
-      .then((r) => r.json())
-      .then((data) => { setPosts(Array.isArray(data) ? data : []); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, [locale]);
-
-  const categories = [...new Set(posts.map((p) => p.category))].sort();
-  const filtered = selectedCategory ? posts.filter((p) => p.category === selectedCategory) : posts;
-  const featured = filtered[0];
-  const rest = filtered.slice(1);
-
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      <section className="gradient-hero py-16 text-white">
-        <div className="mx-auto max-w-7xl px-4 text-center">
-          <Badge className="mb-4 bg-teal/20 text-teal-200 border-teal/30">Blog</Badge>
-          <h1 className="text-4xl font-bold mb-4">Shipping & Import Insights</h1>
-          <p className="text-lg text-slate-300 max-w-2xl mx-auto">
-            Expert guides, tariff updates, sourcing tips, and business strategies for importing from China.
-          </p>
-        </div>
-      </section>
-
-      <div className="mx-auto max-w-5xl px-4 py-12">
-        {/* Category Filter */}
-        {categories.length > 0 && (
-          <div className="flex gap-2 flex-wrap mb-8">
-            <Button size="sm" variant={!selectedCategory ? "default" : "outline"} onClick={() => setSelectedCategory(null)}
-              className={!selectedCategory ? "bg-teal hover:bg-teal/90" : ""}>
-              <Filter className="h-3 w-3 mr-1" /> All
-            </Button>
-            {categories.map((cat) => (
-              <Button key={cat} size="sm" variant={selectedCategory === cat ? "default" : "outline"}
-                onClick={() => setSelectedCategory(cat)}
-                className={selectedCategory === cat ? "bg-teal hover:bg-teal/90" : ""}>
-                {cat}
-              </Button>
-            ))}
-          </div>
-        )}
-
-        {loading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <Card key={i} className="animate-pulse"><div className="h-40 bg-muted rounded-t-lg" /><CardContent className="p-5 space-y-2"><div className="h-4 bg-muted rounded w-3/4" /><div className="h-3 bg-muted rounded w-full" /></CardContent></Card>
-            ))}
-          </div>
-        ) : posts.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-4xl mb-4">📝</p>
-            <h3 className="text-xl font-semibold mb-2">Coming Soon</h3>
-            <p className="text-muted-foreground">Blog posts are being prepared. Check back soon!</p>
-          </div>
-        ) : (
-          <>
-            {/* Featured Post */}
-            {featured && (
-              <Link href={`/blog/${featured.slug}`}>
-                <Card className="mb-10 overflow-hidden hover:shadow-lg transition-shadow group">
-                  <CardContent className="p-0">
-                    <div className="grid md:grid-cols-2">
-                      <div className="h-64 md:h-auto bg-gradient-to-br from-teal/10 to-gold/10 flex items-center justify-center text-8xl overflow-hidden">
-                        {getCoverImage(featured.content) ? <img src={getCoverImage(featured.content)!} alt={featured.title} className="h-full w-full object-cover" /> : featured.emoji}
-                      </div>
-                      <div className="p-8 flex flex-col justify-center">
-                        <Badge className="w-fit mb-3">{featured.category}</Badge>
-                        <h2 className="text-2xl font-bold mb-3 group-hover:text-teal transition-colors">{featured.title}</h2>
-                        <p className="text-muted-foreground mb-4">{featured.excerpt}</p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(featured.createdAt).toLocaleDateString()}</span>
-                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{featured.readTime}</span>
-                          {featured.viewCount !== undefined && featured.viewCount > 0 && (
-                            <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{featured.viewCount.toLocaleString()} views</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            )}
-
-            {/* Grid */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {rest.map((post, i) => (
-                <motion.div key={post.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                  <Link href={`/blog/${post.slug}`}>
-                    <Card className="h-full hover:shadow-lg transition-shadow group overflow-hidden">
-                      <div className="h-40 bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center text-5xl rounded-t-lg overflow-hidden">
-                        {getCoverImage(post.content) ? <img src={getCoverImage(post.content)!} alt={post.title} className="h-full w-full object-cover" /> : post.emoji}
-                      </div>
-                      <CardContent className="p-5">
-                        <Badge variant="secondary" className="mb-2 text-xs">{post.category}</Badge>
-                        <h3 className="font-semibold mb-2 line-clamp-2 group-hover:text-teal transition-colors">{post.title}</h3>
-                        <p className="text-sm text-muted-foreground line-clamp-3 mb-3">{post.excerpt}</p>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(post.createdAt).toLocaleDateString()}</span>
-                          <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{post.readTime}</span>
-                          {post.viewCount !== undefined && post.viewCount > 0 && (
-                            <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{post.viewCount.toLocaleString()}</span>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* CTA */}
-        <div className="mt-16 text-center p-8 rounded-2xl bg-gradient-to-r from-teal/5 to-gold/5 border">
-          <h2 className="text-2xl font-bold mb-3">Ready to Start Importing?</h2>
-          <p className="text-muted-foreground mb-6">Put these insights into action — get a free quote and let us handle the logistics.</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/quote"><Button size="lg" className="bg-teal hover:bg-teal/90">Get Free Quote <ArrowRight className="ml-2 h-5 w-5" /></Button></Link>
-            <Link href="/whitepaper"><Button size="lg" variant="outline">Download Free Guide 📘</Button></Link>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <BlogListClient posts={JSON.parse(JSON.stringify(posts))} />;
 }

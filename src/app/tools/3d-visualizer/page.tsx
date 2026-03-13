@@ -226,7 +226,7 @@ export default function ThreeDVisualizerPage() {  const { t } = useTranslation()
           destination: "Seattle, WA",
           totalCBM: round(totalCbm, 4),
           totalWeight: round(totalWeight, 1),
-          shippingEstimateUSD: 0,
+          shippingEstimateUSD: Math.round(Math.max(totalCbm * 350, totalWeight * 0.45, 150)),
           items: items.map(i => ({ name: i.name, quantity: 1, cbm: round(i.lm * i.wm * i.hm, 4), weightKG: i.weightKg })),
           visualizerConfig: { items: items.length, totalCbm: round(totalCbm, 4), totalWeight: round(totalWeight, 1), containerType: container.label, packed: packedMode },
           snapshotDataUrl: snapshot,
