@@ -113,6 +113,28 @@ export async function GET(request: NextRequest) {
           }
         }
         result.coc = { sections, updatedAt: raw.match(/Last updated: (.+)/)?.[1] || "Unknown" };
+      } else {
+        // Fallback: read from DB (production server)
+        const dbCoc = await prisma.agentLog.findFirst({ where: { type: "coc", relatedTo: "coc:latest" } });
+        if (dbCoc) {
+          const raw = dbCoc.content;
+          const sections: { title: string; content: string }[] = [];
+          const parts = raw.split(/^## (Part \d+ — .+)$/gm);
+          if (parts.length > 1) {
+            for (let i = 1; i < parts.length; i += 2) {
+              sections.push({ title: parts[i], content: parts[i + 1]?.trim() || "" });
+            }
+          }
+          const appendixMatch = raw.match(/^## (Appendix .+)$/gm);
+          if (appendixMatch) {
+            for (const header of appendixMatch) {
+              const idx = raw.indexOf(header);
+              const nextSection = raw.indexOf("\n## ", idx + 1);
+              sections.push({ title: header.replace("## ", ""), content: raw.substring(idx + header.length, nextSection > 0 ? nextSection : undefined).trim() });
+            }
+          }
+          result.coc = { sections, updatedAt: raw.match(/Last updated: (.+)/)?.[1] || "Unknown" };
+        }
       }
     }
 

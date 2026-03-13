@@ -88,6 +88,14 @@ for (const file of files) {
 
 console.log(`\n📊 Total: ${standups.length} standups, ${decisions.length} decisions`);
 
+// Read Code of Conduct
+let coc = null;
+const cocPath = join(ROOT, "agents", "CODE-OF-CONDUCT.md");
+if (existsSync(cocPath)) {
+  coc = readFileSync(cocPath, "utf-8");
+  console.log(`📜 Code of Conduct: ${(coc.length / 1024).toFixed(1)} KB`);
+}
+
 if (flags.dryRun) {
   console.log("\n🏁 Dry run complete. Remove --dry-run to push.\n");
   process.exit(0);
@@ -99,7 +107,7 @@ try {
   const res = await fetch(targetUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-fleet-secret": syncSecret },
-    body: JSON.stringify({ standups, decisions }),
+    body: JSON.stringify({ standups, decisions, coc }),
   });
   const data = await res.json();
   if (res.ok) {

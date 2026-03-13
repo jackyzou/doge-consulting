@@ -13,10 +13,22 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { standups, decisions } = body;
+    const { standups, decisions, coc } = body;
 
     let standupsCreated = 0;
     let decisionsCreated = 0;
+
+    // ── Store Code of Conduct as AgentLog type="coc" ──
+    if (coc && typeof coc === "string") {
+      const existing = await prisma.agentLog.findFirst({ where: { type: "coc", relatedTo: "coc:latest" } });
+      if (existing) {
+        await prisma.agentLog.update({ where: { id: existing.id }, data: { content: coc } });
+      } else {
+        await prisma.agentLog.create({
+          data: { agent: "alex", type: "coc", priority: "normal", title: "Code of Conduct", content: coc, status: "completed", relatedTo: "coc:latest" },
+        });
+      }
+    }
 
     // ── Upsert standup logs as AgentLog type="standup" ──
     if (Array.isArray(standups)) {
