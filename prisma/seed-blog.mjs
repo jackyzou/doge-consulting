@@ -2331,6 +2331,10 @@ const upsert = db.prepare(`
     updatedAt=datetime('now')
 `);
 
+// Track which posts are newly inserted (not updates)
+const existing = db.prepare("SELECT slug FROM BlogPost WHERE language='en'").all().map(r => r.slug);
+const newSlugs = allPosts.filter(p => !existing.includes(p.slug)).map(p => p.slug);
+
 const txn = db.transaction(() => {
   for (const p of allPosts) {
     upsert.run(cuid(), p.slug, p.title, p.excerpt, p.content, p.category, p.emoji, p.readTime);
@@ -2338,5 +2342,75 @@ const txn = db.transaction(() => {
 });
 
 txn();
-console.log(`✅ ${allPosts.length} blog posts upserted!`);
+console.log(`✅ ${allPosts.length} blog posts upserted! (${newSlugs.length} new)`);
+
+// Notify subscribers about NEW posts directly via SMTP
+if (newSlugs.length > 0) {
+  try {
+    const { config: loadEnv } = await import("dotenv");
+    loadEnv({ path: ".env.local" });
+    loadEnv({ path: ".env" });
+
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+
+    if (smtpHost && smtpUser && smtpPass) {
+      const nodemailer = await import("nodemailer");
+      const transporter = nodemailer.default.createTransport({
+        host: smtpHost,
+        port: parseInt(process.env.SMTP_PORT || "587"),
+        secure: false,
+        auth: { user: smtpUser, pass: smtpPass },
+      });
+
+      const subscribers = db2 ? [] : db.prepare("SELECT email FROM Subscriber").all();
+      // Re-open DB if closed
+      const subDb = new Database(DB_PATH);
+      const subs = subDb.prepare("SELECT email FROM Subscriber").all();
+      subDb.close();
+
+      if (subs.length > 0) {
+        const fromEmail = process.env.SMTP_FROM || smtpUser;
+        console.log(`📧 Notifying ${subs.length} subscriber(s) about ${newSlugs.length} new post(s)...`);
+
+        for (const slug of newSlugs) {
+          const post = allPosts.find(p => p.slug === slug);
+          if (!post) continue;
+
+          const coverMatch = post.content.match(/!\[[^\]]*\]\(([^)]+)\)/);
+          const coverImage = coverMatch ? coverMatch[1] : null;
+          const blogUrl = `https://doge-consulting.com/blog/${post.slug}`;
+
+          for (const sub of subs) {
+            try {
+              await transporter.sendMail({
+                from: `"Doge Consulting Blog" <${fromEmail}>`,
+                to: sub.email,
+                subject: `${post.emoji} New: ${post.title}`,
+                html: `<div style="font-family:system-ui;max-width:600px;margin:0 auto;padding:20px;">
+                  ${coverImage ? `<img src="${coverImage}" style="width:100%;border-radius:12px;max-height:300px;object-fit:cover;" />` : ""}
+                  <h2 style="color:#0f2b46;margin-top:16px;">${post.emoji} ${post.title}</h2>
+                  <p style="color:#64748b;line-height:1.6;">${post.excerpt}</p>
+                  <a href="${blogUrl}" style="display:inline-block;background:#2ec4b6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:12px;">Read Full Article →</a>
+                  <p style="color:#94a3b8;font-size:12px;margin-top:24px;">You're receiving this because you subscribed to Doge Consulting updates.</p>
+                </div>`,
+              });
+              console.log(`  ✉️  ${sub.email} — ${post.title}`);
+            } catch (err) {
+              console.log(`  ⚠️  Failed to email ${sub.email}: ${err.message}`);
+            }
+          }
+        }
+      } else {
+        console.log(`📧 No subscribers yet — skipping notification.`);
+      }
+    } else {
+      console.log(`📧 SMTP not configured — skipping subscriber notification.`);
+    }
+  } catch (err) {
+    console.log(`📧 Notification skipped: ${err.message}`);
+  }
+}
+
 db.close();
