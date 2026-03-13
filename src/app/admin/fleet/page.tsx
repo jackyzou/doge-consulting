@@ -282,57 +282,184 @@ export default function OperationsPage() {
         </div>
       )}
 
-      {/* ═══ STANDUPS TAB — React-Markdown ═══ */}
-      {tab === "standups" && (
-        <div className="space-y-3">
-          {logs.length === 0 ? (
-            <Card><CardContent className="py-12 text-center"><Calendar className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" /><p className="text-sm text-muted-foreground">No standup logs. Run <code className="bg-muted px-1.5 py-0.5 rounded text-xs">node agents/run-fleet.mjs</code> then sync.</p></CardContent></Card>
-          ) : logs.map(log => (
-            <Card key={log.date} className="overflow-hidden">
-              <button className="w-full text-left p-4 hover:bg-muted/30 transition-colors flex items-center gap-3" onClick={() => setExpandedLog(expandedLog === log.date ? null : log.date)}>
-                {expandedLog === log.date ? <ChevronDown className="h-4 w-4 shrink-0 text-teal" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold">{log.date}</span>
-                    {log.hasCeoItems && <Badge variant="destructive" className="text-[10px] px-1.5 py-0 animate-pulse">CEO Action</Badge>}
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">{log.decisionCount} decisions</Badge>
-                    <span className="text-xs text-muted-foreground">{log.sizeKB} KB</span>
+      {/* ═══ STANDUPS TAB — Structured View ═══ */}
+      {tab === "standups" && (() => {
+        // Parse logs into structured sections for better readability
+        function parseLogSections(content: string) {
+          const sections: { type: string; title: string; agent?: string; content: string; icon: string }[] = [];
+          // Split by ## headers
+          const parts = content.split(/^## /gm).filter(Boolean);
+          for (const part of parts) {
+            const firstLine = part.split("\n")[0].trim();
+            const body = part.substring(firstLine.length).trim();
+            if (!firstLine || body.length < 10) continue;
+
+            // Detect section type
+            if (firstLine.includes("Morning Standup") || firstLine.includes("🌅")) {
+              // Parse individual agent reports from #### headers
+              const agentParts = body.split(/^#### /gm).filter(Boolean);
+              // Intro section (Round 1 header etc)
+              if (agentParts.length > 1) {
+                for (const ap of agentParts) {
+                  const agentLine = ap.split("\n")[0].trim();
+                  const agentBody = ap.substring(agentLine.length).trim();
+                  // Detect if this is an agent report or a synthesis/summary section
+                  const agentMatch = agentLine.match(/^(Seth|Seto|Rachel|Amy|Tiffany|Alex)/);
+                  if (agentMatch) {
+                    sections.push({ type: "agent-report", title: agentLine, agent: agentMatch[1].toLowerCase(), content: agentBody, icon: "👤" });
+                  } else if (agentLine.includes("Synthesis") || agentLine.includes("Alex Chen")) {
+                    sections.push({ type: "synthesis", title: agentLine, content: agentBody, icon: "🎯" });
+                  }
+                }
+              }
+              // Look for ### sections within the standup
+              const subSections = body.split(/^### /gm).filter(Boolean);
+              for (const sub of subSections) {
+                const subTitle = sub.split("\n")[0].trim();
+                const subBody = sub.substring(subTitle.length).trim();
+                if (subTitle.includes("Round 2") || subTitle.includes("Synthesis")) {
+                  sections.push({ type: "synthesis", title: subTitle, content: subBody, icon: "🎯" });
+                } else if (subTitle.includes("🔴") || subTitle.includes("CEO")) {
+                  sections.push({ type: "ceo", title: subTitle, content: subBody, icon: "🔴" });
+                } else if (subTitle.includes("📊") || subTitle.includes("Summary")) {
+                  sections.push({ type: "summary", title: subTitle, content: subBody, icon: "📊" });
+                } else if (subTitle.includes("Round 1")) {
+                  // Skip — agent reports already parsed from ####
+                } else if (subBody.length > 20) {
+                  sections.push({ type: "section", title: subTitle, content: subBody, icon: "📋" });
+                }
+              }
+            } else if (firstLine.includes("Operations Summary") || firstLine.includes("📊")) {
+              sections.push({ type: "summary", title: firstLine, content: body, icon: "📊" });
+            } else if (firstLine.includes("Evening") || firstLine.includes("Morning Brief")) {
+              sections.push({ type: "brief", title: firstLine, content: body, icon: "📝" });
+            } else if (body.length > 50) {
+              sections.push({ type: "section", title: firstLine, content: body, icon: "📋" });
+            }
+          }
+          return sections;
+        }
+
+        const selectedLog = expandedLog ? logs.find(l => l.date === expandedLog) : null;
+        const parsedSections = selectedLog ? parseLogSections(selectedLog.content) : [];
+
+        const sectionColors: Record<string, string> = {
+          "agent-report": "border-l-blue-400",
+          synthesis: "border-l-teal",
+          ceo: "border-l-red-500",
+          summary: "border-l-amber-500",
+          brief: "border-l-slate-300",
+          section: "border-l-slate-300",
+        };
+
+        const mdClasses = "prose prose-sm max-w-none prose-headings:text-navy prose-headings:font-bold prose-h3:text-base prose-h3:mt-4 prose-h3:mb-2 prose-h4:text-sm prose-h4:mt-3 prose-h4:mb-1 prose-p:text-muted-foreground prose-p:text-sm prose-p:leading-relaxed prose-p:my-1.5 prose-li:text-muted-foreground prose-li:text-sm prose-li:my-0.5 prose-strong:text-foreground prose-strong:font-semibold prose-blockquote:border-teal/40 prose-blockquote:bg-teal/5 prose-blockquote:rounded-r prose-blockquote:py-0.5 prose-blockquote:my-2 prose-table:text-xs sm:prose-table:text-sm prose-th:text-left prose-th:font-semibold prose-th:text-navy prose-th:bg-muted/50 prose-td:py-1.5 prose-td:px-2 sm:prose-td:px-3 prose-th:py-1.5 prose-th:px-2 sm:prose-th:px-3 prose-hr:my-4 prose-code:bg-muted prose-code:px-1 prose-code:rounded prose-code:text-xs [&_table]:w-full [&_table]:border-collapse [&_table]:border [&_table]:border-border/30 [&_table]:rounded-lg [&_table]:overflow-hidden [&_table]:text-xs sm:[&_table]:text-sm [&_td]:border-b [&_td]:border-border/20 [&_th]:border-b-2 [&_th]:border-border/30 [&_table]:block sm:[&_table]:table [&_thead]:block sm:[&_thead]:table-header-group [&_tbody]:block sm:[&_tbody]:table-row-group [&_tr]:block sm:[&_tr]:table-row [&_td]:block sm:[&_td]:table-cell [&_th]:block sm:[&_th]:table-cell [&_td]:before:content-[attr(data-label)] [&_td]:before:font-semibold sm:[&_td]:before:content-none";
+
+        return (
+          <div className="space-y-4">
+            {/* Day selector — horizontal scroll on mobile */}
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-none">
+              {logs.map(log => (
+                <button key={log.date} onClick={() => setExpandedLog(expandedLog === log.date ? null : log.date)}
+                  className={`shrink-0 rounded-xl px-4 py-3 text-left border transition-all ${expandedLog === log.date ? "bg-navy text-white border-navy shadow-lg" : "bg-white hover:border-teal/40 hover:shadow-md"}`}>
+                  <div className="flex items-center gap-2">
+                    <span className={`font-semibold text-sm ${expandedLog === log.date ? "text-white" : "text-navy"}`}>{log.date}</span>
+                    {log.hasCeoItems && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
                   </div>
-                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                    {log.agents.map(a => <span key={a} className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full">{a}</span>)}
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`text-[10px] ${expandedLog === log.date ? "text-white/70" : "text-muted-foreground"}`}>{log.decisionCount} decisions · {log.agents.length} agents</span>
                   </div>
-                </div>
-              </button>
-              {expandedLog === log.date && (
-                <div className="border-t bg-white">
-                  <ScrollArea className="h-[70vh] sm:h-[600px]">
-                    <div className="p-4 sm:p-6 lg:p-8">
-                      <article className="prose prose-sm sm:prose-base max-w-none
-                        prose-headings:text-navy prose-headings:font-bold
-                        prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b prose-h2:border-teal/20
-                        prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3
-                        prose-h4:text-base prose-h4:mt-5 prose-h4:mb-2
-                        prose-p:text-muted-foreground prose-p:leading-relaxed
-                        prose-li:text-muted-foreground prose-li:text-sm
-                        prose-strong:text-foreground prose-strong:font-semibold
-                        prose-blockquote:border-teal/40 prose-blockquote:bg-teal/5 prose-blockquote:rounded-r-lg prose-blockquote:py-1
-                        prose-table:text-sm prose-th:text-left prose-th:font-semibold prose-th:text-navy prose-th:bg-muted/50
-                        prose-td:py-2 prose-td:px-3 prose-th:py-2 prose-th:px-3
-                        prose-hr:my-6 prose-hr:border-border/50
-                        prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-normal
-                        [&_table]:w-full [&_table]:border-collapse [&_table]:border [&_table]:border-border/30 [&_table]:rounded-lg [&_table]:overflow-hidden
-                        [&_td]:border-b [&_td]:border-border/20 [&_th]:border-b-2 [&_th]:border-border/30
-                      ">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{log.content}</ReactMarkdown>
-                      </article>
+                </button>
+              ))}
+            </div>
+
+            {/* No log selected */}
+            {!selectedLog && (
+              <Card><CardContent className="py-16 text-center">
+                <Calendar className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">Select a date above to view the standup log</p>
+              </CardContent></Card>
+            )}
+
+            {/* Selected log — structured sections */}
+            {selectedLog && (
+              <div className="space-y-3">
+                {/* Header card */}
+                <Card className="bg-gradient-to-r from-navy/5 to-teal/5 border-navy/10">
+                  <CardContent className="py-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <h3 className="font-bold text-navy text-lg">Standup — {selectedLog.date}</h3>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          {selectedLog.agents.map(a => {
+                            const agentData = agents.find(ag => ag.name.includes(a));
+                            return (
+                              <span key={a} className="inline-flex items-center gap-1 text-[11px] bg-white/80 px-2 py-0.5 rounded-full border">
+                                {agentData && <span className="w-3 h-3 rounded-full" style={{ background: agentData.color }} />}
+                                {a}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>{selectedLog.decisionCount} decisions</span>
+                        <span>{selectedLog.sizeKB} KB</span>
+                      </div>
                     </div>
-                  </ScrollArea>
-                </div>
-              )}
-            </Card>
-          ))}
-        </div>
-      )}
+                  </CardContent>
+                </Card>
+
+                {parsedSections.length > 0 ? (
+                  // Structured view — each section as a card
+                  parsedSections.map((section, idx) => {
+                    const agentData = section.agent ? agents.find(a => a.id === section.agent || a.name.toLowerCase().startsWith(section.agent || "")) : null;
+                    return (
+                      <Card key={idx} className={`border-l-4 ${sectionColors[section.type] || "border-l-slate-300"} overflow-hidden`}>
+                        <button className="w-full text-left p-3 sm:p-4 hover:bg-muted/20 transition-colors flex items-start gap-3"
+                          onClick={() => setExpandedLog(expandedLog === `${selectedLog.date}-${idx}` ? selectedLog.date : `${selectedLog.date}-${idx}`)}>
+                          <span className="text-lg shrink-0 mt-0.5">{section.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {agentData && (
+                                <span className="w-5 h-5 rounded-full text-[9px] text-white font-bold flex items-center justify-center shrink-0" style={{ background: agentData.color }}>{agentData.avatar[0]}</span>
+                              )}
+                              <h4 className="font-semibold text-sm text-navy">{section.title}</h4>
+                              {section.type === "ceo" && <Badge variant="destructive" className="text-[9px] px-1.5 py-0">CEO</Badge>}
+                              {section.type === "summary" && <Badge className="bg-amber-100 text-amber-700 text-[9px] px-1.5 py-0">Summary</Badge>}
+                            </div>
+                            {expandedLog !== `${selectedLog.date}-${idx}` && (
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                {section.content.replace(/[#*|\-\[\]]/g, " ").replace(/\s+/g, " ").substring(0, 150)}...
+                              </p>
+                            )}
+                          </div>
+                          {expandedLog === `${selectedLog.date}-${idx}` ? <ChevronDown className="h-4 w-4 shrink-0 text-teal mt-1" /> : <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground mt-1" />}
+                        </button>
+                        {expandedLog === `${selectedLog.date}-${idx}` && (
+                          <div className="border-t px-3 sm:px-5 py-3 sm:py-4 bg-white">
+                            <article className={mdClasses}>
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.content}</ReactMarkdown>
+                            </article>
+                          </div>
+                        )}
+                      </Card>
+                    );
+                  })
+                ) : (
+                  // Fallback: render full content if parsing yields nothing
+                  <Card>
+                    <CardContent className="p-3 sm:p-5">
+                      <article className={mdClasses}>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedLog.content}</ReactMarkdown>
+                      </article>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* ═══ PLAYBOOK (Code of Conduct) TAB ═══ */}
       {tab === "playbook" && (
