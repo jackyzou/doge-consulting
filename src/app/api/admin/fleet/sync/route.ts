@@ -13,10 +13,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { standups, decisions, coc } = body;
+    const { standups, decisions, coc, resetDecisions } = body;
 
     let standupsCreated = 0;
     let decisionsCreated = 0;
+
+    // ── Reset decisions if requested (re-sync with correct attribution) ──
+    if (resetDecisions) {
+      await prisma.agentLog.deleteMany({ where: { type: "decision" } });
+    }
 
     // ── Store Code of Conduct as AgentLog type="coc" ──
     if (coc && typeof coc === "string") {

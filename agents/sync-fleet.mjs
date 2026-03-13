@@ -26,6 +26,7 @@ for (let i = 0; i < args.length; i++) {
   if (args[i] === "--dry-run") flags.dryRun = true;
   if (args[i] === "--url" && args[i + 1]) flags.url = args[++i];
   if (args[i] === "--secret" && args[i + 1]) flags.secret = args[++i];
+  if (args[i] === "--reset-decisions") flags.resetDecisions = true;
 }
 
 const targetUrl = flags.url || SYNC_URL;
@@ -123,7 +124,7 @@ try {
   const res = await fetch(targetUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-fleet-secret": syncSecret },
-    body: JSON.stringify({ standups, decisions, coc }),
+    body: JSON.stringify({ standups, decisions, coc, resetDecisions: flags.resetDecisions || false }),
   });
   const data = await res.json();
   if (res.ok) {
