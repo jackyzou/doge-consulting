@@ -32,22 +32,29 @@ const priorityConfig: Record<string, { label: string; color: string; border: str
 const agentColors: Record<string, string> = { alex: "#0F2B46", amy: "#059669", seth: "#2563EB", rachel: "#D97706", seto: "#7C3AED", tiffany: "#EC4899", jacky: "#2EC4B6" };
 const typeIcons: Record<string, string> = { decision: "📋", standup: "🌅", action: "⚡", alert: "🚨", note: "📝" };
 
-// Prose classes for markdown rendering
-const mdClasses = `prose prose-sm sm:prose-base max-w-none
-  prose-headings:text-navy prose-headings:font-bold
-  prose-h2:text-lg sm:prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b prose-h2:border-teal/20
-  prose-h3:text-base sm:prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3
-  prose-h4:text-sm sm:prose-h4:text-base prose-h4:mt-4 prose-h4:mb-2
-  prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:text-sm
-  prose-li:text-muted-foreground prose-li:text-sm
+// Markdown prose classes — designed to match VS Code preview readability
+const mdClasses = `prose prose-base max-w-none
+  prose-headings:text-navy prose-headings:font-bold prose-headings:tracking-tight
+  prose-h1:text-2xl prose-h1:mt-10 prose-h1:mb-4
+  prose-h2:text-xl prose-h2:mt-10 prose-h2:mb-5 prose-h2:pb-3 prose-h2:border-b-2 prose-h2:border-teal/30
+  prose-h3:text-lg prose-h3:mt-8 prose-h3:mb-4
+  prose-h4:text-base prose-h4:mt-6 prose-h4:mb-3 prose-h4:text-navy/80
+  prose-p:text-foreground/80 prose-p:leading-7 prose-p:my-3
+  prose-li:text-foreground/80 prose-li:leading-7 prose-li:my-1
+  prose-ul:my-4 prose-ol:my-4
   prose-strong:text-foreground prose-strong:font-semibold
-  prose-blockquote:border-teal/40 prose-blockquote:bg-teal/5 prose-blockquote:rounded-r-lg prose-blockquote:py-1
-  prose-table:text-xs sm:prose-table:text-sm prose-th:text-left prose-th:font-semibold prose-th:text-navy prose-th:bg-muted/50
-  prose-td:py-1.5 prose-td:px-2 sm:prose-td:px-3 prose-th:py-1.5 prose-th:px-2 sm:prose-th:px-3
-  prose-hr:my-6 prose-hr:border-border/50
-  prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-normal
-  [&_table]:w-full [&_table]:border-collapse [&_table]:border [&_table]:border-border/30 [&_table]:rounded-lg [&_table]:overflow-hidden
-  [&_td]:border-b [&_td]:border-border/20 [&_th]:border-b-2 [&_th]:border-border/30
+  prose-em:text-foreground/60
+  prose-blockquote:border-l-4 prose-blockquote:border-teal/40 prose-blockquote:bg-teal/5 prose-blockquote:rounded-r-lg prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:my-5 prose-blockquote:not-italic
+  prose-a:text-teal prose-a:no-underline hover:prose-a:underline
+  prose-hr:my-8 prose-hr:border-t-2 prose-hr:border-border/40
+  prose-code:bg-slate-100 prose-code:text-navy prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-sm prose-code:font-normal prose-code:before:content-none prose-code:after:content-none
+  prose-pre:bg-slate-900 prose-pre:text-slate-100 prose-pre:rounded-xl prose-pre:p-4
+  prose-img:rounded-xl prose-img:shadow-md
+  [&_table]:w-full [&_table]:my-6 [&_table]:border-collapse [&_table]:border [&_table]:border-border/40 [&_table]:rounded-xl [&_table]:overflow-hidden [&_table]:shadow-sm
+  [&_th]:bg-navy/5 [&_th]:text-navy [&_th]:font-semibold [&_th]:text-left [&_th]:py-3 [&_th]:px-4 [&_th]:text-sm [&_th]:border-b-2 [&_th]:border-border/40
+  [&_td]:py-2.5 [&_td]:px-4 [&_td]:text-sm [&_td]:border-b [&_td]:border-border/20
+  [&_tr:hover]:bg-muted/30
+  [&_tr:last-child_td]:border-b-0
   overflow-x-auto`;
 
 export default function OperationsPage() {

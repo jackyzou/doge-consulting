@@ -69,14 +69,30 @@ for (const file of files) {
   standups.push({ date, content, agents });
   console.log(`  📝 ${date} — ${(content.length / 1024).toFixed(1)} KB, ${agents.length} agents`);
 
+  // Extract decisions with correct agent attribution
+  // Track which agent section we're inside by looking for #### Agent Name headers
+  let currentAgent = "alex";
+  const agentMap = { "seth": "seth", "seto": "seto", "rachel": "rachel", "amy": "amy", "tiffany": "tiffany", "alex": "alex" };
+
   for (const line of content.split("\n")) {
     const trimmed = line.trim();
-    const decMatch = trimmed.match(/\[DECISION\]\s*(.+?)\s*—\s*(NEEDS_CEO|PROPOSED|APPROVED)/i);
+
+    // Detect agent section headers like "#### Seth Parker (CTO)" or "#### Amy Lin (CFO)"
+    const agentHeader = trimmed.match(/^#{1,4}\s+(Seth|Seto|Rachel|Amy|Tiffany|Alex)\s/i);
+    if (agentHeader) {
+      currentAgent = agentMap[agentHeader[1].toLowerCase()] || "alex";
+    }
+    // Also detect "### Round 2 — Alex" synthesis sections
+    if (trimmed.match(/Round\s*2|Synthesis|Alex Chen Synthesis/i)) {
+      currentAgent = "alex";
+    }
+
+    const decMatch = trimmed.match(/\[DECISION\]\s*(.+?)\s*—\s*(NEEDS_CEO|PROPOSED|APPROVED|REJECTED|MODIFIED)/i);
     if (decMatch) {
       decisions.push({
-        agent: "alex",
+        agent: currentAgent,
         title: decMatch[1].trim(),
-        content: `From standup ${date}: ${decMatch[1].trim()}`,
+        content: `From standup ${date} (proposed by ${currentAgent}): ${decMatch[1].trim()}`,
         status: decMatch[2] === "NEEDS_CEO" ? "open" : decMatch[2] === "PROPOSED" ? "open" : "completed",
         priority: decMatch[2] === "NEEDS_CEO" ? "critical" : "normal",
         assignedTo: decMatch[2] === "NEEDS_CEO" ? "jacky" : null,
