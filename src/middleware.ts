@@ -35,8 +35,8 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/api/") ||
     pathname.includes(".") // static files (.css, .js, .png, etc.)
   ) {
-    // Still apply auth guard for API routes
-    if (pathname.startsWith("/api/admin") || pathname.startsWith("/api/customer")) {
+    // Still apply auth guard for API routes (except fleet sync which uses its own secret)
+    if ((pathname.startsWith("/api/admin") || pathname.startsWith("/api/customer")) && !pathname.startsWith("/api/admin/fleet/sync")) {
       return handleAuth(request, pathname);
     }
     return NextResponse.next();
