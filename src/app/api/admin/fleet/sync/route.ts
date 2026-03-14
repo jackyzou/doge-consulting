@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     // ── Upsert decisions as AgentLog type="decision" ──
     if (Array.isArray(decisions)) {
       for (const d of decisions) {
-        // Deduplicate by title + date combo
+        // Find by title + relatedTo to deduplicate
         const existing = await prisma.agentLog.findFirst({
           where: {
             type: "decision",
@@ -71,7 +71,16 @@ export async function POST(request: NextRequest) {
             relatedTo: d.relatedTo || null,
           },
         });
-        if (!existing) {
+        if (existing) {
+          // Update agent attribution if it changed (fixes alex-only bug)
+          if (existing.agent !== (d.agent || "alex")) {
+            await prisma.agentLog.update({
+              where: { id: existing.id },
+              data: { agent: d.agent || "alex" },
+            });
+            decisionsCreated++; // count as updated
+          }
+        } else {
           await prisma.agentLog.create({
             data: {
               agent: d.agent || "alex",

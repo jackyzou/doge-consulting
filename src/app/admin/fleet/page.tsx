@@ -394,7 +394,7 @@ export default function OperationsPage() {
                 <span className="font-semibold text-sm">{section.title}</span>
               </button>
               {expandedCocSection === idx && (
-                <div className="border-t p-4 sm:p-6">
+                <div className="border-t p-5 sm:p-8">
                   <article className={mdClasses}>
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.content}</ReactMarkdown>
                   </article>
