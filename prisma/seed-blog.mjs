@@ -2318,7 +2318,277 @@ If you're considering starting or scaling a TikTok Shop business with products f
   },
 ];
 
-const allPosts = [...posts, ...posts2, ...posts3, ...posts4, ...posts5, ...posts6, ...posts7, ...posts8];
+const posts9 = [
+  {
+    slug: "fifa-world-cup-2026-seattle-sourcing-guide",
+    title: "FIFA World Cup 2026 Is Coming to Seattle — Here's How Small Businesses Can Cash In by Sourcing from China",
+    excerpt: "Seattle hosts FIFA World Cup matches this summer. Smart local businesses are already sourcing merch, fan gear, and event supplies from China at 40-60% below retail. A practical guide to the opportunity.",
+    category: "Business Opportunity",
+    emoji: "⚽",
+    readTime: "12 min",
+    content: `![Soccer fans celebrating at a major international match](https://images.unsplash.com/photo-1459865264687-595d652de67e?w=1200&h=630&fit=crop&q=80)
+
+# FIFA World Cup 2026 Is Coming to Seattle — Here's How Small Businesses Can Cash In
+
+*Published March 15, 2026 · By Seto Nakamura, Trade Intelligence*
+
+---
+
+The 2026 FIFA World Cup is the biggest sporting event to hit North America in decades — and **Seattle is one of the host cities**. Lumen Field will host group stage matches and potentially a knockout round, bringing an estimated **400,000+ visitors** to the city between June and July 2026.
+
+For Seattle-area small businesses, this is a once-in-a-generation revenue opportunity. And the smart ones are already sourcing products from China to capitalize on it.
+
+Here's your practical guide to identifying the products, finding the factories, and getting goods to Seattle in time.
+
+---
+
+## The Opportunity by the Numbers
+
+| Metric | Value |
+|---|---|
+| Estimated visitors to Seattle | 400,000+ |
+| Average fan spending per match day | $200-$400 |
+| Global TV audience | 5 billion+ |
+| Matches at Lumen Field | 5-6 games |
+| Event window | June 11 – July 19, 2026 |
+| Time remaining to source | ~3 months |
+
+**The spending breakdown for a typical fan:**
+- Merchandise & souvenirs: $50-$150
+- Food & beverages: $40-$80
+- Transportation & parking: $30-$60
+- Accommodation: $150-$400/night
+
+The merch and souvenirs category alone represents a **$20-$60 million opportunity** just in Seattle.
+
+---
+
+## Top Products to Source from China
+
+### 1. 🧣 Scarves, Flags & Banners ($0.50-$3.00 from factory)
+
+The #1 impulse purchase at any soccer event. Country flags, team scarves, and "Seattle World Cup 2026" banners.
+
+- **Factory price (1688.com):** ¥3-20 ($0.40-$2.80)
+- **Street vendor price in Seattle:** $10-$25
+- **Margin:** 400-800%
+- **MOQ:** 100-500 pieces
+- **Source city:** Yiwu (world capital of small commodities)
+- **Lead time:** 7-14 days production + 14-21 days sea freight
+
+**Key tip:** Order BOTH participating team flags (32 countries) AND generic World Cup designs. Don't bet on one team — cover them all.
+
+### 2. ⚽ Replica Soccer Balls ($2-$8 from factory)
+
+Every kid wants one. Training-quality balls with World Cup branding sell like crazy.
+
+- **Factory price:** ¥15-55 ($2-$8)
+- **Retail price:** $15-$40
+- **Margin:** 300-500%
+- **MOQ:** 200-500 pieces
+- **Source city:** Yiwu or Sialkot (Pakistan for premium, China for volume)
+- **Lead time:** 10-20 days + shipping
+
+⚠️ **WARNING:** Do NOT source official FIFA-licensed products from China. Only generic "soccer ball" designs without FIFA logos. Licensed merchandise requires official authorization.
+
+### 3. 👕 Fan T-Shirts & Jerseys ($3-$8 from factory)
+
+Generic country-themed shirts (not official team jerseys — those are licensed). "I ❤️ Seattle World Cup 2026" shirts, country name tees, etc.
+
+- **Factory price:** ¥20-55 ($3-$8)
+- **Retail price:** $20-$40
+- **Margin:** 300-500%
+- **MOQ:** 50-200 per design
+- **Source city:** Guangzhou (textile capital)
+- **Lead time:** 7-14 days + shipping
+
+**Pro move:** Offer custom printing. Source blank tees from China ($2-3 each), print locally in Seattle with event-specific designs. Fastest turnaround, zero shipping risk.
+
+### 4. 📱 Phone Cases, Keychains & Accessories ($0.20-$2.00)
+
+Low-cost, high-margin impulse buys. Soccer-themed phone cases, keychains, wristbands, lanyards, and pins.
+
+- **Factory price:** ¥1.5-15 ($0.20-$2.00)
+- **Retail price:** $5-$15
+- **Margin:** 500-1000%
+- **MOQ:** 500+ (low cost per unit means order big)
+- **Source city:** Yiwu or Shenzhen
+- **Lead time:** 5-10 days + shipping
+
+### 5. 🎺 Vuvuzelas, Face Paint, Foam Fingers ($0.30-$3.00)
+
+Game day atmosphere products. Noise makers, face paint in country colors, foam #1 fingers, temporary tattoos.
+
+- **Factory price:** ¥2-20 ($0.30-$3.00)
+- **Retail price:** $5-$15
+- **Margin:** 400-800%
+- **Source city:** Yiwu
+- **Lead time:** 5-14 days + shipping
+
+### 6. 🎒 Bags, Coolers & Stadium-Approved Clear Bags ($1-$5)
+
+FIFA requires clear bags for stadium entry. This is a HUGE opportunity — fans MUST buy them.
+
+- **Factory price:** ¥7-35 ($1-$5) for clear PVC stadium bags
+- **Retail price:** $10-$25
+- **Margin:** 300-500%
+- **Source city:** Guangzhou or Yiwu
+- **Lead time:** 7-14 days + shipping
+
+💡 **TIP:** Clear bags with "Seattle World Cup 2026" branding will sell at premium. Source the bags from China, add local printing.
+
+---
+
+## How to Source: Step-by-Step
+
+### Step 1: Find Products on 1688.com
+
+[1688.com](https://1688.com) is China's domestic wholesale platform — same factories as Alibaba but 30-50% cheaper because it's designed for Chinese buyers.
+
+**How to navigate 1688 (it's in Chinese):**
+1. Use Google Chrome with auto-translate
+2. Search in Chinese: 世界杯周边 (World Cup merchandise), 球迷围巾 (fan scarves), 足球 (soccer balls)
+3. Filter by: "实力商家" (verified supplier) and "48小时发货" (ships within 48h)
+4. Compare 3-5 suppliers on price, MOQ, and reviews
+5. Contact supplier via Aliwangwang chat (built-in messaging)
+
+**Can't read Chinese? We handle that.** Doge Consulting has bilingual staff in Shenzhen who browse 1688 for you, negotiate with factories, and handle QC. [Use our AI Product Matcher](/catalog) — paste any product URL and we'll find the manufacturer.
+
+### Step 2: Verify the Supplier
+
+Before ordering:
+- Check their business license (营业执照) — listed on their 1688 store page
+- Ask for sample photos and previous export records
+- Request a sample order (usually $5-$20 including shipping)
+- Check their response time — good suppliers reply within 2 hours
+
+### Step 3: Place Your Order (Timing is CRITICAL)
+
+**You have ~3 months.** Here's the timeline:
+
+| Action | Deadline | Why |
+|---|---|---|
+| Select products & suppliers | March 20 | Need time for samples |
+| Receive and approve samples | April 5 | Quality check before bulk |
+| Place bulk order | April 10 | Production needs 7-14 days |
+| Goods ship from China | April 25 | Sea freight to Seattle: 14-18 days |
+| Arrive in Seattle | May 15 | Buffer for customs clearance |
+| Ready to sell | June 1 | 10 days before first match |
+
+⚠️ **If you miss the April 25 shipping window**, you'll need air freight ($4-6/kg vs $0.15-$0.30/kg for sea). That eats your margins.
+
+### Step 4: Shipping to Seattle
+
+**Sea freight (recommended for cost):**
+- Shenzhen/Guangzhou → Seattle/Tacoma: 14-18 days
+- Cost: ~$0.15-$0.30/kg (LCL) or $2,800-$3,200 per 20ft container (FCL)
+- Use our [Freight Rate Calculator](/tools/revenue-calculator) to get exact pricing
+
+**Air freight (for last-minute orders):**
+- 3-5 days delivery
+- $4-$6/kg — only makes sense for high-value, lightweight items (phone cases, accessories)
+
+### Step 5: Customs & Duties
+
+Most of these products fall under low or moderate duty rates:
+
+| Product | HTS Code | Duty Rate | Section 301? |
+|---|---|---|---|
+| Scarves/textiles | 6117.10 | 4.7% | +7.5% |
+| Soccer balls | 9506.62 | 0% | No |
+| T-shirts (cotton) | 6109.10 | 16.5% | +7.5% |
+| Phone cases | 3926.90 | 3.4% | +25% |
+| Bags (PVC) | 4202.92 | 17.6% | +7.5% |
+| Keychains | 7117.19 | 11% | +7.5% |
+
+Use our [Duty Calculator](/tools/duty-calculator) to look up exact rates for your specific products.
+
+---
+
+## Why Source Through Doge Consulting?
+
+We're a Seattle-based company with a team in Shenzhen, China. Here's what we offer:
+
+### 🏷️ Enterprise Pricing: 10% Off All Sourcing
+
+When you source through Doge Consulting, you get **at least 10% off the factory price** on all products. Why? Because we have established enterprise relationships with factories in Yiwu, Guangzhou, and Shenzhen. Our volume gets you pricing that individual buyers can't access.
+
+**Example:**
+- Fan scarves on 1688.com: ¥8/piece ($1.10)
+- Through Doge Consulting: ¥7.2/piece ($1.00) — **10% savings**
+- At 1,000 scarves: you save $100 on product alone, plus we handle QC, shipping, and customs
+
+### What's Included:
+
+| Service | What You Get |
+|---|---|
+| **Product sourcing** | We find and vet factories on 1688, negotiate pricing |
+| **Quality control** | On-the-ground inspection in China before shipping |
+| **Shipping management** | Sea or air freight, customs brokerage, delivery to your door |
+| **Customs clearance** | HTS classification, duty payment, ISF filing |
+| **Free consultation** | 30-min call to plan your World Cup inventory strategy |
+
+### Get Started:
+
+1. **[Get a Free Quote](/quote)** — Tell us what you want to source and we'll provide a landed cost estimate
+2. **[Use our AI Product Matcher](/catalog)** — Paste a product URL from Amazon/AliExpress and we find the factory
+3. **[Freight Calculator](/tools/revenue-calculator)** — Compare shipping options and costs
+4. **[Duty Calculator](/tools/duty-calculator)** — Check tariff rates before you commit
+5. **[Contact Us](/contact)** — Talk to our Seattle team about your World Cup plan
+
+---
+
+## What Other Seattle Businesses Are Doing
+
+### Pop-up Shops Near Lumen Field
+
+Several Seattle entrepreneurs are already planning pop-up retail around Pioneer Square and SoDo for match days. Key locations: 1st Ave S, Occidental Ave, the stadiums parking areas. Permits are being issued by the City of Seattle — apply early.
+
+### Food Carts & Beverage Vendors
+
+International food is a major draw. Source serving supplies, disposable plates, cups, and utensils from China at 60-70% below local wholesale. Branded napkins and cups with World Cup themes are a nice touch.
+
+### Hotels & Airbnb Hosts
+
+Welcome packages for guests: mini soccer balls, city maps, transit guides, and branded tote bags. Source the tote bags from China for $1-2 each, sell the experience.
+
+### Local Retailers
+
+If you already have a shop in Pike Place, Capitol Hill, or the waterfront — dedicate a section to World Cup merch starting June 1. The foot traffic increase alone justifies the inventory investment.
+
+---
+
+## The Bottom Line
+
+The FIFA World Cup in Seattle is a **3-month window to make money** that won't come again for decades. The businesses that source smart — starting NOW — will capture the highest margins.
+
+**Key facts:**
+- China sources 70%+ of the world's sporting merchandise
+- 1688.com has factory prices 30-50% below Alibaba
+- Sea freight from China to Seattle takes 14-18 days
+- You need to order by late April to arrive by June
+- Doge Consulting offers 10% off sourcing + full logistics support
+
+**Don't wait.** Every day you delay is a day closer to the air freight deadline.
+
+---
+
+## Next Steps
+
+- **[Free Consultation](/contact)** — Let's plan your World Cup inventory together (30 min, no cost)
+- **[AI Product Matcher](/catalog)** — Found a product online? We'll find the factory in China.
+- **[Freight Calculator](/tools/revenue-calculator)** — How much will shipping cost?
+- **[Duty Calculator](/tools/duty-calculator)** — What tariffs apply to your products?
+- **[Get a Quote](/quote)** — We'll calculate your exact landed cost
+
+📧 Subscribe to our newsletter for weekly sourcing tips and World Cup merch updates.
+
+*Doge Consulting Group — Seattle, WA · Shenzhen, China · Hong Kong*
+*Your products. Our logistics. Factory-direct pricing.*`,
+  },
+];
+
+const allPosts = [...posts, ...posts2, ...posts3, ...posts4, ...posts5, ...posts6, ...posts7, ...posts8, ...posts9];
 
 console.log("🌱 Seeding blog posts...");
 
@@ -2364,8 +2634,6 @@ if (newSlugs.length > 0) {
         auth: { user: smtpUser, pass: smtpPass },
       });
 
-      const subscribers = db2 ? [] : db.prepare("SELECT email FROM Subscriber").all();
-      // Re-open DB if closed
       const subDb = new Database(DB_PATH);
       const subs = subDb.prepare("SELECT email FROM Subscriber").all();
       subDb.close();
