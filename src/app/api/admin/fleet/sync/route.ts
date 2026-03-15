@@ -123,14 +123,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Return all decisions with CEO feedback (updated since last sync)
+    // Return all decisions + unaddressed chat messages
     const decisions = await prisma.agentLog.findMany({
       where: { type: "decision" },
       orderBy: { updatedAt: "desc" },
       take: 100,
     });
 
-    return NextResponse.json({ ok: true, decisions, count: decisions.length });
+    const chatMessages = await prisma.agentLog.findMany({
+      where: { type: "chat", status: "open" },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+
+    return NextResponse.json({ ok: true, decisions, chatMessages, count: decisions.length });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Error";
     return NextResponse.json({ error: msg }, { status: 500 });

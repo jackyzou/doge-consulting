@@ -66,7 +66,7 @@ export default function OperationsPage() {
   const [cocUpdated, setCocUpdated] = useState("");
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"overview" | "decisions" | "agents" | "standups" | "playbook">("overview");
+  const [tab, setTab] = useState<"overview" | "decisions" | "agents" | "standups" | "playbook" | "chat">("overview");
   const [selectedDecision, setSelectedDecision] = useState<Decision | null>(null);
   const [feedback, setFeedback] = useState("");
   const [showNewDecision, setShowNewDecision] = useState(false);
@@ -81,6 +81,18 @@ export default function OperationsPage() {
   const [showArchive, setShowArchive] = useState(false);
   const [expandedCocSection, setExpandedCocSection] = useState<number | null>(0);
   const contentRef = useRef<HTMLTextAreaElement>(null);
+
+  // Chat state
+  const [chatMessages, setChatMessages] = useState<Decision[]>([]);
+  const [chatText, setChatText] = useState("");
+  const [chatMentions, setChatMentions] = useState<string[]>([]);
+  const [chatImage, setChatImage] = useState<File | null>(null);
+  const [chatImagePreview, setChatImagePreview] = useState<string | null>(null);
+  const [chatSending, setChatSending] = useState(false);
+  const [chatMentionOpen, setChatMentionOpen] = useState(false);
+  const chatInputRef = useRef<HTMLTextAreaElement>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatFileRef = useRef<HTMLInputElement>(null);
 
   const fetchData = useCallback(() => {
     fetch("/api/admin/fleet")
@@ -110,6 +122,62 @@ export default function OperationsPage() {
         .catch(() => setAgentDecisions([]));
     }
   }, [selectedAgent]);
+
+  // Load chat messages when chat tab is active
+  const loadChat = useCallback(() => {
+    fetch("/api/admin/fleet/chat")
+      .then(r => r.json())
+      .then(data => {
+        setChatMessages(data.messages || []);
+        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (tab === "chat") loadChat();
+  }, [tab, loadChat]);
+
+  const sendChat = async () => {
+    if (!chatText.trim() && !chatImage) return;
+    setChatSending(true);
+
+    try {
+      if (chatImage) {
+        const form = new FormData();
+        form.append("text", chatText);
+        form.append("mentions", chatMentions.join(","));
+        form.append("image", chatImage);
+        await fetch("/api/admin/fleet/chat", { method: "POST", body: form });
+      } else {
+        await fetch("/api/admin/fleet/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: chatText, mentions: chatMentions }),
+        });
+      }
+      setChatText("");
+      setChatMentions([]);
+      setChatImage(null);
+      setChatImagePreview(null);
+      loadChat();
+    } catch { /* ignore */ }
+    setChatSending(false);
+  };
+
+  const handleChatImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setChatImage(file);
+      const reader = new FileReader();
+      reader.onload = () => setChatImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const toggleChatMention = (agentId: string) => {
+    setChatMentions(prev => prev.includes(agentId) ? prev.filter(m => m !== agentId) : [...prev, agentId]);
+  };
 
   const updateDecision = async (id: string, status: string, extra?: string) => {
     const d = decisions.find(x => x.id === id);
@@ -158,7 +226,7 @@ export default function OperationsPage() {
           <p className="text-muted-foreground text-sm">Agent fleet, decisions, standups & playbook</p>
         </div>
         <div className="flex items-center gap-1 rounded-lg border bg-muted/50 p-1 overflow-x-auto">
-          {(["overview", "decisions", "agents", "standups", "playbook"] as const).map(t => (
+          {(["overview", "decisions", "agents", "standups", "chat", "playbook"] as const).map(t => (
             <Button key={t} variant={tab === t ? "default" : "ghost"} size="sm" onClick={() => setTab(t)} className="capitalize text-xs sm:text-sm whitespace-nowrap">{t}</Button>
           ))}
         </div>
@@ -389,6 +457,110 @@ export default function OperationsPage() {
             </CardContent></Card>
           )}
         </div>
+      )}
+
+      {/* ═══ CHAT TAB ═══ */}
+      {tab === "chat" && (
+        <Card className="flex flex-col" style={{ height: "calc(100vh - 280px)", minHeight: "400px" }}>
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {chatMessages.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                <Send className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                <p className="text-sm">No messages yet. Send a message to your agents.</p>
+                <p className="text-xs mt-1">Use @ to mention specific agents. They&apos;ll address your messages in the next standup.</p>
+              </div>
+            )}
+            {chatMessages.map((msg) => {
+              const isAgent = msg.agent !== "jacky";
+              const agentData = agents.find(a => a.id === msg.agent);
+              const mentionedAgents = (msg.assignedTo || "").split(",").filter(Boolean);
+              const hasImage = msg.content.includes("![");
+              const textContent = msg.content.replace(/\n\n!\[.*?\]\(.*?\)/, "").trim();
+              const imageMatch = msg.content.match(/!\[.*?\]\((.*?)\)/);
+              const imageUrl = imageMatch ? imageMatch[1] : null;
+
+              return (
+                <div key={msg.id} className={`flex gap-3 ${isAgent ? "" : "flex-row-reverse"}`}>
+                  <div className="shrink-0">
+                    <div className="w-8 h-8 rounded-full text-[10px] text-white font-bold flex items-center justify-center" style={{ background: isAgent ? (agentData?.color || "#94a3b8") : "#2EC4B6" }}>
+                      {isAgent ? (agentData?.avatar?.[0] || "?") : "JZ"}
+                    </div>
+                  </div>
+                  <div className={`max-w-[75%] ${isAgent ? "" : "text-right"}`}>
+                    <div className={`rounded-2xl px-4 py-2.5 ${isAgent ? "bg-muted" : "bg-navy text-white"}`}>
+                      {mentionedAgents.length > 0 && (
+                        <div className="flex gap-1 mb-1 flex-wrap">
+                          {mentionedAgents.map(m => {
+                            const a = agents.find(ag => ag.id === m);
+                            return a ? (
+                              <span key={m} className={`text-[10px] px-1.5 py-0.5 rounded-full ${isAgent ? "bg-teal/20 text-teal" : "bg-white/20 text-white/90"}`}>@{a.name.split(" ")[0]}</span>
+                            ) : null;
+                          })}
+                        </div>
+                      )}
+                      <p className="text-sm whitespace-pre-wrap leading-relaxed">{textContent}</p>
+                      {imageUrl && (
+                        <img src={imageUrl} alt="attached" className="mt-2 rounded-lg max-w-full max-h-48 object-cover cursor-pointer" onClick={() => window.open(imageUrl, "_blank")} />
+                      )}
+                    </div>
+                    <div className={`flex items-center gap-2 mt-1 text-[10px] text-muted-foreground ${isAgent ? "" : "justify-end"}`}>
+                      <span>{isAgent ? agentData?.name || msg.agent : "Jacky"}</span>
+                      <span>·</span>
+                      <span>{new Date(msg.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                      {msg.status === "open" && <Badge variant="outline" className="text-[9px] px-1 py-0">Pending</Badge>}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Mention bar */}
+          <div className="border-t px-4 py-2 bg-muted/30">
+            <div className="flex items-center gap-1 overflow-x-auto">
+              <span className="text-[10px] text-muted-foreground shrink-0 mr-1">Mention:</span>
+              {agents.map(a => (
+                <button key={a.id} onClick={() => toggleChatMention(a.id)}
+                  className={`shrink-0 flex items-center gap-1 px-2 py-1 rounded-full text-[11px] transition-colors ${chatMentions.includes(a.id) ? "bg-navy text-white" : "bg-muted hover:bg-muted/80"}`}>
+                  <span className="w-4 h-4 rounded-full text-[8px] text-white font-bold flex items-center justify-center" style={{ background: a.color }}>{a.avatar[0]}</span>
+                  {a.name.split(" ")[0]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Image preview */}
+          {chatImagePreview && (
+            <div className="px-4 py-2 border-t bg-muted/20">
+              <div className="relative inline-block">
+                <img src={chatImagePreview} alt="preview" className="h-20 rounded-lg object-cover" />
+                <button className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center" onClick={() => { setChatImage(null); setChatImagePreview(null); }}>✕</button>
+              </div>
+            </div>
+          )}
+
+          {/* Input */}
+          <div className="border-t p-3 flex gap-2 items-end">
+            <input ref={chatFileRef} type="file" accept="image/*" className="hidden" onChange={handleChatImageSelect} />
+            <Button variant="ghost" size="sm" className="shrink-0 h-10 w-10 p-0" onClick={() => chatFileRef.current?.click()}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+            </Button>
+            <textarea
+              ref={chatInputRef}
+              value={chatText}
+              onChange={e => setChatText(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); } }}
+              placeholder={chatMentions.length > 0 ? `Message to ${chatMentions.map(m => agents.find(a => a.id === m)?.name.split(" ")[0]).join(", ")}...` : "Message your agents... (Enter to send, Shift+Enter for new line)"}
+              className="flex-1 rounded-xl border p-3 text-sm min-h-[44px] max-h-32 resize-none focus:ring-2 focus:ring-teal/50 focus:border-teal"
+              rows={1}
+            />
+            <Button className="shrink-0 bg-navy hover:bg-navy/90 h-10 w-10 p-0" onClick={sendChat} disabled={chatSending || (!chatText.trim() && !chatImage)}>
+              {chatSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </Button>
+          </div>
+        </Card>
       )}
 
       {/* ═══ PLAYBOOK ═══ */}
