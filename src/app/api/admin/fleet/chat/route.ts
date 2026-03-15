@@ -100,3 +100,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 400 });
   }
 }
+
+// PATCH /api/admin/fleet/chat — mark message as addressed or add agent reply
+export async function PATCH(request: NextRequest) {
+  try {
+    await requireAdmin();
+    const body = await request.json();
+    const { id, status } = body;
+
+    if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+
+    const updated = await prisma.agentLog.update({
+      where: { id },
+      data: { ...(status && { status }) },
+    });
+
+    return NextResponse.json(updated);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Error";
+    return NextResponse.json({ error: msg }, { status: 400 });
+  }
+}

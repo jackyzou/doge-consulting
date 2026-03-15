@@ -129,6 +129,54 @@ const updatedLog = existingLog + logEntry;
 writeFileSync(recentLogFile, updatedLog, "utf-8");
 console.log(`\n📝 Log saved: agents/logs/${today}.md`);
 
+// ── Generate TODOs from sync pull (CEO decisions + chat messages) ────
+const syncPullPath = join(logsDir, ".last-sync-pull.json");
+if (existsSync(syncPullPath)) {
+  try {
+    const pullData = JSON.parse(readFileSync(syncPullPath, "utf-8"));
+    const todos = [];
+
+    // In-progress decisions = active TODOs
+    if (pullData.ceoActions) {
+      for (const action of pullData.ceoActions) {
+        if (action.status === "in_progress" || action.status === "open") {
+          todos.push({ type: "decision", agent: action.agent || "alex", title: action.title, action: action.action || "" });
+        }
+      }
+    }
+
+    if (todos.length > 0) {
+      console.log(`\n📋 Active TODOs from CEO (${todos.length}):`);
+      console.log("─".repeat(50));
+      for (const todo of todos) {
+        const agentName = CONFIG.agents.find(a => a.id === todo.agent)?.name || todo.agent;
+        console.log(`  → [${agentName}] ${todo.title}`);
+        if (todo.action) {
+          const actionPreview = todo.action.replace(/\*\*/g, "").substring(0, 120);
+          if (actionPreview) console.log(`    CEO: ${actionPreview}`);
+        }
+      }
+      console.log("─".repeat(50));
+
+      // Write TODOs to a file for easy reference
+      const todoFile = join(logsDir, ".active-todos.md");
+      const todoMd = `# Active TODOs — ${today}\n\nGenerated from CEO decisions at ${timestamp}\n\n` +
+        todos.map((t, i) => {
+          const agentName = CONFIG.agents.find(a => a.id === t.agent)?.name || t.agent;
+          return `## ${i + 1}. ${t.title}\n- **Owner:** ${agentName}\n- **CEO Comment:** ${t.action || "No comment"}\n- **Status:** In Progress\n`;
+        }).join("\n");
+      writeFileSync(todoFile, todoMd, "utf-8");
+      console.log(`   Saved to: agents/logs/.active-todos.md`);
+    }
+
+    // Unaddressed chat messages
+    // Check for chat messages in the local DB or from sync
+    console.log(`\n📊 Sync Status: ${pullData.openItems || 0} open | ${pullData.inProgress || 0} in-progress | ${pullData.completed || 0} approved | ${pullData.rejected || 0} rejected`);
+  } catch {
+    // Non-critical — sync pull may not exist yet
+  }
+}
+
 // ── Summary ─────────────────────────────────────────────────
 console.log("\n" + "=".repeat(60));
 console.log(`✅ Fleet ${mode} complete.`);

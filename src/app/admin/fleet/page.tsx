@@ -93,6 +93,7 @@ export default function OperationsPage() {
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatFileRef = useRef<HTMLInputElement>(null);
+  const [chatReplyTo, setChatReplyTo] = useState<Decision | null>(null);
 
   const fetchData = useCallback(() => {
     fetch("/api/admin/fleet")
@@ -160,6 +161,7 @@ export default function OperationsPage() {
       setChatMentions([]);
       setChatImage(null);
       setChatImagePreview(null);
+      setChatReplyTo(null);
       loadChat();
     } catch { /* ignore */ }
     setChatSending(false);
@@ -481,7 +483,7 @@ export default function OperationsPage() {
               const imageUrl = imageMatch ? imageMatch[1] : null;
 
               return (
-                <div key={msg.id} className={`flex gap-3 ${isAgent ? "" : "flex-row-reverse"}`}>
+                <div key={msg.id} className={`flex gap-3 ${isAgent ? "" : "flex-row-reverse"} group cursor-pointer`} onClick={() => { setChatReplyTo(msg); chatInputRef.current?.focus(); }}>
                   <div className="shrink-0">
                     <div className="w-8 h-8 rounded-full text-[10px] text-white font-bold flex items-center justify-center" style={{ background: isAgent ? (agentData?.color || "#94a3b8") : "#2EC4B6" }}>
                       {isAgent ? (agentData?.avatar?.[0] || "?") : "JZ"}
@@ -508,7 +510,13 @@ export default function OperationsPage() {
                       <span>{isAgent ? agentData?.name || msg.agent : "Jacky"}</span>
                       <span>·</span>
                       <span>{new Date(msg.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
-                      {msg.status === "open" && <Badge variant="outline" className="text-[9px] px-1 py-0">Pending</Badge>}
+                      {msg.status === "open" && (
+                        <button className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 hover:bg-emerald-100 hover:text-emerald-700 transition-colors"
+                          onClick={async (e) => { e.stopPropagation(); await fetch("/api/admin/fleet/chat", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: msg.id, status: "completed" }) }); loadChat(); }}>
+                          ⏳ Pending — click to resolve
+                        </button>
+                      )}
+                      {msg.status === "completed" && <span className="text-[9px] text-emerald-600">✓ Addressed</span>}
                     </div>
                   </div>
                 </div>
@@ -530,6 +538,17 @@ export default function OperationsPage() {
               ))}
             </div>
           </div>
+
+          {/* Reply-to banner */}
+          {chatReplyTo && (
+            <div className="px-4 py-2 border-t bg-navy/5 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-muted-foreground">Replying to</span>
+                <span className="font-medium text-navy">{chatReplyTo.content.substring(0, 60)}...</span>
+              </div>
+              <button className="text-xs text-muted-foreground hover:text-red-500" onClick={() => setChatReplyTo(null)}>✕ Cancel</button>
+            </div>
+          )}
 
           {/* Image preview */}
           {chatImagePreview && (
