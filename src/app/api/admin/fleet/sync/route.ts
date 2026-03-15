@@ -61,25 +61,27 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Upsert decisions as AgentLog type="decision" ──
+    // THREADING: If a decision with the same title already exists, DON'T replace it.
+    // CEO comments and back-and-forth are preserved on the existing record.
+    // Only create if it's genuinely new (no title match).
     if (Array.isArray(decisions)) {
       for (const d of decisions) {
-        // Find by title + relatedTo to deduplicate
+        // Check if ANY decision with this title exists (regardless of relatedTo)
         const existing = await prisma.agentLog.findFirst({
           where: {
             type: "decision",
             title: d.title,
-            relatedTo: d.relatedTo || null,
           },
         });
         if (existing) {
-          // Update agent attribution if it changed (fixes alex-only bug)
+          // Update agent attribution if wrong, but NEVER overwrite content (preserves CEO comments)
           if (existing.agent !== (d.agent || "alex")) {
             await prisma.agentLog.update({
               where: { id: existing.id },
               data: { agent: d.agent || "alex" },
             });
-            decisionsCreated++; // count as updated
           }
+          // Don't count as new — this is a thread update
         } else {
           await prisma.agentLog.create({
             data: {

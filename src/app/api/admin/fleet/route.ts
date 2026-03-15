@@ -41,12 +41,23 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
     const section = searchParams.get("section");
     const id = searchParams.get("id");
+    const agentId = searchParams.get("agentId");
     const result: Record<string, unknown> = {};
 
     // Single decision detail
     if (id) {
       const decision = await prisma.agentLog.findUnique({ where: { id } });
       return NextResponse.json(decision);
+    }
+
+    // Per-agent decisions (for agent detail view)
+    if (agentId) {
+      const agentDecisions = await prisma.agentLog.findMany({
+        where: { type: "decision", agent: agentId },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+      });
+      return NextResponse.json({ decisions: agentDecisions });
     }
 
     if (!section || section === "agents") {

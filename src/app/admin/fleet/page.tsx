@@ -77,6 +77,7 @@ export default function OperationsPage() {
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
   const [adding, setAdding] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [agentDecisions, setAgentDecisions] = useState<Decision[]>([]);
   const [showArchive, setShowArchive] = useState(false);
   const [expandedCocSection, setExpandedCocSection] = useState<number | null>(0);
   const contentRef = useRef<HTMLTextAreaElement>(null);
@@ -99,6 +100,16 @@ export default function OperationsPage() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Load per-agent decisions when agent is selected
+  useEffect(() => {
+    if (selectedAgent) {
+      fetch(`/api/admin/fleet?agentId=${selectedAgent.id}`)
+        .then(r => r.json())
+        .then(data => setAgentDecisions(data.decisions || []))
+        .catch(() => setAgentDecisions([]));
+    }
+  }, [selectedAgent]);
 
   const updateDecision = async (id: string, status: string, extra?: string) => {
     const d = decisions.find(x => x.id === id);
@@ -153,14 +164,20 @@ export default function OperationsPage() {
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats — clickable to navigate to relevant tab */}
       <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
-        <Card className={openDecisions.length > 0 ? "border-amber-200 bg-amber-50/30" : ""}>
+        <Card className={`cursor-pointer hover:shadow-md transition-shadow ${openDecisions.length > 0 ? "border-amber-200 bg-amber-50/30" : ""}`} onClick={() => setTab("decisions")}>
           <CardContent className="pt-5 pb-4"><div className="flex items-center gap-3"><div className={`rounded-lg p-2 ${openDecisions.length > 0 ? "bg-amber-100" : "bg-slate-100"}`}><AlertTriangle className={`h-4 w-4 ${openDecisions.length > 0 ? "text-amber-600" : "text-slate-400"}`} /></div><div><p className="text-xl font-bold">{openDecisions.length}</p><p className="text-[11px] text-muted-foreground">Open</p></div></div></CardContent>
         </Card>
-        <Card><CardContent className="pt-5 pb-4"><div className="flex items-center gap-3"><div className="rounded-lg bg-blue-100 p-2"><Clock className="h-4 w-4 text-blue-600" /></div><div><p className="text-xl font-bold">{inProgressDecisions.length}</p><p className="text-[11px] text-muted-foreground">In Progress</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-5 pb-4"><div className="flex items-center gap-3"><div className="rounded-lg bg-emerald-100 p-2"><CheckCircle className="h-4 w-4 text-emerald-600" /></div><div><p className="text-xl font-bold">{completedDecisions.length}</p><p className="text-[11px] text-muted-foreground">Resolved</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-5 pb-4"><div className="flex items-center gap-3"><div className="rounded-lg bg-teal/10 p-2"><Bot className="h-4 w-4 text-teal" /></div><div><p className="text-xl font-bold">{agents.length}</p><p className="text-[11px] text-muted-foreground">Agents</p></div></div></CardContent></Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setTab("decisions")}>
+          <CardContent className="pt-5 pb-4"><div className="flex items-center gap-3"><div className="rounded-lg bg-blue-100 p-2"><Clock className="h-4 w-4 text-blue-600" /></div><div><p className="text-xl font-bold">{inProgressDecisions.length}</p><p className="text-[11px] text-muted-foreground">In Progress</p></div></div></CardContent>
+        </Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => { setTab("decisions"); setShowArchive(true); }}>
+          <CardContent className="pt-5 pb-4"><div className="flex items-center gap-3"><div className="rounded-lg bg-emerald-100 p-2"><CheckCircle className="h-4 w-4 text-emerald-600" /></div><div><p className="text-xl font-bold">{completedDecisions.length}</p><p className="text-[11px] text-muted-foreground">Resolved</p></div></div></CardContent>
+        </Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setTab("agents")}>
+          <CardContent className="pt-5 pb-4"><div className="flex items-center gap-3"><div className="rounded-lg bg-teal/10 p-2"><Bot className="h-4 w-4 text-teal" /></div><div><p className="text-xl font-bold">{agents.length}</p><p className="text-[11px] text-muted-foreground">Agents</p></div></div></CardContent>
+        </Card>
       </div>
 
       {/* ═══ OVERVIEW ═══ */}
@@ -527,8 +544,8 @@ export default function OperationsPage() {
       </Dialog>
 
       {/* ═══ AGENT DETAIL DIALOG ═══ */}
-      <Dialog open={!!selectedAgent} onOpenChange={() => setSelectedAgent(null)}>
-        <DialogContent className="max-w-md">
+      <Dialog open={!!selectedAgent} onOpenChange={() => { setSelectedAgent(null); setAgentDecisions([]); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           {selectedAgent && (<>
             <DialogHeader>
               <div className="flex items-center gap-4">
@@ -572,6 +589,30 @@ export default function OperationsPage() {
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${(selectedAgent.stats.approved / selectedAgent.stats.total) * 100}%` }} />
                     </div>
+                  </div>
+                )}
+              </div>
+              {/* Proposal history */}
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-semibold mb-3">Proposal History</h4>
+                {agentDecisions.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Loading proposals...</p>
+                ) : (
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {agentDecisions.map((d: Decision) => (
+                      <div key={d.id} className="flex items-start gap-2 p-2 rounded-lg hover:bg-muted/50 cursor-pointer text-sm" onClick={() => { setSelectedAgent(null); setSelectedDecision(d); setFeedback(""); }}>
+                        <span className="mt-0.5">
+                          {d.status === "completed" ? <Check className="h-3.5 w-3.5 text-emerald-500" /> :
+                           d.status === "rejected" ? <span className="text-red-500 text-xs">✕</span> :
+                           d.status === "in_progress" ? <Clock className="h-3.5 w-3.5 text-blue-500" /> :
+                           <Circle className="h-3.5 w-3.5 text-amber-500" />}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs leading-snug ${d.status === "completed" || d.status === "rejected" ? "text-muted-foreground line-through" : "text-foreground"}`}>{d.title}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(d.createdAt).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
