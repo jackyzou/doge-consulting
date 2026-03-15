@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { JsonLd, breadcrumbSchema } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
   title: "Get a Shipping Quote — Free Estimate in 24 Hours",
@@ -12,5 +13,5 @@ export const metadata: Metadata = {
 };
 
 export default function QuoteLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (<><JsonLd data={breadcrumbSchema([{name:"Home",url:"https://doge-consulting.com"},{name:"Get Quote",url:"https://doge-consulting.com/quote"}])} />{children}</>);
 }
