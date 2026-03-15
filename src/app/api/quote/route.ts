@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
         destinationCity: body.destination || "Seattle, WA",
         estimatedTransit: body.transitDays || null,
         notes: body.notes || `Public quote request. Total CBM: ${body.totalCBM || "N/A"}, Total Weight: ${body.totalWeight || "N/A"} kg. Estimated shipping: $${shippingCost.toFixed(2)} USD.${body.visualizerConfig ? `\n\nVisualizer Config: ${JSON.stringify(body.visualizerConfig)}` : ""}`,
+        snapshotUrl: body.snapshotDataUrl || null,
         validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
         items: {
           create: items,

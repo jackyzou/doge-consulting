@@ -94,6 +94,7 @@ model Quote {
   estimatedTransit String?
 
   notes          String?
+  snapshotUrl    String?   // 3D visualizer screenshot (base64 data URL or file path)
   validUntil     DateTime?
   sentAt         DateTime?
   acceptedAt     DateTime?
