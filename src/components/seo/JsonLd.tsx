@@ -125,9 +125,13 @@ export function articleSchema(article: {
     datePublished: article.datePublished,
     dateModified: article.dateModified || article.datePublished,
     author: {
-      "@type": "Organization",
+      "@type": "Person",
       name: article.authorName,
-      url: "https://doge-consulting.com",
+      url: `https://doge-consulting.com/team`,
+      worksFor: {
+        "@type": "Organization",
+        name: "Doge Consulting Group Limited",
+      },
     },
     publisher: {
       "@type": "Organization",

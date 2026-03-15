@@ -45,6 +45,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/case-studies`, lastModified: now, changeFrequency: "monthly", priority: 0.7, alternates: withAlternates("/case-studies") },
     { url: `${BASE_URL}/whitepaper`, lastModified: now, changeFrequency: "monthly", priority: 0.7, alternates: withAlternates("/whitepaper") },
     { url: `${BASE_URL}/privacy`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${BASE_URL}/team`, lastModified: now, changeFrequency: "monthly", priority: 0.7, alternates: withAlternates("/team") },
+    { url: `${BASE_URL}/guide/shipping-from-china`, lastModified: now, changeFrequency: "weekly", priority: 0.9, alternates: withAlternates("/guide/shipping-from-china") },
     { url: `${BASE_URL}/track`, lastModified: now, changeFrequency: "monthly", priority: 0.6, alternates: withAlternates("/track") },
     // Tools index + individual tools — high SEO value
     { url: `${BASE_URL}/tools`, lastModified: now, changeFrequency: "monthly", priority: 0.8, alternates: withAlternates("/tools") },
