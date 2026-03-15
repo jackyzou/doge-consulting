@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { JsonLd, softwareAppSchema } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
   title: "Import Revenue Calculator — Free Profit & ROI Estimator",
@@ -12,5 +13,14 @@ export const metadata: Metadata = {
 };
 
 export default function RevenueLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      <JsonLd data={softwareAppSchema({
+        name: "Import Revenue Calculator — Profit & ROI Estimator",
+        description: "Free online import revenue calculator. Estimate profit margins, landed costs, duties, ROI, and break-even for China imports.",
+        url: "https://doge-consulting.com/tools/revenue-calculator",
+      })} />
+      {children}
+    </>
+  );
 }

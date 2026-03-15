@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { JsonLd, softwareAppSchema } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
   title: "Import Duty Calculator — 2026 US Tariff Estimator",
@@ -12,5 +13,14 @@ export const metadata: Metadata = {
 };
 
 export default function DutyLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      <JsonLd data={softwareAppSchema({
+        name: "Import Duty Calculator — 2026 US Tariff Estimator",
+        description: "Free online import duty calculator. Estimate US customs duties including IEEPA, Section 301, Section 122, MPF, and HMT.",
+        url: "https://doge-consulting.com/tools/duty-calculator",
+      })} />
+      {children}
+    </>
+  );
 }

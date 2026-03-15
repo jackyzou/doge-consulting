@@ -75,6 +75,11 @@ export function websiteSchema() {
     name: "Doge Consulting",
     url: "https://doge-consulting.com",
     description: "AI-powered product sourcing and shipping from China to the USA.",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: "https://doge-consulting.com/blog?q={search_term_string}",
+      "query-input": "required name=search_term_string",
+    },
     publisher: {
       "@type": "Organization",
       name: "Doge Consulting Group Limited",
@@ -157,5 +162,75 @@ export function softwareAppSchema(tool: {
       "@type": "Organization",
       name: "Doge Consulting Group Limited",
     },
+  };
+}
+
+// Service schema for /services page
+export function serviceSchema(service: {
+  name: string;
+  description: string;
+  url: string;
+  areaServed?: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: service.name,
+    description: service.description,
+    url: service.url,
+    provider: {
+      "@type": "Organization",
+      name: "Doge Consulting Group Limited",
+      url: "https://doge-consulting.com",
+    },
+    areaServed: service.areaServed || "US",
+    serviceType: "Import/Export Logistics",
+  };
+}
+
+// Breadcrumb schema — use on every page for SERP breadcrumbs
+export function breadcrumbSchema(items: { name: string; url: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+}
+
+// Speakable schema for GEO/AEO — tells AI assistants which sections to cite
+export function speakableSchema(url: string, cssSelectors: string[] = ["h1", "h2", ".prose p:first-of-type"]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    url,
+    speakable: {
+      "@type": "SpeakableSpecification",
+      cssSelector: cssSelectors,
+    },
+  };
+}
+
+// HowTo schema for step-by-step processes
+export function howToSchema(howTo: {
+  name: string;
+  description: string;
+  steps: { name: string; text: string }[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: howTo.name,
+    description: howTo.description,
+    step: howTo.steps.map((s, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      name: s.name,
+      text: s.text,
+    })),
   };
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { JsonLd, softwareAppSchema } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
   title: "Container Tracker — Search by Container Number or Bill of Lading",
@@ -12,5 +13,14 @@ export const metadata: Metadata = {
 };
 
 export default function VesselTrackerLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      <JsonLd data={softwareAppSchema({
+        name: "Container Tracker — Search by Container or B/L",
+        description: "Free container tracking by number or bill of lading. Live vessel positions, port call timelines, and chokepoint views.",
+        url: "https://doge-consulting.com/tools/vessel-tracker",
+      })} />
+      {children}
+    </>
+  );
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { JsonLd, softwareAppSchema } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
   title: "Live Vessel Map & Freight Rate Tracker",
@@ -12,5 +13,14 @@ export const metadata: Metadata = {
 };
 
 export default function ShippingTrackerLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      <JsonLd data={softwareAppSchema({
+        name: "Live Vessel Map & Freight Rate Tracker",
+        description: "Free live vessel tracking and container shipping rate history. Shenzhen, Shanghai, Hong Kong to US ports with 2020-2026 freight rate charts.",
+        url: "https://doge-consulting.com/tools/shipping-tracker",
+      })} />
+      {children}
+    </>
+  );
 }
