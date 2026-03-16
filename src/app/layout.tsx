@@ -7,6 +7,7 @@ import { LiveChat } from "@/components/layout/LiveChat";
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/lib/i18n";
 import { JsonLd, organizationSchema, websiteSchema } from "@/components/seo/JsonLd";
+import { WebVitals } from "@/components/WebVitals";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -72,8 +73,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    // Add Google Search Console verification code here when available
-    // google: "your-verification-code",
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
   },
 };
 
@@ -87,6 +87,7 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`}>
         <JsonLd data={organizationSchema()} />
         <JsonLd data={websiteSchema()} />
+        <WebVitals />
         <I18nProvider>
           <Header />
           <main className="min-h-screen">{children}</main>

@@ -524,6 +524,23 @@ model ContactInquiry {
 }
 
 // ──────────────────────────────────────────
+// Core Web Vitals
+// ──────────────────────────────────────────
+model WebVital {
+  id         String   @id @default(cuid())
+  name       String   // LCP, CLS, INP, TTFB, FCP
+  value      Float
+  rating     String   // good, needs-improvement, poor
+  path       String
+  deviceType String?  // desktop, mobile, tablet
+  createdAt  DateTime @default(now())
+
+  @@index([name])
+  @@index([createdAt])
+  @@index([path])
+}
+
+// ──────────────────────────────────────────
 // Agent Fleet — Decision & Activity Logs
 // ──────────────────────────────────────────
 model AgentLog {

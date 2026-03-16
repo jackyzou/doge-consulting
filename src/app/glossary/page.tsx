@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight, BookOpen } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 const glossary: { term: string; definition: string; category: string }[] = [
   // Documents
@@ -85,8 +86,24 @@ export default function GlossaryPage() {
   const { t } = useTranslation();
   const categories = [...new Set(glossary.map((g) => g.category))].sort();
 
+  // Generate DefinedTerm schema for all glossary terms
+  const definedTermSchema = {
+    "@context": "https://schema.org",
+    "@type": "DefinedTermSet",
+    name: "Shipping & Import Glossary",
+    description: "Comprehensive glossary of international shipping, customs, and China import terminology.",
+    url: "https://doge-consulting.com/glossary",
+    hasDefinedTerm: glossary.map(g => ({
+      "@type": "DefinedTerm",
+      name: g.term,
+      description: g.definition,
+      inDefinedTermSet: "https://doge-consulting.com/glossary",
+    })),
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      <JsonLd data={definedTermSchema} />
       <section className="gradient-hero py-16 text-white">
         <div className="mx-auto max-w-7xl px-4 text-center">
           <Badge className="mb-4 bg-teal/20 text-teal-200 border-teal/30"><BookOpen className="h-3 w-3 mr-1" /> {t("headerTools.glossary")}</Badge>

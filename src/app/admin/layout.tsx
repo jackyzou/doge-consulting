@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, FileText, Package, Settings, ArrowLeft,
-  ShoppingCart, Users, FileDown, LogOut, Loader2, Menu, X, PenLine, Tag, BarChart3, Ship, Bot, Search,
+  ShoppingCart, Users, FileDown, LogOut, Loader2, Menu, X, PenLine, Tag, BarChart3, Ship, Bot, Search, Activity,
 } from "lucide-react";
 import { DogeLogo } from "@/components/ui/doge-logo";
 import { cn } from "@/lib/utils";
@@ -29,6 +29,7 @@ const navItems = [
   { href: "/admin/documents", label: "Documents", icon: FileDown },
   { href: "/admin/blog", label: "Blog", icon: PenLine },
   { href: "/admin/content-audit", label: "SEO Audit", icon: Search },
+  { href: "/admin/seo-monitor", label: "SEO Monitor", icon: Activity },
   { href: "/admin/fleet", label: "Operations", icon: Bot },
   { href: "/admin/coupons", label: "Coupons", icon: Tag },
   { href: "/admin/settings", label: "Settings", icon: Settings },

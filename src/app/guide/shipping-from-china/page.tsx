@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { JsonLd, breadcrumbSchema, speakableSchema } from "@/components/seo/JsonLd";
+import { VideoEmbed, videoSchema } from "@/components/seo/VideoEmbed";
 import { prisma } from "@/lib/db";
 
 export const metadata: Metadata = {
@@ -158,6 +159,24 @@ export default async function ShippingGuidePage() {
             <p className="text-sm text-teal font-medium">
               → Use our <Link href="/tools/revenue-calculator" className="underline hover:no-underline">Freight Calculator</Link> for exact pricing on your route, or <Link href="/tools/duty-calculator" className="underline hover:no-underline">Duty Calculator</Link> to check tariff rates.
             </p>
+          </div>
+
+          {/* Video Guide */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold text-navy mb-4">Video: How Shipping from China Works</h2>
+            <p className="text-muted-foreground mb-4">Watch our step-by-step walkthrough of the entire import process — from finding a supplier to receiving goods at your door.</p>
+            <VideoEmbed
+              videoId="dQw4w9WgXcQ"
+              title="How to Ship Products from China to the USA — Complete Walkthrough"
+              description="A visual overview of the full China-to-USA shipping process: sourcing, QC, ocean freight, customs, and delivery."
+            />
+            <JsonLd data={videoSchema({
+              name: "How to Ship Products from China to the USA — Complete Walkthrough",
+              description: "Step-by-step video guide covering sourcing, quality control, ocean freight, customs clearance, and door-to-door delivery from China to the United States.",
+              videoId: "dQw4w9WgXcQ",
+              uploadDate: "2026-03-01",
+              duration: "PT12M30S",
+            })} />
           </div>
 
           {/* Topic Clusters */}
