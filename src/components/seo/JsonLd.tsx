@@ -238,3 +238,74 @@ export function howToSchema(howTo: {
     })),
   };
 }
+
+// LocalBusiness schema for office locations
+export function localBusinessSchema(location: {
+  name: string;
+  description?: string;
+  address: { street?: string; city: string; region: string; country: string; postalCode?: string };
+  telephone?: string;
+  url?: string;
+  geo?: { lat: number; lng: number };
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "@id": `https://doge-consulting.com/#${location.address.city.toLowerCase().replace(/\s/g, "-")}`,
+    name: location.name,
+    description: location.description || "AI-powered product sourcing and shipping from China to the USA.",
+    url: location.url || "https://doge-consulting.com",
+    telephone: location.telephone,
+    image: "https://doge-consulting.com/doge-logo.png",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: location.address.street,
+      addressLocality: location.address.city,
+      addressRegion: location.address.region,
+      addressCountry: location.address.country,
+      postalCode: location.address.postalCode,
+    },
+    ...(location.geo && {
+      geo: {
+        "@type": "GeoCoordinates",
+        latitude: location.geo.lat,
+        longitude: location.geo.lng,
+      },
+    }),
+    parentOrganization: {
+      "@type": "Organization",
+      name: "Doge Consulting Group Limited",
+    },
+    openingHoursSpecification: [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        opens: "09:00",
+        closes: "18:00",
+      },
+    ],
+  };
+}
+
+// Multi-language schema wrapper — adds inLanguage and translations
+export function multiLanguageSchema(
+  baseSchema: Record<string, unknown>,
+  languages: { code: string; url: string }[]
+) {
+  return {
+    ...baseSchema,
+    inLanguage: languages.map(l => l.code),
+    availableLanguage: languages.map(l => ({
+      "@type": "Language",
+      name: l.code,
+      alternateName: l.code,
+    })),
+    potentialAction: [
+      ...(Array.isArray(baseSchema.potentialAction) ? baseSchema.potentialAction : baseSchema.potentialAction ? [baseSchema.potentialAction] : []),
+      ...languages.map(l => ({
+        "@type": "ReadAction",
+        target: { "@type": "EntryPoint", urlTemplate: l.url, inLanguage: l.code },
+      })),
+    ],
+  };
+}

@@ -6,7 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { LiveChat } from "@/components/layout/LiveChat";
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/lib/i18n";
-import { JsonLd, organizationSchema, websiteSchema } from "@/components/seo/JsonLd";
+import { JsonLd, organizationSchema, websiteSchema, localBusinessSchema } from "@/components/seo/JsonLd";
 import { WebVitals } from "@/components/WebVitals";
 
 const inter = Inter({
@@ -63,6 +63,9 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: "https://doge-consulting.com",
+    types: {
+      "application/rss+xml": "https://doge-consulting.com/feed.xml",
+    },
     languages: {
       "en": "https://doge-consulting.com",
       "zh-Hans": "https://doge-consulting.com",
@@ -87,6 +90,23 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`}>
         <JsonLd data={organizationSchema()} />
         <JsonLd data={websiteSchema()} />
+        <JsonLd data={localBusinessSchema({
+          name: "Doge Consulting — Hong Kong HQ",
+          address: { street: "Rm 5, 27/F, China Resources Bldg, 26 Harbour Rd", city: "Wan Chai", region: "Hong Kong", country: "HK" },
+          telephone: "+852-6151-3289",
+          geo: { lat: 22.2783, lng: 114.1747 },
+        })} />
+        <JsonLd data={localBusinessSchema({
+          name: "Doge Consulting — Seattle Office",
+          address: { city: "Seattle", region: "WA", country: "US" },
+          telephone: "+1-425-223-0449",
+          geo: { lat: 47.6062, lng: -122.3321 },
+        })} />
+        <JsonLd data={localBusinessSchema({
+          name: "Doge Consulting — Shenzhen Warehouse",
+          address: { city: "Shenzhen", region: "Guangdong", country: "CN" },
+          geo: { lat: 22.5431, lng: 114.0579 },
+        })} />
         <WebVitals />
         <I18nProvider>
           <Header />
