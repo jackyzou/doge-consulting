@@ -16,7 +16,7 @@ import {
   Activity, Circle, TrendingUp, BarChart3,
 } from "lucide-react";
 
-interface Agent { id: string; name: string; role: string; avatar: string; color: string; skills: string[]; bio: string; stats: { total: number; approved: number; rejected: number; open: number }; }
+interface Agent { id: string; name: string; role: string; avatar: string; avatarUrl?: string; color: string; skills: string[]; bio: string; stats: { total: number; approved: number; rejected: number; open: number }; }
 interface Decision { id: string; agent: string; type: string; priority: string; title: string; content: string; status: string; assignedTo: string | null; tags: string | null; createdAt: string; updatedAt: string; }
 interface LogSummary { date: string; agents: string[]; decisionCount: number; hasCeoItems: boolean; sizeKB: number; content: string; }
 interface TimelineItem { id: string; agent: string; type: string; title: string; status: string; priority: string; createdAt: string; }
@@ -376,7 +376,7 @@ export default function OperationsPage() {
                 <Card key={agent.id} className="hover:shadow-lg transition-all cursor-pointer group hover:border-teal/40" onClick={() => setSelectedAgent(agent)}>
                   <CardContent className="pt-6">
                     <div className="flex items-start gap-4">
-                      <div className="rounded-full h-12 w-12 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-md" style={{ background: agent.color }}>{agent.avatar}</div>
+                      {agent.avatarUrl ? <img src={agent.avatarUrl} alt={agent.name} className="rounded-full h-12 w-12 object-cover shrink-0 shadow-md border-2" style={{ borderColor: agent.color }} /> : <div className="rounded-full h-12 w-12 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-md" style={{ background: agent.color }}>{agent.avatar}</div>}
                       <div className="min-w-0 flex-1">
                         <h3 className="font-semibold text-navy group-hover:text-teal transition-colors">{agent.name}</h3>
                         <p className="text-sm text-teal font-medium">{agent.role}</p>
@@ -740,7 +740,7 @@ export default function OperationsPage() {
           {selectedAgent && (<>
             <DialogHeader>
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-full text-white text-lg font-bold flex items-center justify-center shadow-lg" style={{ background: selectedAgent.color }}>{selectedAgent.avatar}</div>
+                {selectedAgent.avatarUrl ? <img src={selectedAgent.avatarUrl} alt={selectedAgent.name} className="w-14 h-14 rounded-full object-cover shadow-lg border-2" style={{ borderColor: selectedAgent.color }} /> : <div className="w-14 h-14 rounded-full text-white text-lg font-bold flex items-center justify-center shadow-lg" style={{ background: selectedAgent.color }}>{selectedAgent.avatar}</div>}
                 <div><DialogTitle>{selectedAgent.name}</DialogTitle><p className="text-sm text-teal font-medium">{selectedAgent.role}</p></div>
               </div>
             </DialogHeader>

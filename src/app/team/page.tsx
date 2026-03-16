@@ -15,29 +15,28 @@ export const metadata: Metadata = {
 
 const team = [
   {
-    name: "Jacky Zou",
-    role: "CEO & Founder",
-    slug: "jacky-zou",
-    image: "JZ",
-    color: "#2EC4B6",
-    bio: "Serial entrepreneur with deep expertise in cross-border e-commerce and US-China trade. Founded Doge Consulting to make factory-direct importing accessible to small and medium businesses. Based in Seattle, WA with operations in Hong Kong and Shenzhen.",
-    expertise: ["Cross-Border E-Commerce", "US-China Trade", "Business Strategy", "Product Sourcing", "Supply Chain"],
-    linkedin: "https://linkedin.com/in/jackyzou",
+    name: "Alex Chen",
+    role: "CEO & Co-Founder",
+    slug: "alex-chen",
+    image: "/team/alex-chen.svg",
+    color: "#0F2B46",
+    bio: "20+ years scaling import/export and technology businesses from zero to multi-million dollar revenue. Leads Doge Consulting's strategy, operations, and team coordination. Previously built cross-border supply chains for major US retailers. Based in Seattle with operations in Hong Kong and Shenzhen.",
+    expertise: ["Business Strategy", "Cross-Border Trade", "Operations Management", "Revenue Growth", "Team Leadership"],
   },
   {
-    name: "Seto Nakamura",
-    role: "Editor-in-Chief & Trade Analyst",
-    slug: "seto-nakamura",
-    image: "SN",
-    color: "#7C3AED",
-    bio: "10 years in international trade journalism and PR. Former correspondent covering Asia-Pacific shipping routes, tariff policy, and supply chain disruptions. Writes data-driven analysis on freight rates, trade policy, and market opportunities for US importers.",
-    expertise: ["Trade Policy Analysis", "Freight Rate Intelligence", "Import/Export Regulations", "Tariff Strategy", "Industry Research"],
+    name: "Amy Lin",
+    role: "Chief Financial Officer",
+    slug: "amy-lin",
+    image: "/team/amy-lin.svg",
+    color: "#059669",
+    bio: "15 years in finance, SMB accounting, and international trade finance. Manages pricing strategy, cash flow, and financial reporting. Expert in US-China trade finance structures and tariff optimization for importers.",
+    expertise: ["Financial Planning", "Pricing Strategy", "Tax Optimization", "Trade Finance", "Cash Flow Management"],
   },
   {
     name: "Seth Parker",
     role: "Chief Technology Officer",
     slug: "seth-parker",
-    image: "SP",
+    image: "/team/seth-parker.svg",
     color: "#2563EB",
     bio: "12 years in full-stack engineering, DevOps, and cloud infrastructure. Built Doge Consulting's technology platform including 8 free import tools, real-time vessel tracking, and AI product matching. Specializes in SEO-optimized web applications and data-driven logistics technology.",
     expertise: ["Web Development", "DevOps", "SEO Technical", "Database Architecture", "Logistics Technology"],
@@ -46,10 +45,28 @@ const team = [
     name: "Rachel Morales",
     role: "Chief Marketing Officer",
     slug: "rachel-morales",
-    image: "RM",
+    image: "/team/rachel-morales.svg",
     color: "#D97706",
     bio: "14 years in digital marketing across B2B and B2C international brands. Leads Doge Consulting's content strategy, SEO, and community growth. Expert in channel optimization for bootstrapped companies targeting niche B2B audiences.",
     expertise: ["SEO Strategy", "Content Marketing", "B2B Growth", "Community Building", "Conversion Optimization"],
+  },
+  {
+    name: "Seto Nakamura",
+    role: "Editor-in-Chief & Trade Analyst",
+    slug: "seto-nakamura",
+    image: "/team/seto-nakamura.svg",
+    color: "#7C3AED",
+    bio: "10 years in international trade journalism and PR. Former correspondent covering Asia-Pacific shipping routes, tariff policy, and supply chain disruptions. Writes data-driven analysis on freight rates, trade policy, and market opportunities for US importers.",
+    expertise: ["Trade Policy Analysis", "Freight Rate Intelligence", "Import/Export Regulations", "Tariff Strategy", "Industry Research"],
+  },
+  {
+    name: "Tiffany Wang",
+    role: "Customer Service Officer",
+    slug: "tiffany-wang",
+    image: "/team/tiffany-wang.svg",
+    color: "#EC4899",
+    bio: "8 years in customer success, e-commerce operations, and order management. Fluent in English and Mandarin Chinese. First point of contact for all customer inquiries, manages quotes, orders, and ongoing customer relationships.",
+    expertise: ["Customer Support", "Order Management", "CRM", "Bilingual EN/ZH", "E-Commerce Operations"],
   },
 ];
 
@@ -71,7 +88,7 @@ export default function TeamPage() {
           url: `https://doge-consulting.com/team#${member.slug}`,
           worksFor: { "@type": "Organization", name: "Doge Consulting Group Limited" },
           knowsAbout: member.expertise,
-          ...(member.linkedin && { sameAs: [member.linkedin] }),
+          image: `https://doge-consulting.com${member.image}`,
         }} />
       ))}
 
@@ -90,9 +107,7 @@ export default function TeamPage() {
             {team.map(member => (
               <div key={member.slug} id={member.slug} className="rounded-xl border bg-white p-6 hover:shadow-lg transition-shadow">
                 <div className="flex items-start gap-4">
-                  <div className="w-16 h-16 rounded-full text-white text-xl font-bold flex items-center justify-center shrink-0 shadow-md" style={{ background: member.color }}>
-                    {member.image}
-                  </div>
+                  <img src={member.image} alt={member.name} className="w-16 h-16 rounded-full object-cover shrink-0 shadow-md border-2" style={{ borderColor: member.color }} />
                   <div>
                     <h2 className="text-xl font-bold text-navy">{member.name}</h2>
                     <p className="text-sm text-teal font-semibold">{member.role}</p>
@@ -104,11 +119,6 @@ export default function TeamPage() {
                     <span key={e} className="text-[11px] bg-muted px-2 py-0.5 rounded-full">{e}</span>
                   ))}
                 </div>
-                {member.linkedin && (
-                  <a href={member.linkedin} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-teal mt-3 hover:underline">
-                    LinkedIn Profile →
-                  </a>
-                )}
               </div>
             ))}
           </div>
