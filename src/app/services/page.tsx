@@ -195,6 +195,71 @@ export default function ServicesPage() {
         </div>
       </section>
 
+      {/* Pricing Model */}
+      <section className="py-16 bg-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-teal">Simple Pricing</p>
+            <h2 className="mt-3 text-3xl font-bold">Free to Start. Pay Only When We Ship.</h2>
+            <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">No consulting fees. No setup costs. No minimum contracts. You only pay when we deliver results.</p>
+          </motion.div>
+          <div className="grid gap-6 md:grid-cols-3 max-w-4xl mx-auto">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0 }}>
+              <Card className="h-full text-center border-teal/30 bg-teal/5">
+                <CardContent className="pt-8 pb-6">
+                  <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-teal/10"><Globe className="h-7 w-7 text-teal" /></div>
+                  <p className="text-3xl font-bold text-teal">Free</p>
+                  <p className="font-semibold mt-1">Consultation & Quotes</p>
+                  <ul className="mt-4 text-sm text-muted-foreground space-y-2 text-left">
+                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-teal mt-0.5 shrink-0" /> Expert sourcing consultation</li>
+                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-teal mt-0.5 shrink-0" /> Detailed all-inclusive quote</li>
+                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-teal mt-0.5 shrink-0" /> Supplier verification research</li>
+                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-teal mt-0.5 shrink-0" /> HS code & duty estimate</li>
+                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-teal mt-0.5 shrink-0" /> All AI tools — no signup needed</li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}>
+              <Card className="h-full text-center border-2 border-teal shadow-lg relative">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2"><Badge className="bg-teal text-white">Most Popular</Badge></div>
+                <CardContent className="pt-8 pb-6">
+                  <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-teal/10"><Ship className="h-7 w-7 text-teal" /></div>
+                  <p className="text-3xl font-bold text-navy">All-Inclusive</p>
+                  <p className="font-semibold mt-1">Sourcing + Shipping</p>
+                  <ul className="mt-4 text-sm text-muted-foreground space-y-2 text-left">
+                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-teal mt-0.5 shrink-0" /> Factory sourcing & negotiation</li>
+                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-teal mt-0.5 shrink-0" /> Quality inspection (free for &gt;$10K)</li>
+                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-teal mt-0.5 shrink-0" /> Ocean freight (LCL or FCL)</li>
+                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-teal mt-0.5 shrink-0" /> Customs clearance & duties</li>
+                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-teal mt-0.5 shrink-0" /> Door-to-door delivery</li>
+                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-teal mt-0.5 shrink-0" /> 70/30 payment terms</li>
+                  </ul>
+                  <Link href="/quote"><Button className="mt-6 w-full bg-teal hover:bg-teal/90">Get a Quote <ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
+                </CardContent>
+              </Card>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }}>
+              <Card className="h-full text-center">
+                <CardContent className="pt-8 pb-6">
+                  <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-navy/10"><Cpu className="h-7 w-7 text-navy" /></div>
+                  <p className="text-3xl font-bold text-navy">Custom</p>
+                  <p className="font-semibold mt-1">Enterprise & IT Solutions</p>
+                  <ul className="mt-4 text-sm text-muted-foreground space-y-2 text-left">
+                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-teal mt-0.5 shrink-0" /> E-commerce integration</li>
+                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-teal mt-0.5 shrink-0" /> Custom AI chatbot development</li>
+                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-teal mt-0.5 shrink-0" /> ERP / inventory setup</li>
+                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-teal mt-0.5 shrink-0" /> Supply chain automation</li>
+                    <li className="flex items-start gap-2"><Check className="h-4 w-4 text-teal mt-0.5 shrink-0" /> Dedicated account manager</li>
+                  </ul>
+                  <Link href="/contact"><Button variant="outline" className="mt-6 w-full">Contact Us</Button></Link>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* Free Tools */}
       <section className="py-16 bg-slate-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
