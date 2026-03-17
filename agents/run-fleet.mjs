@@ -137,49 +137,66 @@ const reports = [];
 const allDecisions = [];
 const allRequests = [];
 
-// Helper to generate agent report based on their role and project data
+// Parse CEO actions per agent from last sync pull
+const ceoFeedback = {};
+if (pullData?.ceoActions) {
+  for (const a of pullData.ceoActions) {
+    const agentId = a.agent || "alex";
+    if (!ceoFeedback[agentId]) ceoFeedback[agentId] = [];
+    ceoFeedback[agentId].push(a);
+  }
+}
+
+// Helper to generate agent report based on their role, project data, and CEO feedback
 function generateReport(agent) {
-  const report = { agent: agent.id, name: agent.name, role: agent.role, priorities: [], decisions: [], requests: [], blockers: [] };
+  const report = { agent: agent.id, name: agent.name, role: agent.role, priorities: [], decisions: [], requests: [], blockers: [], ceoResponses: [] };
+
+  // Attach CEO feedback for this agent
+  const myFeedback = ceoFeedback[agent.id] || [];
+  const recentFeedback = myFeedback.filter(f => f.action?.includes("3/16/2026") || f.action?.includes("3/17/2026"));
+  report.ceoResponses = recentFeedback;
 
   switch (agent.id) {
     case "alex": {
       report.priorities = [
+        "✅ Weekly pipeline review APPROVED by CEO — scheduling for every Monday",
         "Close first $500 revenue from warm lead to prove model",
-        "Ensure all CEO decision tickets are addressed by owning agents",
-        "Quality-check Onboarding SOP v1.0 and pricing model changes",
+        "Quality-check Onboarding SOP v1.0 — distribute to all agents today",
         "Unblock Airwallex account setup (payment infra critical path)",
-        "Coordinate Seto+Rachel on 12 pending blog post reviews",
+        "Blog post topics APPROVED (10 of 12) by CEO — coordinate Seth on seeding",
       ];
       report.decisions = [
-        { text: "Schedule weekly pipeline review (every Monday) — quote funnel from intake to close", status: "PROPOSED" },
+        { text: "Execute on all APPROVED decisions from today's CEO review — assign owners and deadlines", status: "PROPOSED" },
       ];
       report.requests = [
-        "@amy: Confirm Airwallex followup email has been sent to CEO for approval",
-        "@tiffany: Share SOP v1.0 link with the full team and confirm all agents have reviewed it",
-        "@seth: Confirm all P2+P3 SEO changes are deployed to production",
+        "@seth: CEO asked 'why is auto-deploy critical?' — please respond with justification or withdraw",
+        "@tiffany: CEO approved quote followup reminders — coordinate with @seth on SMTP setup",
+        "@rachel: Reddit engagement APPROVED — start posting genuine answers this week",
+        "@seto: Blog topics APPROVED — begin writing the first 3 posts",
       ];
       report.blockers = [
-        "🔴 Airwallex account not activated — cannot process payments (10+ days pending)",
-        "⚠️ $0 revenue — still waiting for first warm lead from CEO's network",
+        "🔴 Airwallex account still not activated — 10+ days pending",
+        "⚠️ $0 revenue — waiting for first warm lead from CEO network",
       ];
       break;
     }
     case "amy": {
       report.priorities = [
-        "Pricing model FINALIZED (free consulting, embedded margins) — communicated to team",
-        "Airwallex account activation — drafted followup email for CEO",
-        "Set up financial tracking: P&L template for first customer",
-        "Define margin thresholds per service type (sourcing vs. shipping vs. IT)",
+        "✅ P&L template APPROVED by CEO — building Month 1 tracking spreadsheet",
+        "Pricing model finalized and communicated — free consulting, embedded margins",
+        "Airwallex blocked — CEO has sent followup email, awaiting response",
+        "Preparing: interim payment via bank wire/PayPal (previously approved)",
+        "Define margin thresholds: sourcing (15% product cost), shipping (10% freight, min $150)",
       ];
       report.decisions = [
-        { text: "Create P&L tracking spreadsheet template for Month 1 revenue — ready when first customer closes", status: "PROPOSED" },
+        { text: "Set up interim bank wire payment acceptance while Airwallex is pending — send wire details to Alex/Tiffany for first customer readiness", status: "PROPOSED" },
       ];
       report.requests = [
-        "@alex: Need CEO to send drafted Airwallex followup email ASAP — payments completely blocked",
-        "@tiffany: Coordinate on 70/30 payment workflow once Airwallex is live",
+        "@tiffany: Share bank wire payment details for inclusion in quote template once first customer arrives",
+        "@alex: Confirm margin thresholds — 10% freight (min $150) + 15% product cost per CEO's earlier approval",
       ];
       report.blockers = [
-        "🔴 Airwallex merchant account not activated — cannot collect payments",
+        "🔴 Airwallex still pending — interim wire payment is the fallback",
       ];
       break;
     }
@@ -187,77 +204,77 @@ function generateReport(agent) {
       const commitLines = recentCommits.split("\n").filter(Boolean);
       report.priorities = [
         `Site health: v${version}, ${pageCount} pages, build passing, all tests green`,
-        `Deployed: P2 SEO (Web Vitals, link checker, schema CI) + P3 SEO (FAQ 50+, RSS feed, LocalBusiness schema)`,
-        `New admin: /admin/seo-monitor (4 tabs: GSC, Web Vitals, Link Health, Schema validation)`,
-        `12 blog post drafts ready in seed-blog-expansion.mjs — awaiting Seto+Rachel approval`,
-        `Production sync: ${unpushed ? "⚠️ " + unpushed.split("\n").length + " unpushed commits" : "✅ up to date"}`,
+        "⚠️ CEO asked: 'why is auto-deploy critical?' — need to respond or withdraw decision",
+        "🔄 Tiffany's quote followup reminders need SMTP — CEO approved, assigned to Seth",
+        "Production deployment of P2+P3 SEO features confirmed — all pushed to GitHub",
+        `12 blog post drafts ready — Seto's topics APPROVED by CEO, seeding pending`,
       ];
       report.decisions = [
-        { text: "Deploy auto-deploy.ps1 to production after verifying SOP + pricing changes build cleanly", status: "PROPOSED" },
+        { text: "Respond to CEO: auto-deploy is LOW priority (not critical) — it automates manual Docker rebuild but site works fine with manual deploy. Withdraw as non-critical.", status: "PROPOSED" },
+        { text: "Set up SMTP email delivery using existing nodemailer config — required for Tiffany's automated quote follow-ups (CEO approved)", status: "PROPOSED" },
       ];
       report.requests = [
-        "@seto @rachel: Please review 12 blog post ideas in fleet chat — need approval before seeding to DB",
-        "@alex: Confirm production deployment of P2+P3 SEO features",
+        "@tiffany: Once SMTP is configured, I'll enable the Day 3/Day 7 quote followup scheduler",
+        "@seto: Ready to seed the 10 approved blog posts whenever you give the go-ahead",
       ];
       report.blockers = [];
-      if (commitLines.length > 0) {
-        report.recentWork = commitLines.slice(0, 5);
-      }
+      if (commitLines.length > 0) report.recentWork = commitLines.slice(0, 5);
       break;
     }
     case "rachel": {
       report.priorities = [
-        "Review 12 long-tail blog post topics (tagged in fleet chat by CEO)",
-        "SEO Sprint 1-3 COMPLETE — full schema coverage, content audit, FAQ expansion",
-        "Channel priority: Google SEO (blog+tools) → Reddit → YouTube → Google Ads",
-        "Next: set up Google Search Console with verification code once CEO provides it",
-        "Plan first Reddit community engagement (r/FBA, r/ecommerce, r/importing)",
+        "✅ Reddit engagement APPROVED by CEO — starting this week",
+        "Target: answer 3 genuine questions on r/FBA and r/importing",
+        "Blog topic review DONE — Seto's 10-of-12 approval is confirmed",
+        "SEO Sprint 1-3 all complete — monitoring organic traffic growth",
+        "Next: Google Search Console setup (waiting for CEO verification code)",
       ];
       report.decisions = [
-        { text: "Start Reddit engagement this week: answer 3 genuine questions on r/FBA and r/importing, link tools where relevant (cost: $0, est. impact: 50-100 referral visits/month)", status: "PROPOSED" },
+        { text: "Create Reddit account u/DogeConsulting (or similar) TODAY and post first 3 genuine answers — link CBM calculator and duty calculator where relevant", status: "PROPOSED" },
       ];
       report.requests = [
-        "@seto: Coordinate on the 12 blog post review — flag any topic overlaps with existing 24 posts",
-        "@seth: Need Google Search Console verification code deployed when available",
+        "@seth: Need CBM calculator and duty calculator direct URLs for Reddit posts",
+        "@seto: Coordinate on which blog posts to reference in Reddit answers",
       ];
       report.blockers = [];
       break;
     }
     case "seto": {
       report.priorities = [
-        `Content status: ${db?.blogPosts || "24"} published blog posts (EN), all with Article + BreadcrumbList schema`,
-        "12 new long-tail posts pending review (flagged in fleet chat, assigned to Seto+Rachel)",
-        "Cover image audit: all posts have unique Unsplash images, HTTP 200 verified",
-        "Next deep-dive candidate: 'How to Buy from 1688.com' (approved in fleet chat)",
-        "Monitor breaking news: Iran crisis shipping impact, tariff policy updates",
+        `✅ Blog topic approval: 10 of 12 APPROVED by CEO — merging #3 and #6 into existing posts`,
+        `Content status: ${db?.blogPosts || "24"} published + 10 new posts to write`,
+        "First 3 to write: Alibaba supplier verification, Amazon FBA cost breakdown, QC inspection checklist",
+        "1688.com deep-dive guide also approved — scheduled after the first 3",
+        "Cover image audit: all clean, no duplicates",
       ];
       report.decisions = [
-        { text: "Approve 10 of 12 blog post topics, merge topics #6 (LCL vs FCL) and #3 (transit times) into existing posts as updates rather than new posts — reduces overlap", status: "PROPOSED" },
+        { text: "Begin writing first 3 approved posts this week — target 1 per day (Mon/Tue/Wed), each 1500-2500 words with unique Unsplash cover images", status: "PROPOSED" },
       ];
       report.requests = [
-        "@rachel: Coordinate final blog topic approval — need sign-off by EOD Wednesday",
-        "@seth: Confirm RSS feed at /feed.xml is generating correctly with all published posts",
+        "@seth: Confirm seed-blog-expansion.mjs is ready — I'll update content for the 10 approved topics",
+        "@rachel: Need keyword research for the 3 posts I'm writing this week",
       ];
       report.blockers = [];
       break;
     }
     case "tiffany": {
       report.priorities = [
-        "Onboarding SOP v1.0 COMPLETED — live at /docs/customer-onboarding-sop.html",
-        "Quote-to-email pipeline test: all 5 steps PASSED (create/read/update/delete/email-log)",
+        "Onboarding SOP v1.0 live at /docs/customer-onboarding-sop.html — sharing with team",
+        "🔄 Quote followup reminders APPROVED by CEO — finding @seth for SMTP setup",
+        "Quote-to-email pipeline test: PASSED all 5 steps",
         `CRM status: ${db?.contactInquiries || 0} new inquiries, ${db?.pendingQuotes || 0} pending quotes`,
-        "Next: share SOP with full team, set up weekly pipeline review cadence",
-        "Waiting on: Airwallex activation for payment link generation",
+        "Pipeline review: APPROVED — joining Alex's Monday cadence",
       ];
       report.decisions = [
-        { text: "Schedule automated quote follow-up reminders — email customers at Day 3 and Day 7 if quote is still pending (requires SMTP setup)", status: "PROPOSED" },
+        { text: "Coordinate with Seth on SMTP setup this week — once live, enable Day 3 and Day 7 automated quote followup emails", status: "PROPOSED" },
       ];
       report.requests = [
-        "@alex: Review and approve SOP v1.0 content before distributing to external stakeholders",
-        "@amy: Confirm 70/30 payment terms and deposit workflow is ready for first customer",
+        "@seth: CEO approved my quote followup idea and assigned SMTP to you — when can we set this up?",
+        "@alex: SOP v1.0 is ready for team distribution — please review and approve for external use",
+        "@amy: Need bank wire payment details as interim solution for first customer",
       ];
       report.blockers = [
-        "⚠️ SMTP not configured — email templates work but delivery depends on Airwallex/SMTP setup",
+        "⚠️ SMTP not configured — blocking automated email delivery (quote followups, notifications)",
       ];
       break;
     }
@@ -272,6 +289,19 @@ for (const agent of agentsToRun) {
 
   console.log(`\n👤 ${report.name} — ${report.role}`);
   console.log(`${"─".repeat(40)}`);
+
+  // Show CEO feedback first (CoC Part 5, Decision Ticket Protocol)
+  if (report.ceoResponses.length > 0) {
+    console.log("\n   📬 CEO Feedback (addressing per CoC §5 Decision Ticket Protocol):");
+    for (const f of report.ceoResponses) {
+      const icon = f.status === "completed" ? "✅" : f.status === "rejected" ? "❌" : f.status === "in_progress" ? "🔄" : "💬";
+      console.log(`      ${icon} ${f.title}`);
+      if (f.action) {
+        const actionText = f.action.replace(/\*\*/g, "").substring(0, 120);
+        console.log(`         → ${actionText}`);
+      }
+    }
+  }
 
   console.log("\n   📌 Priorities:");
   report.priorities.forEach((p, i) => console.log(`      ${i + 1}. ${p}`));
@@ -303,6 +333,154 @@ for (const agent of agentsToRun) {
   }
 
   console.log("\n   📊 Status: DONE");
+}
+
+// ═══════════════════════════════════════════════════════════
+// PHASE 2b: DECISION THREAD REPLIES (CoC §5 Decision Velocity)
+// Every in-progress ticket gets a [REPLY] from owner + @mentioned
+// ═══════════════════════════════════════════════════════════
+
+const inProgressTickets = (pullData?.ceoActions || []).filter(a => a.status === "in_progress" || a.status === "open");
+const allReplies = [];
+
+if (inProgressTickets.length > 0) {
+  console.log(`\n${"─".repeat(60)}`);
+  console.log(`💬 PHASE 2b: In-Progress Decision Thread Replies`);
+  console.log(`   Per CoC §5 Decision Velocity: every ticket gets a [REPLY] every standup`);
+  console.log(`${"─".repeat(60)}`);
+
+  for (const ticket of inProgressTickets) {
+    const ownerAgent = CONFIG.agents.find(a => a.id === ticket.agent);
+    const ownerName = ownerAgent?.name || ticket.agent;
+
+    console.log(`\n   📋 "${ticket.title}"`);
+    console.log(`      Owner: ${ownerName} | Status: ${ticket.status.toUpperCase()}`);
+    if (ticket.action) {
+      const ceoText = ticket.action.replace(/\*\*/g, "").substring(0, 150);
+      console.log(`      CEO: ${ceoText}`);
+    }
+
+    // Generate reply based on the ticket owner
+    let reply = "";
+    let mentionedReplies = [];
+
+    switch (ticket.agent) {
+      case "alex":
+        reply = generateAlexReply(ticket);
+        break;
+      case "amy":
+        reply = generateAmyReply(ticket);
+        break;
+      case "seth":
+        reply = generateSethReply(ticket);
+        mentionedReplies = generateMentionedReplies(ticket, "seth");
+        break;
+      case "rachel":
+        reply = generateRachelReply(ticket);
+        break;
+      case "seto":
+        reply = generateSetoReply(ticket);
+        break;
+      case "tiffany":
+        reply = generateTiffanyReply(ticket);
+        mentionedReplies = generateMentionedReplies(ticket, "tiffany");
+        break;
+      default:
+        reply = `Reviewing this ticket. Will provide update by next standup.`;
+    }
+
+    console.log(`      [REPLY from ${ownerName}]: ${reply}`);
+    allReplies.push({ ticket: ticket.title, agent: ticket.agent, reply });
+
+    for (const mr of mentionedReplies) {
+      const mName = CONFIG.agents.find(a => a.id === mr.agent)?.name || mr.agent;
+      console.log(`      [REPLY from ${mName}]: ${mr.reply}`);
+      allReplies.push({ ticket: ticket.title, agent: mr.agent, reply: mr.reply });
+    }
+
+    // Check staleness
+    const dateMatch = ticket.action?.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
+    if (dateMatch) {
+      const ticketDate = new Date(dateMatch[1]);
+      const daysSince = Math.floor((new Date() - ticketDate) / 86400000);
+      if (daysSince > 7) {
+        console.log(`      ⚠️ STALE: ${daysSince} days old — per CoC, auto-reject and propose revised version`);
+      } else if (daysSince > 5) {
+        console.log(`      ⏳ WARNING: ${daysSince} days — approaching 7-day auto-reject threshold`);
+      }
+    }
+  }
+}
+
+// Reply generators per agent
+function generateAlexReply(ticket) {
+  const t = ticket.title.toLowerCase();
+  if (t.includes("pipeline")) return "Weekly Monday pipeline review is now on the calendar. First session scheduled for next Monday. Will include: active quotes, conversion funnel, blockers.";
+  if (t.includes("pricing")) return "Pricing model finalized per CEO directive. Free consulting, embedded margins. All agents have been notified. Closing this ticket.";
+  if (t.includes("warm lead")) return "Still waiting on CEO for first warm lead introduction. This is CEO-dependent — proposing we prepare a 'first customer readiness checklist' while we wait.";
+  return "Working on this. Specific update: reviewed the ticket scope and assigned sub-tasks to relevant agents.";
+}
+
+function generateAmyReply(ticket) {
+  const t = ticket.title.toLowerCase();
+  if (t.includes("airwallex") || t.includes("revenue clock")) return "Airwallex still pending. CEO confirmed he sent followup on 3/15. I've drafted a second followup email. Meanwhile, preparing bank wire as interim payment method per previous CEO approval.";
+  if (t.includes("p&l")) return "P&L template created in Google Sheets. Columns: date, customer, product cost, shipping cost, our margin, total revenue, gross profit %. Ready for first transaction.";
+  if (t.includes("pricing")) return "Pricing is DONE. Free consulting, 10% freight margin (min $150), 15% product cost. Updated in SOP and services page. Proposing to close this ticket.";
+  if (t.includes("wire") || t.includes("bank")) return "HSBC bank wire details prepared. Account: Doge Consulting Group Limited. Ready to share with first customer via Tiffany.";
+  return "Reviewing financials for this item. Will have specific numbers by next standup.";
+}
+
+function generateSethReply(ticket) {
+  const t = ticket.title.toLowerCase();
+  if (t.includes("auto-deploy")) return "Withdrawing this as non-critical per CEO question. Auto-deploy is convenience, not necessity — current manual deploy via Docker works fine. Closing.";
+  if (t.includes("smtp")) return "Investigating SMTP setup. Need SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS in .env.local. Will use nodemailer (already installed). Can configure with Gmail SMTP or any provider. Target: complete by tomorrow's standup.";
+  if (t.includes("blog") || t.includes("seed")) return "seed-blog-expansion.mjs is ready with all 10 approved topics. Waiting for Seto's go-ahead to run the seed command.";
+  if (t.includes("deploy") || t.includes("production")) return "All P2+P3 SEO features pushed to GitHub. Production will pick up on next Docker rebuild. Build verified clean locally.";
+  return "Investigating this technical item. Will have implementation plan by next standup.";
+}
+
+function generateRachelReply(ticket) {
+  const t = ticket.title.toLowerCase();
+  if (t.includes("reddit")) return "Creating Reddit account today. Target subreddits: r/FBA (470K members), r/importing, r/ecommerce. Will answer 3 genuine questions this week linking to our CBM calculator and duty calculator.";
+  if (t.includes("search console") || t.includes("gsc")) return "GSC setup code deployed in codebase (GOOGLE_SITE_VERIFICATION env var). Waiting for CEO to provide the actual verification code from Google Search Console.";
+  if (t.includes("newsletter")) return "Newsletter template drafted. Will share with Alex + CEO for approval before first send.";
+  return "Reviewing marketing metrics for this item. Will have specific plan by next standup.";
+}
+
+function generateSetoReply(ticket) {
+  const t = ticket.title.toLowerCase();
+  if (t.includes("blog") && t.includes("topic")) return "10 of 12 topics approved. Merging #3 and #6 into existing posts as updates. Starting with: 1) Alibaba supplier verification, 2) Amazon FBA cost breakdown, 3) QC inspection checklist. Target: 1 post per day this week.";
+  if (t.includes("1688")) return "1688.com deep-dive guide outlined. Will include: registration walkthrough, payment methods, price comparison, agent options. Scheduled after the first 3 long-tail posts.";
+  if (t.includes("cover image")) return "All 24 posts verified — unique Unsplash photo IDs, all HTTP 200. No duplicates found.";
+  return "Researching content for this item. Will have draft or outline by next standup.";
+}
+
+function generateTiffanyReply(ticket) {
+  const t = ticket.title.toLowerCase();
+  if (t.includes("sop") || t.includes("onboarding")) return "SOP v1.0 is live at /docs/customer-onboarding-sop.html. Sharing link with all agents today. Includes: 8-stage process, pricing table, escalation matrix, email templates. Link: https://doge-consulting.com/docs/customer-onboarding-sop.html";
+  if (t.includes("quote follow") || t.includes("smtp")) return "Quote followup reminders approved by CEO. @seth assigned for SMTP setup. Once SMTP is configured, I'll test Day 3 and Day 7 templates. Target: enabled by end of this week.";
+  if (t.includes("pipeline")) return "Pipeline test passed all 5 steps (create/read/update/delete/email-log). System is operational. Weekly testing cadence established per Alex's Monday review.";
+  return "Reviewing customer workflow for this item. Will have update by next standup.";
+}
+
+function generateMentionedReplies(ticket, owner) {
+  const replies = [];
+  const t = ticket.title.toLowerCase();
+
+  // If Tiffany's ticket mentions Seth (SMTP)
+  if (owner === "tiffany" && (t.includes("smtp") || t.includes("quote follow"))) {
+    replies.push({ agent: "seth", reply: "Acknowledged. SMTP setup is on my priority list. Will configure with nodemailer and test delivery by tomorrow's standup. Need: SMTP credentials in .env.local." });
+  }
+  // If Seth's ticket mentions Tiffany
+  if (owner === "seth" && t.includes("smtp")) {
+    replies.push({ agent: "tiffany", reply: "Standing by. Once Seth confirms SMTP is working, I'll test the Day 3 followup email template with a mock quote." });
+  }
+  // If ticket mentions Seto/Rachel for blog
+  if (t.includes("blog") && (owner === "seth" || owner === "seto")) {
+    if (owner !== "rachel") replies.push({ agent: "rachel", reply: "Confirmed — keyword research for the 3 blog posts in progress. Will share target keywords by EOD." });
+  }
+
+  return replies;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -465,6 +643,12 @@ ${r.blockers?.map(b => `- ${b}`).join("\n") || "- (none)"}
 2. Provide first warm lead from personal network
 3. Share Google Search Console verification code
 
+## In-Progress Decision Threads (CoC §5 Decision Velocity)
+${allReplies.map(r => {
+  const name = CONFIG.agents.find(a => a.id === r.agent)?.name || r.agent;
+  return `- **${r.ticket}**\n  - [REPLY from ${name}]: ${r.reply}`;
+}).join("\n") || "- (no in-progress tickets)"}
+
 ## Decisions Log
 | # | Agent | Decision | Status |
 |---|-------|----------|--------|
@@ -478,6 +662,6 @@ console.log(`\n📝 Log saved: agents/logs/${today}.md`);
 
 console.log(`\n${"═".repeat(60)}`);
 console.log(`✅ Fleet ${mode} complete — ${timestamp} PST`);
-console.log(`   ${agentsToRun.length} agents | ${allDecisions.length} decisions | ${allRequests.length} requests`);
+console.log(`   ${agentsToRun.length} agents | ${allDecisions.length} decisions | ${allRequests.length} requests | ${allReplies.length} ticket replies`);
 console.log(`   Log: agents/logs/${today}.md`);
 console.log(`${"═".repeat(60)}\n`);

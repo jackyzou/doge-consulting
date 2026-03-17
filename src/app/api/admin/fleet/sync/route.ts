@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { standups, decisions, coc, resetDecisions } = body;
+    const { standups, decisions, coc, resetDecisions, replies } = body;
 
     let standupsCreated = 0;
     let decisionsCreated = 0;
@@ -111,11 +111,32 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ── Append replies to decision threads ──
+    let repliesAppended = 0;
+    if (Array.isArray(replies)) {
+      for (const r of replies) {
+        if (!r.ticket || !r.reply) continue;
+        const existing = await prisma.agentLog.findFirst({
+          where: { type: "decision", title: r.ticket },
+        });
+        if (existing) {
+          const agentName = r.agentName || r.agent || "agent";
+          const replyLine = `\n\n---\n**[REPLY from ${agentName}] (${new Date().toISOString().split("T")[0]}):** ${r.reply}`;
+          await prisma.agentLog.update({
+            where: { id: existing.id },
+            data: { content: existing.content + replyLine },
+          });
+          repliesAppended++;
+        }
+      }
+    }
+
     return NextResponse.json({
       ok: true,
       standupsCreated,
       decisionsCreated,
-      message: `Synced ${standupsCreated} standups, ${decisionsCreated} decisions`,
+      repliesAppended,
+      message: `Synced ${standupsCreated} standups, ${decisionsCreated} decisions, ${repliesAppended} replies`,
     });
   } catch (e) {
     console.error("Fleet sync error:", e);

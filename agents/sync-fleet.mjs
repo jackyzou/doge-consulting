@@ -105,6 +105,33 @@ for (const file of files) {
 
 console.log(`\n📊 Total: ${standups.length} standups, ${decisions.length} decisions`);
 
+// Extract [REPLY] entries from standup logs
+const replies = [];
+for (const s of standups) {
+  const replyRegex = /\[REPLY from ([^\]]+)\]:\s*(.+)/g;
+  // Find which ticket each reply belongs to by looking at context
+  const lines = s.content.split("\n");
+  let currentTicket = "";
+  for (const line of lines) {
+    // Detect ticket header like: **"Some decision title"** or #### [Owner: X] Title
+    const ticketMatch = line.match(/[*"]+([^"*]+)[*"]+/) || line.match(/\[Owner:\s*\w+\]\s*(.+)/);
+    if (ticketMatch && !line.includes("[REPLY")) currentTicket = ticketMatch[1].trim();
+    
+    const replyMatch = line.match(/\[REPLY from ([^\]]+)\]:\s*(.+)/);
+    if (replyMatch && currentTicket) {
+      const agentName = replyMatch[1].trim();
+      const replyText = replyMatch[2].trim();
+      // Map name to agent ID
+      const agentMap = { "Alex Chen": "alex", "Amy Lin": "amy", "Seth Parker": "seth", "Rachel Morales": "rachel", "Seto Nakamura": "seto", "Tiffany Wang": "tiffany" };
+      const agentId = agentMap[agentName] || agentName.toLowerCase().split(" ")[0];
+      replies.push({ ticket: currentTicket, agent: agentId, agentName, reply: replyText, date: s.date });
+    }
+  }
+}
+if (replies.length > 0) {
+  console.log(`💬 Found ${replies.length} ticket replies to sync`);
+}
+
 // Read Code of Conduct
 let coc = null;
 const cocPath = join(ROOT, "agents", "CODE-OF-CONDUCT.md");
@@ -124,7 +151,7 @@ try {
   const res = await fetch(targetUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-fleet-secret": syncSecret },
-    body: JSON.stringify({ standups, decisions, coc, resetDecisions: flags.resetDecisions || false }),
+    body: JSON.stringify({ standups, decisions, coc, resetDecisions: flags.resetDecisions || false, replies }),
   });
   const data = await res.json();
   if (res.ok) {
