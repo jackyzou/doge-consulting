@@ -56,6 +56,16 @@ export async function POST(request: NextRequest) {
             },
           });
           standupsCreated++;
+        } else if (s.content.length > existing.content.length) {
+          // Update if the new content is longer (more complete standup)
+          await prisma.agentLog.update({
+            where: { id: existing.id },
+            data: {
+              content: s.content,
+              tags: (s.agents || []).join(","),
+            },
+          });
+          standupsCreated++;
         }
       }
     }
