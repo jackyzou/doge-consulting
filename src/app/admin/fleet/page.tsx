@@ -634,7 +634,11 @@ export default function OperationsPage() {
                 {/* Proposer info */}
                 {agent && (
                   <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                    <div className="w-8 h-8 rounded-full text-white text-xs font-bold flex items-center justify-center" style={{ background: agent.color }}>{agent.avatar}</div>
+                    {agent.avatarUrl ? (
+                      <img src={agent.avatarUrl} alt={agent.name} className="w-8 h-8 rounded-full" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full text-white text-xs font-bold flex items-center justify-center" style={{ background: agent.color }}>{agent.avatar}</div>
+                    )}
                     <div>
                       <p className="text-sm font-medium">Proposed by {agent.name}</p>
                       <p className="text-xs text-muted-foreground">{agent.role} · {new Date(selectedDecision.createdAt).toLocaleString()}</p>
@@ -642,14 +646,84 @@ export default function OperationsPage() {
                   </div>
                 )}
 
-                {/* Content with history */}
-                {selectedDecision.content && (
-                  <div className="bg-slate-50 p-4 rounded-lg border max-h-60 overflow-y-auto">
-                    <div className="prose prose-sm max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedDecision.content}</ReactMarkdown>
+                {/* Threaded content — split into original + replies */}
+                {selectedDecision.content && (() => {
+                  const parts = selectedDecision.content.split(/\n---\n/);
+                  const original = parts[0];
+                  const thread = parts.slice(1).filter(p => p.trim());
+                  return (
+                    <div className="space-y-3">
+                      {/* Original proposal */}
+                      <div className="bg-slate-50 p-4 rounded-lg border">
+                        <div className="prose prose-sm max-w-none">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{original}</ReactMarkdown>
+                        </div>
+                      </div>
+
+                      {/* Thread: CEO feedback + agent replies */}
+                      {thread.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Thread ({thread.length} {thread.length === 1 ? "reply" : "replies"})</p>
+                          {thread.map((entry, i) => {
+                            const isCeo = entry.includes("CEO Feedback") || entry.includes("CEO Comment") || entry.includes("APPROVED") || entry.includes("REJECTED") || entry.includes("IN PROGRESS");
+                            const isReply = entry.includes("[REPLY from");
+                            const replyMatch = entry.match(/\[REPLY from ([^\]]+)\]\s*\(([^)]+)\):\s*(.*)/) || entry.match(/\[REPLY from ([^\]]+)\]:\s*(.*)/);
+                            
+                            let replyAgent = "";
+                            let replyDate = "";
+                            let replyText = entry.trim();
+                            
+                            if (replyMatch) {
+                              replyAgent = replyMatch[1];
+                              if (replyMatch.length === 4) {
+                                replyDate = replyMatch[2];
+                                replyText = replyMatch[3];
+                              } else {
+                                replyText = replyMatch[2];
+                              }
+                            }
+
+                            const agentId = replyAgent.toLowerCase().split(" ")[0];
+                            const replyAgentData = agents.find(a => a.id === agentId || a.name === replyAgent);
+                            const bgColor = isCeo ? "bg-teal/5 border-teal/20" : isReply ? "bg-blue-50/50 border-blue-100" : "bg-muted/30 border-border";
+                            const borderLeft = isCeo ? "border-l-teal" : isReply ? "border-l-blue-400" : "border-l-slate-300";
+
+                            return (
+                              <div key={i} className={`${bgColor} border ${borderLeft} border-l-4 rounded-r-lg p-3`}>
+                                <div className="flex items-center gap-2 mb-1.5">
+                                  {isCeo ? (
+                                    <>
+                                      <div className="w-5 h-5 rounded-full bg-teal text-white text-[10px] font-bold flex items-center justify-center">J</div>
+                                      <span className="text-xs font-semibold text-teal">CEO (Jacky)</span>
+                                    </>
+                                  ) : replyAgentData ? (
+                                    <>
+                                      {replyAgentData.avatarUrl ? (
+                                        <img src={replyAgentData.avatarUrl} alt={replyAgentData.name} className="w-5 h-5 rounded-full" />
+                                      ) : (
+                                        <div className="w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center" style={{ background: replyAgentData.color }}>{replyAgentData.avatar}</div>
+                                      )}
+                                      <span className="text-xs font-semibold" style={{ color: replyAgentData.color }}>{replyAgentData.name}</span>
+                                    </>
+                                  ) : replyAgent ? (
+                                    <>
+                                      <div className="w-5 h-5 rounded-full bg-slate-400 text-white text-[10px] font-bold flex items-center justify-center">{replyAgent[0]}</div>
+                                      <span className="text-xs font-semibold text-slate-600">{replyAgent}</span>
+                                    </>
+                                  ) : null}
+                                  {replyDate && <span className="text-[10px] text-muted-foreground">{replyDate}</span>}
+                                </div>
+                                <div className="prose prose-sm max-w-none text-sm">
+                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{isReply ? replyText : entry.replace(/^\*\*/g, "").replace(/\*\*$/g, "")}</ReactMarkdown>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {selectedDecision.assignedTo && (
                   <div className="text-sm"><span className="text-muted-foreground">Assigned to:</span> <strong>{selectedDecision.assignedTo}</strong></div>
