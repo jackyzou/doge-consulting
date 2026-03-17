@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, Search, Mail, Phone, Building, Loader2, ShoppingCart, FileText, DollarSign, Sparkles, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, Search, Mail, Phone, Building, Loader2, ShoppingCart, FileText, DollarSign, Sparkles, Download, ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
 import { generateCsv, downloadCsv } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -72,10 +72,17 @@ export default function AdminCustomersPage() {
           <h1 className="text-2xl font-bold">Customers (CRM)</h1>
           <p className="text-muted-foreground">Manage customer relationships</p>
         </div>
-        <Badge variant="secondary" className="gap-1">
-          <Users className="h-3 w-3" />
-          {total} customers
-        </Badge>
+        <div className="flex items-center gap-2">
+          <a href="/docs/customer-onboarding-sop.html" target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="sm" className="gap-1.5">
+              <BookOpen className="h-3.5 w-3.5" /> Onboarding SOP
+            </Button>
+          </a>
+          <Badge variant="secondary" className="gap-1">
+            <Users className="h-3 w-3" />
+            {total} customers
+          </Badge>
+        </div>
       </div>
 
       {/* Search + Export */}
