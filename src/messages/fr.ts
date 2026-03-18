@@ -70,8 +70,8 @@ const messages = {
     s4Desc: "Nous coordonnons toute la documentation d'exportation et d'importation avec des courtiers en douane agréés, assurant la conformité aux réglementations américaines.",
     s5Title: "Livraison dernier kilomètre",
     s5Desc: "Du port de Seattle à votre porte. Livraison locale LTL disponible dans la grande région de Seattle et de Puget Sound.",
-    s6Title: "Coordination d'assurance",
-    s6Desc: "Nous coordonnons une assurance cargo optionnelle via nos partenaires logistiques agréés, couvrant les dommages, pertes et retards pour vos envois.",
+    s6Title: "Assurance cargo",
+    s6Desc: "Assurance cargo compl\u00e8te en option couvrant les dommages, pertes et retards. S\u00e9r\u00e9nit\u00e9 pour vos envois. (Toutes les polices sont fournies par nos partenaires logistiques tiers.)",
   },
   pricing: {
     title: "Tarifs simples et",

@@ -70,8 +70,8 @@ const messages = {
     s4Desc: "Coordinamos toda la documentación de exportación e importación con agentes de aduanas licenciados, garantizando el cumplimiento de las regulaciones de EE.UU.",
     s5Title: "Entrega de última milla",
     s5Desc: "Del puerto de Seattle a tu puerta. Servicio de entrega local LTL disponible en el área metropolitana de Seattle y Puget Sound.",
-    s6Title: "Coordinación de seguro",
-    s6Desc: "Coordinamos seguro de carga opcional a través de nuestros socios logísticos licenciados, cubriendo daños, pérdidas y retrasos para tus envíos.",
+    s6Title: "Seguro de carga",
+    s6Desc: "Seguro de carga integral opcional que cubre daños, pérdidas y retrasos. Tranquilidad para tus envíos. (Todas las pólizas son proporcionadas por nuestros socios logísticos terceros.)",
   },
   pricing: {
     title: "Precios simples y",

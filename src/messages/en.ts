@@ -70,8 +70,8 @@ const messages = {
     s4Desc: "We coordinate all export and import documentation with licensed customs brokers at both ends, ensuring full compliance with US regulations.",
     s5Title: "Last-Mile Delivery",
     s5Desc: "From Seattle port to your front door. Local LTL delivery available across the Greater Seattle and Puget Sound area.",
-    s6Title: "Insurance Coordination",
-    s6Desc: "We coordinate optional cargo insurance through our licensed third-party logistics partners, covering damage, loss, and delays. Peace of mind for your valuable shipments.",
+    s6Title: "Cargo Insurance",
+    s6Desc: "Optional comprehensive cargo insurance covering damage, loss, and delays. Peace of mind for your valuable shipments. (All insurance policies are provided and underwritten by our third-party logistics partners.)",
   },
   pricing: {
     title: "Simple, Transparent",
