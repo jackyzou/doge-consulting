@@ -111,6 +111,9 @@ const messages = {
     tier3F5: "US customs & delivery",
     tier3F6: "Dedicated project manager",
     getQuote: "Get Quote",
+    toolsHint: "Plan your shipment with our free tools",
+    cbmCalc: "CBM Calculator",
+    visualizer: "3D Visualizer",
   },
   testimonials: {
     title: "What Our",
