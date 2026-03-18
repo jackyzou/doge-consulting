@@ -12,7 +12,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft, ArrowRight, Package, Ruler, Ship, User,
-  Check, Info, Plus, Minus, Warehouse, Truck, CreditCard
+  Check, Info, Plus, Minus, Warehouse, Truck, CreditCard,
+  Calculator, Box, BarChart3,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -273,6 +274,33 @@ function QuotePageContent() {
 
       <section className="py-12">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          {/* Tools banner */}
+          <div className="mb-8 p-4 rounded-xl bg-gradient-to-r from-teal/5 to-navy/5 border border-teal/20">
+            <p className="text-sm font-semibold text-navy mb-3">📐 Plan your shipment with our free tools</p>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/tools/cbm-calculator">
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs hover:border-teal hover:text-teal">
+                  <Calculator className="h-3.5 w-3.5" /> CBM Calculator
+                </Button>
+              </Link>
+              <Link href="/tools/3d-visualizer">
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs hover:border-teal hover:text-teal">
+                  <Box className="h-3.5 w-3.5" /> 3D Container Visualizer
+                </Button>
+              </Link>
+              <Link href="/tools/duty-calculator">
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs hover:border-teal hover:text-teal">
+                  <BarChart3 className="h-3.5 w-3.5" /> Duty Calculator
+                </Button>
+              </Link>
+              <Link href="/tools/revenue-calculator">
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs hover:border-teal hover:text-teal">
+                  <BarChart3 className="h-3.5 w-3.5" /> Revenue Calculator
+                </Button>
+              </Link>
+            </div>
+          </div>
+
           {/* Progress Bar */}
           <div className="mb-10 flex items-center justify-center gap-2">
             {[

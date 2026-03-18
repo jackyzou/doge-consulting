@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, ArrowRight } from "lucide-react";
+import { Check, ArrowRight, Calculator, Box } from "lucide-react";
 import Link from "next/link";
 import { useTranslation } from "@/lib/i18n";
 
@@ -129,6 +129,18 @@ export function PricingOverview() {
                       {t("pricing.getQuote")} <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
+                  <div className="flex gap-2 mt-2">
+                    <Link href="/tools/cbm-calculator" className="flex-1">
+                      <Button variant="outline" size="sm" className="w-full text-xs gap-1.5">
+                        <Calculator className="h-3 w-3" /> {t("pricing.cbmCalc")}
+                      </Button>
+                    </Link>
+                    <Link href="/tools/3d-visualizer" className="flex-1">
+                      <Button variant="outline" size="sm" className="w-full text-xs gap-1.5">
+                        <Box className="h-3 w-3" /> {t("pricing.visualizer")}
+                      </Button>
+                    </Link>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
