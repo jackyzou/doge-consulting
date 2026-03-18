@@ -126,6 +126,43 @@ console.log(`🔖 v${version} | 📄 ${pageCount} pages | 📝 ${db?.blogPosts |
 console.log(`${"═".repeat(60)}`);
 
 // ═══════════════════════════════════════════════════════════
+// PHASE 1b: PROCESS OPEN CHAT → DECISION TICKETS
+// ═══════════════════════════════════════════════════════════
+
+let chatProcessed = 0;
+try {
+  const Database = require("better-sqlite3");
+  const dbPath = join(ROOT, "dev.db");
+  if (existsSync(dbPath)) {
+    const conn = new Database(dbPath);
+    const openChats = conn.prepare(`SELECT id, agent, title, content, assignedTo FROM AgentLog WHERE type='chat' AND status='open' ORDER BY createdAt ASC`).all();
+    if (openChats.length > 0) {
+      console.log(`\n📨 Processing ${openChats.length} open chat messages → decision tickets`);
+      for (const chat of openChats) {
+        const assigned = (chat.assignedTo || '').split(',').filter(Boolean);
+        const cleanTitle = chat.title.replace(/^@\w+\s*:?\s*/, '').substring(0, 100);
+        // Create decision ticket
+        const { randomUUID } = require("crypto");
+        conn.prepare(`INSERT INTO AgentLog (id,agent,type,priority,title,content,status,assignedTo,tags,relatedTo,createdAt,updatedAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+          randomUUID(), assigned[0] || 'alex', 'decision',
+          chat.title.includes('URGENT') ? 'high' : 'normal',
+          `[FROM CHAT] ${cleanTitle}`,
+          `CEO posted in fleet chat:\n\n${chat.content.substring(0, 500)}`,
+          'open', chat.assignedTo,
+          assigned.map(a => `@${a}`).join(','),
+          `chat:${chat.id}`, new Date().toISOString(), new Date().toISOString()
+        );
+        // Mark chat as completed
+        conn.prepare(`UPDATE AgentLog SET status='completed' WHERE id=?`).run(chat.id);
+        console.log(`   ✅ [${assigned.join(',')}] ${cleanTitle}`);
+        chatProcessed++;
+      }
+    }
+    conn.close();
+  }
+} catch {}
+
+// ═══════════════════════════════════════════════════════════
 // PHASE 2: ROUND 1 — Individual Agent Reports
 // ═══════════════════════════════════════════════════════════
 
@@ -662,6 +699,6 @@ console.log(`\n📝 Log saved: agents/logs/${today}.md`);
 
 console.log(`\n${"═".repeat(60)}`);
 console.log(`✅ Fleet ${mode} complete — ${timestamp} PST`);
-console.log(`   ${agentsToRun.length} agents | ${allDecisions.length} decisions | ${allRequests.length} requests | ${allReplies.length} ticket replies`);
+console.log(`   ${agentsToRun.length} agents | ${allDecisions.length} decisions | ${allRequests.length} requests | ${allReplies.length} ticket replies | ${chatProcessed} chats→tickets`);
 console.log(`   Log: agents/logs/${today}.md`);
 console.log(`${"═".repeat(60)}\n`);
