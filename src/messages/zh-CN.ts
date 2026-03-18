@@ -111,6 +111,9 @@ const messages = {
     tier3F5: "美国清关和配送",
     tier3F6: "专属项目经理",
     getQuote: "获取报价",
+    toolsHint: "使用我们的免费工具规划您的货运",
+    cbmCalc: "CBM计算器",
+    visualizer: "3D可视化",
   },
   testimonials: {
     title: "客户",

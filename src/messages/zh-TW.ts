@@ -110,8 +110,9 @@ const messages = {
     tier3F4: "海運運輸（拼箱或整箱）",
     tier3F5: "美國清關和配送",
     tier3F6: "專屬專案經理",
-    getQuote: "取得報價",
-  },
+    getQuote: "取得報價",    toolsHint: "使用我們的免費工具規劃您的貨運",
+    cbmCalc: "CBM計算器",
+    visualizer: "3D可視化",  },
   testimonials: {
     title: "客戶",
     titleHighlight: "評價",

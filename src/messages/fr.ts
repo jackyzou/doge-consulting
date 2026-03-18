@@ -111,6 +111,9 @@ const messages = {
     tier3F5: "Douanes US et livraison",
     tier3F6: "Chef de projet dédié",
     getQuote: "Obtenir un devis",
+    toolsHint: "Planifiez votre expédition avec nos outils gratuits",
+    cbmCalc: "Calculateur CBM",
+    visualizer: "Visualiseur 3D",
   },
   testimonials: {
     title: "Ce que disent",

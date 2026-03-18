@@ -111,6 +111,9 @@ const messages = {
     tier3F5: "Aduanas EE.UU. y entrega",
     tier3F6: "Gerente de proyecto dedicado",
     getQuote: "Obtener cotización",
+    toolsHint: "Planifica tu envío con nuestras herramientas gratuitas",
+    cbmCalc: "Calculadora CBM",
+    visualizer: "Visualizador 3D",
   },
   testimonials: {
     title: "Lo que dicen",
