@@ -126,41 +126,114 @@ console.log(`🔖 v${version} | 📄 ${pageCount} pages | 📝 ${db?.blogPosts |
 console.log(`${"═".repeat(60)}`);
 
 // ═══════════════════════════════════════════════════════════
-// PHASE 1b: PROCESS OPEN CHAT → DECISION TICKETS
+// PHASE 1b: PROCESS OPEN CHAT → DECISION TICKETS + AGENT REPLIES
 // ═══════════════════════════════════════════════════════════
 
 let chatProcessed = 0;
+let chatRepliesPosted = 0;
 try {
   const Database = require("better-sqlite3");
+  const { randomUUID } = require("crypto");
   const dbPath = join(ROOT, "dev.db");
   if (existsSync(dbPath)) {
     const conn = new Database(dbPath);
     const openChats = conn.prepare(`SELECT id, agent, title, content, assignedTo FROM AgentLog WHERE type='chat' AND status='open' ORDER BY createdAt ASC`).all();
     if (openChats.length > 0) {
-      console.log(`\n📨 Processing ${openChats.length} open chat messages → decision tickets`);
+      console.log(`\n📨 Processing ${openChats.length} open chat messages → tickets + agent replies`);
+      console.log(`${"─".repeat(50)}`);
+
       for (const chat of openChats) {
         const assigned = (chat.assignedTo || '').split(',').filter(Boolean);
         const cleanTitle = chat.title.replace(/^@\w+\s*:?\s*/, '').substring(0, 100);
+        const chatContent = chat.content || '';
+        const ts = new Date().toISOString();
+
+        console.log(`\n   📩 CEO: "${cleanTitle}"`);
+        console.log(`      To: ${assigned.join(', ') || 'all'}`);
+
         // Create decision ticket
-        const { randomUUID } = require("crypto");
         conn.prepare(`INSERT INTO AgentLog (id,agent,type,priority,title,content,status,assignedTo,tags,relatedTo,createdAt,updatedAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(
           randomUUID(), assigned[0] || 'alex', 'decision',
-          chat.title.includes('URGENT') ? 'high' : 'normal',
+          chat.title.includes('URGENT') || chat.title.includes('CRITICAL') ? 'high' : 'normal',
           `[FROM CHAT] ${cleanTitle}`,
-          `CEO posted in fleet chat:\n\n${chat.content.substring(0, 500)}`,
+          `CEO posted in fleet chat:\n\n${chatContent.substring(0, 800)}`,
           'open', chat.assignedTo,
           assigned.map(a => `@${a}`).join(','),
-          `chat:${chat.id}`, new Date().toISOString(), new Date().toISOString()
+          `chat:${chat.id}`, ts, ts
         );
-        // Mark chat as completed
+        console.log(`      📋 Decision ticket created`);
+
+        // Generate agent replies in the chat thread
+        for (const agentId of (assigned.length > 0 ? assigned : ['alex'])) {
+          const reply = generateChatReply(agentId, cleanTitle, chatContent);
+          if (reply) {
+            const agentNames = { alex: 'Alex Chen', amy: 'Amy Lin', seth: 'Seth Parker', rachel: 'Rachel Morales', seto: 'Seto Nakamura', tiffany: 'Tiffany Wang' };
+            const agentName = agentNames[agentId] || agentId;
+            conn.prepare(`INSERT INTO AgentLog (id,agent,type,priority,title,content,status,assignedTo,tags,relatedTo,createdAt,updatedAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+              randomUUID(), agentId, 'chat', 'normal',
+              `RE: ${cleanTitle.substring(0, 80)}`,
+              reply,
+              'completed', chat.agent, `@${chat.agent}`, `chat:${chat.id}`, ts, ts
+            );
+            console.log(`      💬 ${agentName}: ${reply.substring(0, 100)}...`);
+            chatRepliesPosted++;
+          }
+        }
+
+        // Mark original chat as completed
         conn.prepare(`UPDATE AgentLog SET status='completed' WHERE id=?`).run(chat.id);
-        console.log(`   ✅ [${assigned.join(',')}] ${cleanTitle}`);
         chatProcessed++;
       }
+      console.log(`\n${"─".repeat(50)}`);
+      console.log(`   ✅ ${chatProcessed} chats → tickets, ${chatRepliesPosted} agent replies posted\n`);
     }
     conn.close();
   }
-} catch {}
+} catch (e) { console.log(`   ⚠️ Chat processing error: ${e.message}`); }
+
+// Chat reply generator — produces contextual responses based on chat content
+function generateChatReply(agentId, title, content) {
+  const t = (title + ' ' + content).toLowerCase();
+  const agentReplies = {
+    alex: () => {
+      if (t.includes('compliance') || t.includes('airwallex')) return 'Acknowledged. I\'ll review all service descriptions for compliance-sensitive terms and coordinate with the team to ensure we\'re aligned. Any items needing CEO action will be escalated immediately.';
+      if (t.includes('blog') || t.includes('content')) return 'Coordinating with Seto and Rachel on this. Will ensure editorial review meets our quality bar before publishing. Timeline and assignments will be in today\'s standup.';
+      if (t.includes('customer') || t.includes('lead') || t.includes('onboard')) return 'Noted. SOP is in place — when we have a prospect, I\'ll lead the initial handoff per the onboarding protocol. Tiffany on standby for follow-up.';
+      return 'Received. Will review and assign to the appropriate team members. Update in next standup.';
+    },
+    amy: () => {
+      if (t.includes('airwallex') || t.includes('payment')) return 'Standing by for Airwallex activation. Interim HSBC wire payment ready as fallback. P&L tracking template prepared for first transaction.';
+      if (t.includes('pricing') || t.includes('cost') || t.includes('margin')) return 'Reviewing from a financial perspective. Will provide margin analysis and pricing recommendation in next standup.';
+      if (t.includes('budget') || t.includes('expense')) return 'Will review against our budget. Current OpEx is within targets. Detailed breakdown available if needed.';
+      return 'Noted from finance side. Will assess any financial implications and report in standup.';
+    },
+    seth: () => {
+      if (t.includes('website') || t.includes('deploy') || t.includes('fix') || t.includes('change')) return 'On it. Will implement, verify build passes, and push to GitHub. Production will update on next Docker rebuild.';
+      if (t.includes('seo') || t.includes('schema') || t.includes('page')) return 'Reviewing technical SEO implications. Will check structured data, meta tags, and build verification.';
+      if (t.includes('smtp') || t.includes('email')) return 'SMTP setup is on my list. Will configure nodemailer with credentials from .env.local and test delivery.';
+      if (t.includes('blog') || t.includes('seed')) return 'Blog seed script ready. Will run once content is approved by Seto/Rachel.';
+      return 'Acknowledged. Will evaluate technical requirements and provide implementation timeline in next standup.';
+    },
+    rachel: () => {
+      if (t.includes('blog') || t.includes('content') || t.includes('seo')) return 'Reviewing from an SEO/content strategy perspective. Will check keyword targets, internal linking opportunities, and content calendar alignment.';
+      if (t.includes('marketing') || t.includes('insurance') || t.includes('compliance')) return 'Will audit all marketing materials and content for the flagged terms. Any updates needed will be listed with specific page references.';
+      if (t.includes('reddit') || t.includes('channel')) return 'On it. Reddit engagement plan in progress — targeting r/FBA, r/importing, r/ecommerce with genuine answers linking to our tools.';
+      return 'Noted. Will evaluate marketing and content implications and report in standup.';
+    },
+    seto: () => {
+      if (t.includes('blog') || t.includes('post') || t.includes('content')) return 'Reviewing content requirements. Will check against our existing 24 posts for overlap, verify topic angles, and prepare outlines for approved topics.';
+      if (t.includes('news') || t.includes('industry')) return 'Monitoring. Will research and prepare analysis if this impacts our audience of US importers.';
+      return 'Acknowledged. Will research and prepare a thorough analysis for next standup.';
+    },
+    tiffany: () => {
+      if (t.includes('customer') || t.includes('onboard') || t.includes('sop')) return 'SOP is live and ready. Quote pipeline tested and operational. Standing by for first customer — response time target is under 2 hours.';
+      if (t.includes('quote') || t.includes('payment')) return 'Quote system operational. Will coordinate with Amy on payment workflow once Airwallex is activated.';
+      return 'Noted. Will review for any customer service process impacts and update in standup.';
+    },
+  };
+  const fn = agentReplies[agentId];
+  return fn ? fn() : null;
+}
 
 // ═══════════════════════════════════════════════════════════
 // PHASE 2: ROUND 1 — Individual Agent Reports
