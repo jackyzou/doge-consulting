@@ -28,8 +28,9 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
       - FLEET_SYNC_SECRET=${FLEET_SYNC_SECRET:-}
-      # - AIRWALLEX_CLIENT_ID=${AIRWALLEX_CLIENT_ID}
-      # - AIRWALLEX_API_KEY=${AIRWALLEX_API_KEY}
+      - AIRWALLEX_CLIENT_ID=${AIRWALLEX_CLIENT_ID}
+      - AIRWALLEX_API_KEY=${AIRWALLEX_API_KEY}
+      - NEXT_PUBLIC_AIRWALLEX_ENV=production
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
       interval: 10s
