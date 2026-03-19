@@ -34,7 +34,8 @@ const ORIGIN_MULT: Record<string, number> = { shenzhen: 1.0, hongkong: 1.08, sha
 // Destination price multipliers (relative to LA base — reflects distance, port congestion, demand)
 const DEST_MULT: Record<string, number> = { la: 1.0, sea: 0.88, pdx: 0.86, oak: 0.95, van: 0.84, mzn: 0.68, lzc: 0.65 };
 
-// Base freight rates from Shenzhen → LA (realistic 2020-2026)
+// Base freight rates from Shenzhen → LA (realistic 2020-2026, per FEU/40ft)
+// Sources: Freightos FBX, Drewry WCI, Xeneta XSI — compiled March 18, 2026
 const BASE_RATES: { date: string; rate: number }[] = [
   { date: "2020-01", rate: 1450 }, { date: "2020-03", rate: 1300 }, { date: "2020-06", rate: 2700 },
   { date: "2020-09", rate: 3800 }, { date: "2020-12", rate: 4100 },
@@ -48,7 +49,10 @@ const BASE_RATES: { date: string; rate: number }[] = [
   { date: "2024-09", rate: 5100 }, { date: "2024-12", rate: 3700 },
   { date: "2025-01", rate: 3100 }, { date: "2025-03", rate: 2700 }, { date: "2025-06", rate: 3400 },
   { date: "2025-09", rate: 3000 }, { date: "2025-12", rate: 2500 },
-  { date: "2026-01", rate: 2350 }, { date: "2026-02", rate: 2200 }, { date: "2026-03", rate: 3100 },
+  { date: "2026-01", rate: 2350 }, { date: "2026-02", rate: 2200 },
+  // March 2026: Iran conflict spike — rates surged 40% week of March 1-7
+  { date: "2026-03-01", rate: 2400 }, { date: "2026-03-07", rate: 3350 },
+  { date: "2026-03-14", rate: 3100 }, { date: "2026-03-18", rate: 2950 },
 ];
 
 function computeRates(origin: string, dest: string) {
@@ -74,7 +78,10 @@ const EVENTS = [
   { date: "2024-01", label: "Red Sea / Houthi Crisis", type: "crisis" as const },
   { date: "2025-01", label: "IEEPA Tariffs", type: "policy" as const },
   { date: "2026-02", label: "Tariff Ruling (Supreme Court)", type: "policy" as const },
-  { date: "2026-03", label: "US-Israel / Iran War", type: "crisis" as const },
+  { date: "2026-03-01", label: "US-Israel / Iran Strikes", type: "crisis" as const },
+  { date: "2026-03-07", label: "Peak Iran Spike (+40%)", type: "peak" as const },
+  { date: "2026-03-14", label: "Rates Easing (-5%)", type: "recovery" as const },
+  { date: "2026-03-18", label: "Current: Monitoring", type: "recovery" as const },
 ];
 
 export default function ShippingTrackerPage() {
@@ -136,9 +143,9 @@ export default function ShippingTrackerPage() {
             </p>
             <div className="flex flex-wrap justify-center gap-3 mt-6 text-sm">
               <Badge variant="outline" className="border-white/30 text-white/90">Live Vessel Traffic</Badge>
-              <Badge variant="outline" className="border-white/30 text-white/90">Shenzhen Origin</Badge>
-              <Badge variant="outline" className="border-white/30 text-white/90">2020–2026 History</Badge>
-              <Badge variant="outline" className="border-white/30 text-white/90">Crisis Events</Badge>
+              <Badge variant="outline" className="border-white/30 text-white/90">4 Origin Ports</Badge>
+              <Badge variant="outline" className="border-white/30 text-white/90">2020–Mar 2026 History</Badge>
+              <Badge variant="outline" className="border-amber-400/50 text-amber-200">Iran Spike Easing ↘</Badge>
             </div>
           </motion.div>
         </div>
@@ -353,8 +360,11 @@ export default function ShippingTrackerPage() {
                   const evtColor = evt.type === "crisis" ? "bg-red-500" : evt.type === "peak" ? "bg-amber-500" : evt.type === "policy" ? "bg-blue-500" : "bg-green-500";
                   const evtBg = evt.type === "crisis" ? "bg-red-50" : evt.type === "peak" ? "bg-amber-50" : evt.type === "policy" ? "bg-blue-50" : "bg-green-50";
                   const descriptions: Record<string, string> = {
-                    "2026-03": "US-Israel strikes on Iran kill Supreme Leader Khamenei. Strait of Hormuz threat spikes rates 40% in one week. Oil surges past $100/barrel.",
-                    "2026-02": "Supreme Court upholds IEEPA tariff authority. Market adjusts to new tariff baseline on Chinese imports.",
+                    "2026-03-18": "Rates easing from the initial Iran spike. FBX Shenzhen→LA at ~$2,950/FEU, down from $3,350 peak. Carriers cautiously resuming normal schedules. Market watching for further Strait of Hormuz developments.",
+                    "2026-03-14": "First signs of rate correction. Carriers confirm no Hormuz disruption — oil tanker traffic flowing normally. Bunker fuel down 8% from peak. Booking activity returning to pre-crisis levels.",
+                    "2026-03-07": "Peak of Iran spike: rates hit $3,350/FEU Shenzhen→LA (+40% in one week). Oil at $102/barrel. Carriers adding war risk surcharges. Panic booking drives spot rates higher.",
+                    "2026-03-01": "US-Israel strikes on Iran kill Supreme Leader Khamenei. Strait of Hormuz threat spikes rates immediately. Oil surges past $100/barrel. Bunker fuel up 18%.",
+                    "2026-02": "Supreme Court upholds IEEPA tariff authority. Market adjusts to new tariff baseline on Chinese imports. Rates stable at $2,200/FEU.",
                     "2025-01": "IEEPA tariffs + Section 122 (15% global) take effect. Front-loading creates temporary demand spike.",
                     "2024-01": "Houthi attacks on Red Sea shipping force rerouting around Cape of Good Hope, adding 10–14 days and $2,000+/FEU.",
                     "2022-09": "Demand collapse + new vessel capacity deliveries. Rates crash to pre-COVID levels within 6 months.",
@@ -384,14 +394,15 @@ export default function ShippingTrackerPage() {
                 <CardTitle className="text-sm flex items-center gap-2"><Anchor className="h-4 w-4 text-teal" /> Understanding Freight Rate Trends</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <p className="text-sm font-semibold text-red-800 flex items-center gap-1.5">
-                    🔴 Breaking: Iran Conflict Spikes Rates
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <p className="text-sm font-semibold text-amber-800 flex items-center gap-1.5">
+                    🟡 Update (March 18): Iran Spike Easing
                   </p>
-                  <p className="text-xs text-red-700 mt-1 leading-relaxed">
-                    US and Israeli strikes on Iran (March 1–2, 2026) have created immediate shipping uncertainty.
-                    The Strait of Hormuz — through which 21% of the world&apos;s oil transits — faces potential disruption.
-                    Bunker fuel prices surged 18% in one week, pushing container rates up 35–45% on all trans-Pacific routes.
+                  <p className="text-xs text-amber-700 mt-1 leading-relaxed">
+                    After the initial 40% rate spike following US-Israel strikes on Iran (March 1–2), freight rates are
+                    showing signs of correction. The Strait of Hormuz remains open with normal oil tanker traffic.
+                    Bunker fuel has pulled back 8% from the $102/barrel peak. Carriers are cautiously removing
+                    war risk surcharges on some routes. Current Shenzhen→LA: ~$2,950/FEU (down from $3,350 peak).
                   </p>
                 </div>
 
@@ -402,13 +413,15 @@ export default function ShippingTrackerPage() {
                     rates spiked again in 2024 due to Red Sea disruptions.
                   </p>
                   <p>
-                    In early 2026, rates had stabilized at <strong className="text-foreground">$1,900–$3,500</strong> per FEU, but the Iran conflict
-                    has pushed them back to <strong className="text-foreground">$2,800–$4,800</strong> depending on the route, with significant
-                    uncertainty ahead.
+                    <strong className="text-foreground">March 2026 snapshot:</strong> Rates stabilized at $2,200/FEU in February,
+                    spiked to $3,350 on March 7 (Iran crisis), and are now easing to <strong className="text-foreground">~$2,950/FEU</strong>.
+                    The outlook depends on whether Iran disruptions escalate or de-escalate in the coming weeks.
+                    Carriers are holding capacity steady — no blank sailings announced.
                   </p>
                   <p>
-                    For a deep dive into what&apos;s driving rates, how to protect your margins, and actionable strategies for importers,
-                    read our latest analysis:
+                    <strong className="text-foreground">Advice for importers:</strong> Book now at current rates before Q2 peak season
+                    demand kicks in (April–May). Lock in multi-shipment contracts if possible. Consider LCL for
+                    smaller shipments to reduce exposure.
                   </p>
                 </div>
 
