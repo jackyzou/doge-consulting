@@ -49,7 +49,8 @@ export async function POST(request: NextRequest) {
       checkoutUrl = `${origin}/payment/success?orderId=${encodeURIComponent(orderId)}&amount=${amount}&currency=${currency}&demo=1`;
     } else {
       // Real Airwallex Hosted Payment Page
-      checkoutUrl = buildCheckoutUrl(paymentIntent.id, paymentIntent.client_secret, currency);
+      const successUrl = `${origin}/payment/success?orderId=${encodeURIComponent(orderId)}`;
+      checkoutUrl = buildCheckoutUrl(paymentIntent.id, paymentIntent.client_secret, currency, successUrl);
     }
 
     console.log(`💳 Payment intent created: ${paymentIntent.id} for ${currency} ${amount} (order ${orderId})`);

@@ -40,6 +40,9 @@ export function isLiveMode(): boolean {
   return !!(AIRWALLEX_CLIENT_ID && AIRWALLEX_API_KEY);
 }
 
+// Log mode on startup
+console.log(`[Airwallex] Mode: ${isLiveMode() ? "LIVE" : "DEMO"} | API: ${AIRWALLEX_API_URL} | Client ID: ${AIRWALLEX_CLIENT_ID ? AIRWALLEX_CLIENT_ID.substring(0, 8) + "..." : "NOT SET"}`);
+
 // ── Auth token cache ───────────────────────────────────────────────
 // Airwallex tokens are valid for ~30 minutes; we cache and refresh at 25 min
 let cachedToken: string | null = null;
@@ -83,13 +86,17 @@ export async function getAuthToken(): Promise<string> {
 /**
  * Build the Airwallex Hosted Payment Page URL for a given intent
  */
-export function buildCheckoutUrl(intentId: string, clientSecret: string, currency: string): string {
+export function buildCheckoutUrl(intentId: string, clientSecret: string, currency: string, successUrl?: string): string {
   const env = isLiveMode() ? "checkout" : "checkout-demo";
-  return `https://${env}.airwallex.com/#/standalone/checkout`
+  let url = `https://${env}.airwallex.com/#/standalone/checkout`
     + `?intent_id=${intentId}`
     + `&client_secret=${encodeURIComponent(clientSecret)}`
     + `&currency=${currency}`
     + `&mode=payment`;
+  if (successUrl) {
+    url += `&successUrl=${encodeURIComponent(successUrl)}`;
+  }
+  return url;
 }
 
 /**

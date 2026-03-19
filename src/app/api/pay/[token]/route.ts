@@ -193,7 +193,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     // Build Airwallex Hosted Payment Page checkout URL
-    const checkoutUrl = buildCheckoutUrl(intent.id, intent.client_secret, paymentLink.currency);
+    const successUrl = `${origin}/pay/${token}/success`;
+    const checkoutUrl = buildCheckoutUrl(intent.id, intent.client_secret, paymentLink.currency, successUrl);
 
     return NextResponse.json({
       success: true,
