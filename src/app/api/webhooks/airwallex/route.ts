@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyWebhookSignature } from "@/lib/airwallex";
 import { prisma } from "@/lib/db";
-import { sendPaymentReceivedEmail } from "@/lib/email-notifications";
+import { sendPaymentReceivedEmail, sendOrderConfirmedEmail } from "@/lib/email-notifications";
+import { generateSequenceNumber } from "@/lib/sequence";
 
 // Airwallex webhook event types we care about
 type WebhookEvent = {
@@ -54,67 +55,166 @@ export async function POST(request: NextRequest) {
         // Find the Payment record by externalId (Airwallex intent ID)
         const payment = await prisma.payment.findFirst({
           where: { externalId: pi.id },
-          include: { order: true, paymentLink: true },
+          include: {
+            order: true,
+            paymentLink: { include: { quote: { include: { items: true } } } },
+          },
         });
 
-        if (payment) {
-          // Update payment status to completed
-          await prisma.payment.update({
-            where: { id: payment.id },
+        if (!payment) {
+          console.warn(`⚠️ No Payment record found for intent ${pi.id}`);
+          break;
+        }
+
+        // Update payment status to completed
+        await prisma.payment.update({
+          where: { id: payment.id },
+          data: {
+            status: "completed",
+            paidAt: new Date(),
+            method: "credit_card",
+          },
+        });
+
+        // Mark payment link as used
+        if (payment.paymentLink) {
+          await prisma.paymentLink.update({
+            where: { id: payment.paymentLink.id },
+            data: { status: "used" },
+          });
+        }
+
+        // If there's already an Order, update its balances
+        if (payment.order) {
+          const newDeposit = payment.order.depositAmount + payment.amount;
+          const newBalance = Math.max(0, payment.order.totalAmount - newDeposit);
+          const newStatus = payment.order.status === "pending" ? "confirmed" : payment.order.status;
+
+          await prisma.order.update({
+            where: { id: payment.order.id },
             data: {
-              status: "completed",
-              paidAt: new Date(),
-              method: "credit_card", // Airwallex HPP default
+              depositAmount: newDeposit,
+              balanceDue: newBalance,
+              status: newStatus,
             },
           });
 
-          // Mark payment link as used
-          if (payment.paymentLink) {
-            await prisma.paymentLink.update({
-              where: { id: payment.paymentLink.id },
-              data: { status: "used" },
-            });
-          }
-
-          // Update order: reduce balanceDue, increase depositAmount, update status
-          if (payment.order) {
-            const newDeposit = payment.order.depositAmount + payment.amount;
-            const newBalance = Math.max(0, payment.order.totalAmount - newDeposit);
-            const newStatus = payment.order.status === "pending" ? "confirmed" : payment.order.status;
-
-            await prisma.order.update({
-              where: { id: payment.order.id },
-              data: {
-                depositAmount: newDeposit,
-                balanceDue: newBalance,
-                status: newStatus,
-              },
-            });
-
-            // Add status history entry
-            await prisma.orderStatusHistory.create({
-              data: {
-                orderId: payment.order.id,
-                status: newStatus,
-                note: `Payment ${payment.paymentNumber} received: ${pi.currency} ${pi.amount} via Airwallex`,
-                changedBy: "system",
-              },
-            });
-          }
+          await prisma.orderStatusHistory.create({
+            data: {
+              orderId: payment.order.id,
+              status: newStatus,
+              note: `Payment ${payment.paymentNumber} received: ${pi.currency} ${pi.amount} via Airwallex`,
+              changedBy: "system",
+            },
+          });
 
           // Send payment confirmation email
           await sendPaymentReceivedEmail({
             paymentNumber: payment.paymentNumber,
-            orderNumber: payment.order?.orderNumber || "N/A",
-            customerName: pi.metadata?.customerName || payment.order?.customerName || "Customer",
-            customerEmail: pi.metadata?.customerEmail || payment.order?.customerEmail || "",
+            orderNumber: payment.order.orderNumber,
+            customerName: pi.metadata?.customerName || payment.order.customerName || "Customer",
+            customerEmail: pi.metadata?.customerEmail || payment.order.customerEmail || "",
             amount: payment.amount,
             currency: payment.currency,
             method: "credit_card",
             type: payment.type,
           });
-        } else {
-          console.warn(`⚠️ No Payment record found for intent ${pi.id}`);
+        }
+        // No Order yet — convert Quote → Order (the normal path for payment-link payments)
+        else if (payment.paymentLink?.quote && payment.paymentLink.quote.status !== "converted") {
+          const quote = payment.paymentLink.quote;
+          const orderNumber = await generateSequenceNumber("ORD");
+          const depositAmount = Math.round(payment.amount * 100) / 100;
+
+          const customer = await prisma.user.findUnique({ where: { email: quote.customerEmail } });
+          const customerId = customer?.id || quote.customerId || null;
+
+          const order = await prisma.order.create({
+            data: {
+              orderNumber,
+              quoteId: quote.id,
+              customerId,
+              customerName: quote.customerName,
+              customerEmail: quote.customerEmail,
+              customerPhone: quote.customerPhone,
+              subtotal: quote.subtotal,
+              shippingCost: quote.shippingCost,
+              insuranceCost: quote.insuranceCost,
+              customsDuty: quote.customsDuty,
+              discount: quote.discount,
+              taxAmount: quote.taxAmount,
+              totalAmount: quote.totalAmount,
+              depositAmount,
+              balanceDue: Math.round((quote.totalAmount - depositAmount) * 100) / 100,
+              currency: quote.currency,
+              shippingMethod: quote.shippingMethod,
+              originCity: quote.originCity,
+              destinationCity: quote.destinationCity,
+              status: "confirmed",
+              items: {
+                create: quote.items.map((i) => ({
+                  name: i.name,
+                  description: i.description,
+                  quantity: i.quantity,
+                  unitPrice: i.unitPrice,
+                  totalPrice: i.totalPrice,
+                  unit: i.unit,
+                  productId: i.productId,
+                })),
+              },
+              statusHistory: {
+                create: {
+                  status: "confirmed",
+                  note: `Deposit paid via Airwallex. Converted from ${quote.quoteNumber}`,
+                  changedBy: "system",
+                },
+              },
+            },
+          });
+
+          // Link payment to the new order
+          await prisma.payment.update({
+            where: { id: payment.id },
+            data: { orderId: order.id },
+          });
+
+          // Mark quote as converted
+          await prisma.quote.update({
+            where: { id: quote.id },
+            data: { status: "converted", customerId },
+          });
+
+          console.log(`✅ Quote ${quote.quoteNumber} → Order ${orderNumber} (deposit: ${depositAmount} ${quote.currency})`);
+
+          // Send order confirmation email
+          try {
+            await sendOrderConfirmedEmail({
+              orderNumber,
+              customerName: quote.customerName,
+              customerEmail: quote.customerEmail,
+              totalAmount: quote.totalAmount,
+              depositAmount,
+              currency: quote.currency,
+            });
+          } catch (emailErr) {
+            console.error("Failed to send order confirmation email (non-fatal):", emailErr);
+          }
+
+          // Send payment receipt email
+          try {
+            await sendPaymentReceivedEmail({
+              paymentNumber: payment.paymentNumber,
+              orderNumber,
+              customerName: quote.customerName,
+              customerEmail: quote.customerEmail,
+              amount: payment.amount,
+              currency: payment.currency,
+              method: "credit_card",
+              type: payment.type,
+            });
+          } catch (emailErr) {
+            console.error("Failed to send payment receipt email (non-fatal):", emailErr);
+          }
         }
         break;
       }
@@ -124,9 +224,10 @@ export async function POST(request: NextRequest) {
         const orderId = pi.metadata?.orderId || pi.merchant_order_id;
         console.log(`❌ Payment failed for order ${orderId}`);
 
-        // Mark payment as failed
+        // Mark payment as failed and reset payment link so customer can retry
         const failedPayment = await prisma.payment.findFirst({
           where: { externalId: pi.id },
+          include: { paymentLink: true },
         });
 
         if (failedPayment) {
@@ -137,6 +238,14 @@ export async function POST(request: NextRequest) {
               failedAt: new Date(),
             },
           });
+
+          // Reset payment link to active so customer can try again
+          if (failedPayment.paymentLink && failedPayment.paymentLink.status === "processing") {
+            await prisma.paymentLink.update({
+              where: { id: failedPayment.paymentLink.id },
+              data: { status: "active" },
+            });
+          }
         }
         break;
       }

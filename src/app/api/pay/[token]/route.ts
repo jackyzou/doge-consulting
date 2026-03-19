@@ -24,6 +24,10 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "This payment link has already been used" }, { status: 410 });
     }
 
+    if (paymentLink.status === "processing") {
+      return NextResponse.json({ error: "This payment is currently being processed" }, { status: 410 });
+    }
+
     if (paymentLink.status === "expired" || (paymentLink.expiresAt && paymentLink.expiresAt < new Date())) {
       return NextResponse.json({ error: "This payment link has expired" }, { status: 410 });
     }
@@ -69,11 +73,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Invalid or expired payment link" }, { status: 410 });
     }
 
+    // Mark as processing immediately to prevent double payment
+    await prisma.paymentLink.update({
+      where: { token },
+      data: { status: "processing" },
+    });
+
     const origin = request.headers.get("origin") || "http://localhost:3000";
 
     // In demo mode (no Airwallex creds), simulate success
     if (!isLiveMode()) {
-      // Mark link as used
+      // Mark link as fully used (demo completes immediately)
       await prisma.paymentLink.update({
         where: { token },
         data: { status: "used" },
