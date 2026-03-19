@@ -27,16 +27,17 @@ export interface CreatePaymentRequest {
 }
 
 // ── Configuration ──────────────────────────────────────────────────
-const AIRWALLEX_API_URL = process.env.NEXT_PUBLIC_AIRWALLEX_ENV === "production"
-  ? "https://api.airwallex.com"
-  : "https://api-demo.airwallex.com";
-
+// Use production API when real credentials are present, demo otherwise
 const AIRWALLEX_CLIENT_ID = process.env.AIRWALLEX_CLIENT_ID || "";
 const AIRWALLEX_API_KEY = process.env.AIRWALLEX_API_KEY || "";
 
+const AIRWALLEX_API_URL = (AIRWALLEX_CLIENT_ID && AIRWALLEX_API_KEY)
+  ? "https://api.airwallex.com"
+  : "https://api-demo.airwallex.com";
+
 /** Returns true when real credentials are configured */
 export function isLiveMode(): boolean {
-  return !!(process.env.AIRWALLEX_CLIENT_ID && process.env.AIRWALLEX_API_KEY);
+  return !!(AIRWALLEX_CLIENT_ID && AIRWALLEX_API_KEY);
 }
 
 // ── Auth token cache ───────────────────────────────────────────────
@@ -83,7 +84,7 @@ export async function getAuthToken(): Promise<string> {
  * Build the Airwallex Hosted Payment Page URL for a given intent
  */
 export function buildCheckoutUrl(intentId: string, clientSecret: string, currency: string): string {
-  const env = process.env.NEXT_PUBLIC_AIRWALLEX_ENV === "production" ? "checkout" : "checkout-demo";
+  const env = isLiveMode() ? "checkout" : "checkout-demo";
   return `https://${env}.airwallex.com/#/standalone/checkout`
     + `?intent_id=${intentId}`
     + `&client_secret=${encodeURIComponent(clientSecret)}`

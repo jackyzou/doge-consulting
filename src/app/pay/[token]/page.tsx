@@ -45,8 +45,8 @@ export default function PaymentPage() {
   } | null>(null);
 
   const effectiveAmount = appliedCoupon
-    ? Math.round((data?.amount || 0) - appliedCoupon.discountAmount)
-    : data?.amount || 0;
+    ? Math.round(((data?.amount || 0) - appliedCoupon.discountAmount) * 100) / 100
+    : Math.round((data?.amount || 0) * 100) / 100;
 
   useEffect(() => {
     fetch(`/api/pay/${token}`)
@@ -231,9 +231,9 @@ export default function PaymentPage() {
               Payment Details
             </CardTitle>
             <div className="flex items-center gap-2 text-2xl font-bold">
-              ${effectiveAmount.toLocaleString()} <span className="text-sm font-normal text-muted-foreground">{data?.currency}</span>
+              ${effectiveAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-sm font-normal text-muted-foreground">{data?.currency}</span>
               {appliedCoupon && (
-                <span className="text-sm font-normal line-through text-muted-foreground">${data?.amount.toLocaleString()}</span>
+                <span className="text-sm font-normal line-through text-muted-foreground">${data?.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               )}
             </div>
           </CardHeader>
@@ -305,7 +305,7 @@ export default function PaymentPage() {
               {processing ? (
                 <><Loader2 className="h-5 w-5 animate-spin" />Redirecting to Airwallex…</>
               ) : (
-                <><Lock className="h-5 w-5" />Pay ${effectiveAmount.toLocaleString()}</>
+                <><Lock className="h-5 w-5" />Pay ${effectiveAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</>
               )}
             </Button>
 
