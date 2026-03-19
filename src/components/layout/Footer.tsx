@@ -78,6 +78,8 @@ export function Footer() {
               <li><Link href="/contact" className="hover:text-white transition-colors">{t("footer.contactLink")}</Link></li>
               <li><Link href="/quote" className="hover:text-white transition-colors">{t("footer.getQuote")}</Link></li>
               <li><Link href="/privacy" className="hover:text-white transition-colors">{t("footer.privacyPolicy")}</Link></li>
+              <li><Link href="/terms" className="hover:text-white transition-colors">Terms & Conditions</Link></li>
+              <li><Link href="/shipping-policy" className="hover:text-white transition-colors">Shipping & Refund Policy</Link></li>
             </ul>
           </div>
 
@@ -103,13 +105,13 @@ export function Footer() {
               {t("footer.contactTitle")}
             </h3>
             <ul className="space-y-3 text-sm text-slate-300">
-              <li className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-teal" />
-                {t("footer.locationUS")}
+              <li className="flex items-start gap-2">
+                <MapPin className="h-4 w-4 text-gold mt-0.5 shrink-0" />
+                <span>Rm 5, 27/F, China Resources Bldg,<br />26 Harbour Rd, Wan Chai, Hong Kong</span>
               </li>
               <li className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-gold" />
-                {t("footer.locationHK")}
+                <MapPin className="h-4 w-4 text-teal" />
+                Seattle, WA, USA
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-teal" />
@@ -118,6 +120,10 @@ export function Footer() {
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-teal" />
                 +1 (425) 223-0449
+              </li>
+              <li className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-gold" />
+                +852 6151-3289
               </li>
             </ul>
           </div>
