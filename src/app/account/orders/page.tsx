@@ -130,9 +130,9 @@ export default function CustomerOrdersPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <p className="text-lg font-bold">${order.totalAmount.toLocaleString()}</p>
+                      <p className="text-lg font-bold">${order.totalAmount.toFixed(2)}</p>
                       {order.balanceDue > 0 && (
-                        <p className="text-xs text-amber-600">Balance: ${order.balanceDue.toLocaleString()}</p>
+                        <p className="text-xs text-amber-600">Balance: ${order.balanceDue.toFixed(2)}</p>
                       )}
                     </div>
                     <Button variant="outline" size="sm" onClick={() => setShowDetail(order)} className="gap-1">
@@ -162,8 +162,8 @@ export default function CustomerOrdersPage() {
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div><span className="text-muted-foreground">Destination:</span> <span className="font-medium">{showDetail.destinationCity}</span></div>
                   <div><span className="text-muted-foreground">Shipping:</span> <span className="font-medium">{showDetail.shippingMethod || "N/A"}</span></div>
-                  <div><span className="text-muted-foreground">Total:</span> <span className="font-bold">${showDetail.totalAmount.toLocaleString()}</span></div>
-                  <div><span className="text-muted-foreground">Balance Due:</span> <span className="font-bold text-amber-600">${showDetail.balanceDue.toLocaleString()}</span></div>
+                  <div><span className="text-muted-foreground">Total:</span> <span className="font-bold">${showDetail.totalAmount.toFixed(2)}</span></div>
+                  <div><span className="text-muted-foreground">Balance Due:</span> <span className="font-bold text-amber-600">${showDetail.balanceDue.toFixed(2)}</span></div>
                   {showDetail.trackingId && <div><span className="text-muted-foreground">Tracking:</span> <span className="font-medium">{showDetail.trackingId}</span></div>}
                   {showDetail.vessel && <div><span className="text-muted-foreground">Vessel:</span> <span className="font-medium">{showDetail.vessel}</span></div>}
                   {showDetail.estimatedDelivery && <div><span className="text-muted-foreground">ETA:</span> <span className="font-medium text-teal">{new Date(showDetail.estimatedDelivery).toLocaleDateString()}</span></div>}
@@ -185,8 +185,8 @@ export default function CustomerOrdersPage() {
                         <tr key={i}>
                           <td className="px-3 py-2">{it.name}</td>
                           <td className="px-3 py-2 text-right">{it.quantity}</td>
-                          <td className="px-3 py-2 text-right">${it.unitPrice.toLocaleString()}</td>
-                          <td className="px-3 py-2 text-right font-medium">${it.totalPrice.toLocaleString()}</td>
+                          <td className="px-3 py-2 text-right">${it.unitPrice.toFixed(2)}</td>
+                          <td className="px-3 py-2 text-right font-medium">${it.totalPrice.toFixed(2)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -205,7 +205,7 @@ export default function CustomerOrdersPage() {
                             <span className="ml-2 text-muted-foreground">{p.method.replace(/_/g, " ")}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">${p.amount.toLocaleString()}</span>
+                            <span className="font-medium">${p.amount.toFixed(2)}</span>
                             <Badge variant="secondary">{p.status}</Badge>
                           </div>
                         </div>

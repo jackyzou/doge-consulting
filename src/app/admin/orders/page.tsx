@@ -328,10 +328,10 @@ export default function AdminOrdersPage() {
                   </div>
                   <div className="flex items-center gap-4 sm:flex-col sm:items-end sm:gap-2">
                     <div className="text-right">
-                      <p className="text-lg font-bold">${order.totalAmount.toLocaleString()}</p>
+                      <p className="text-lg font-bold">${order.totalAmount.toFixed(2)}</p>
                       <p className="text-xs text-muted-foreground flex items-center gap-1 justify-end">
                         <DollarSign className="h-3 w-3" />
-                        Balance: ${order.balanceDue.toLocaleString()}
+                        Balance: ${order.balanceDue.toFixed(2)}
                       </p>
                     </div>
                     <div className="flex gap-1 flex-wrap">
@@ -378,8 +378,8 @@ export default function AdminOrdersPage() {
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div><span className="text-muted-foreground">Customer:</span> <span className="font-medium">{showDetail.customerName}</span></div>
                   <div><span className="text-muted-foreground">Email:</span> {showDetail.customerEmail}</div>
-                  <div><span className="text-muted-foreground">Total:</span> <span className="font-bold">${showDetail.totalAmount.toLocaleString()}</span></div>
-                  <div><span className="text-muted-foreground">Balance:</span> <span className="font-bold text-amber-600">${showDetail.balanceDue.toLocaleString()}</span></div>
+                  <div><span className="text-muted-foreground">Total:</span> <span className="font-bold">${showDetail.totalAmount.toFixed(2)}</span></div>
+                  <div><span className="text-muted-foreground">Balance:</span> <span className="font-bold text-amber-600">${showDetail.balanceDue.toFixed(2)}</span></div>
                   {showDetail.trackingId && <div><span className="text-muted-foreground">Tracking:</span> {showDetail.trackingId}</div>}
                   {showDetail.vessel && <div><span className="text-muted-foreground">Vessel:</span> {showDetail.vessel}</div>}
                 </div>
@@ -400,8 +400,8 @@ export default function AdminOrdersPage() {
                         <tr key={i}>
                           <td className="px-3 py-2">{it.name}</td>
                           <td className="px-3 py-2 text-right">{it.quantity}</td>
-                          <td className="px-3 py-2 text-right">${it.unitPrice.toLocaleString()}</td>
-                          <td className="px-3 py-2 text-right font-medium">${it.totalPrice.toLocaleString()}</td>
+                          <td className="px-3 py-2 text-right">${it.unitPrice.toFixed(2)}</td>
+                          <td className="px-3 py-2 text-right font-medium">${it.totalPrice.toFixed(2)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -420,7 +420,7 @@ export default function AdminOrdersPage() {
                             <span className="ml-2 text-muted-foreground">{p.method.replace(/_/g, " ")}</span>
                           </div>
                           <div className="text-right">
-                            <span className="font-medium">${p.amount.toLocaleString()}</span>
+                            <span className="font-medium">${p.amount.toFixed(2)}</span>
                             <Badge className="ml-2" variant="secondary">{p.status}</Badge>
                           </div>
                         </div>
@@ -509,7 +509,7 @@ export default function AdminOrdersPage() {
           <DialogHeader><DialogTitle>Record Payment</DialogTitle></DialogHeader>
           {showPayment && (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">Order: <span className="font-medium text-foreground">{showPayment.orderNumber}</span> · Balance: <span className="font-bold">${showPayment.balanceDue.toLocaleString()}</span></p>
+              <p className="text-sm text-muted-foreground">Order: <span className="font-medium text-foreground">{showPayment.orderNumber}</span> · Balance: <span className="font-bold">${showPayment.balanceDue.toFixed(2)}</span></p>
               <div>
                 <Label>Amount ($)</Label>
                 <Input type="number" value={payAmount} onChange={(e) => setPayAmount(Number(e.target.value))} className="mt-1" />

@@ -90,7 +90,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     // Action: convert quote to order
     if (body.action === "convert") {
       const orderNumber = await generateSequenceNumber("ORD");
-      const depositAmount = quote.totalAmount * (quote.depositPercent / 100);
+      const depositAmount = Math.round(quote.totalAmount * (quote.depositPercent / 100) * 100) / 100;
 
       const order = await prisma.order.create({
         data: {
@@ -108,7 +108,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           taxAmount: quote.taxAmount,
           totalAmount: quote.totalAmount,
           depositAmount,
-          balanceDue: quote.totalAmount - depositAmount,
+          balanceDue: Math.round((quote.totalAmount - depositAmount) * 100) / 100,
           currency: quote.currency,
           shippingMethod: quote.shippingMethod,
           originCity: quote.originCity,

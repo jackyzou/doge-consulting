@@ -93,7 +93,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (paymentLink.quote && paymentLink.quote.status !== "converted") {
         const quote = paymentLink.quote;
         const orderNumber = await generateSequenceNumber("ORD");
-        const depositAmount = quote.totalAmount * (quote.depositPercent / 100);
+        const depositAmount = Math.round(quote.totalAmount * (quote.depositPercent / 100) * 100) / 100;
 
         // Find or match customer by email
         const customer = await prisma.user.findUnique({ where: { email: quote.customerEmail } });
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             taxAmount: quote.taxAmount,
             totalAmount: quote.totalAmount,
             depositAmount,
-            balanceDue: quote.totalAmount - depositAmount,
+            balanceDue: Math.round((quote.totalAmount - depositAmount) * 100) / 100,
             currency: quote.currency,
             shippingMethod: quote.shippingMethod,
             originCity: quote.originCity,
@@ -177,8 +177,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const customerName = body.name || paymentLink.quote?.customerName || "";
     const orderId = paymentLink.quote?.quoteNumber || paymentLink.id;
 
+    // Apply coupon discount if provided
+    const discountAmount = Number(body.discountAmount) || 0;
+    const chargeAmount = Math.round((paymentLink.amount - discountAmount) * 100) / 100;
+
     const intent = await createPaymentIntent({
-      amount: paymentLink.amount,
+      amount: chargeAmount,
       currency: paymentLink.currency,
       orderId,
       customerEmail,
@@ -188,6 +192,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       metadata: {
         paymentLinkToken: token,
         paymentLinkId: paymentLink.id,
+        ...(body.couponCode ? { couponCode: body.couponCode, discountAmount: String(discountAmount) } : {}),
       },
     });
 
