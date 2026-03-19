@@ -768,6 +768,36 @@ ${allDecisions.map((d, i) => `| ${i + 1} | ${CONFIG.agents.find(a => a.id === d.
 `;
 
 writeFileSync(recentLogFile, existingLog + logEntry, "utf-8");
+
+// ── Phase 6b: Write decisions to local DB for tracking ──
+let decisionsWritten = 0;
+try {
+  const Database = require("better-sqlite3");
+  const { randomUUID } = require("crypto");
+  const dbPath = join(ROOT, "dev.db");
+  if (existsSync(dbPath) && allDecisions.length > 0) {
+    const conn = new Database(dbPath);
+    const checkStmt = conn.prepare(`SELECT id FROM AgentLog WHERE type='decision' AND title=?`);
+    const insertStmt = conn.prepare(`INSERT INTO AgentLog (id,agent,type,priority,title,content,status,relatedTo,createdAt,updatedAt) VALUES (?,?,?,?,?,?,?,?,?,?)`);
+    const ts = new Date().toISOString();
+    for (const d of allDecisions) {
+      // Skip if already exists (avoids duplicates across multiple standup runs)
+      const existing = checkStmt.get(d.text);
+      if (!existing) {
+        insertStmt.run(
+          randomUUID(), d.agent, 'decision', 'normal',
+          d.text, `From standup ${today} (proposed by ${d.agent}): ${d.text}`,
+          'open', `standup:${today}`, ts, ts
+        );
+        decisionsWritten++;
+      }
+    }
+    conn.close();
+    if (decisionsWritten > 0) {
+      console.log(`💾 ${decisionsWritten} new decisions written to local DB`);
+    }
+  }
+} catch {}
 console.log(`\n📝 Log saved: agents/logs/${today}.md`);
 
 console.log(`\n${"═".repeat(60)}`);
