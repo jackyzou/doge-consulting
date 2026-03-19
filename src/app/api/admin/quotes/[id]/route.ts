@@ -44,7 +44,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           where: { id: paymentLink.id },
           data: {
             status: "active",
-            amount: quote.totalAmount * (quote.depositPercent / 100),
+            amount: Math.round(quote.totalAmount * (quote.depositPercent / 100) * 100) / 100,
             currency: quote.currency,
             description: `Deposit for ${quote.quoteNumber}`,
             expiresAt: quote.validUntil,
@@ -54,7 +54,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         paymentLink = await prisma.paymentLink.create({
           data: {
             quoteId: quote.id,
-            amount: quote.totalAmount * (quote.depositPercent / 100),
+            amount: Math.round(quote.totalAmount * (quote.depositPercent / 100) * 100) / 100,
             currency: quote.currency,
             description: `Deposit for ${quote.quoteNumber}`,
             expiresAt: quote.validUntil,

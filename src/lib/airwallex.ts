@@ -99,13 +99,16 @@ export function buildCheckoutUrl(intentId: string, clientSecret: string, currenc
 export async function createPaymentIntent(
   request: CreatePaymentRequest
 ): Promise<PaymentIntent> {
+  // Ensure amount has exactly 2 decimal places for currency compliance
+  const amount = Math.round(request.amount * 100) / 100;
+
   // Demo mode — return a simulated payment intent
   if (!isLiveMode()) {
     const demoId = `demo_pi_${Date.now()}`;
     return {
       id: demoId,
       client_secret: `demo_cs_${demoId}`,
-      amount: request.amount,
+      amount,
       currency: request.currency,
       status: "REQUIRES_PAYMENT_METHOD",
       orderId: request.orderId,
@@ -127,7 +130,7 @@ export async function createPaymentIntent(
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        amount: request.amount,
+        amount,
         currency: request.currency,
         merchant_order_id: request.orderId,
         descriptor: request.description?.substring(0, 32) || "Doge Consulting",
