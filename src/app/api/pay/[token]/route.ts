@@ -200,7 +200,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       redirectUrl: checkoutUrl,
     });
   } catch (error) {
-    console.error("POST payment link error:", error);
-    return NextResponse.json({ error: "Payment processing failed" }, { status: 500 });
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error("POST payment link error:", errMsg, error);
+    return NextResponse.json({ error: `Payment processing failed: ${errMsg}` }, { status: 500 });
   }
 }

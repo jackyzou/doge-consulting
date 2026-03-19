@@ -281,20 +281,13 @@ export default function PaymentPage() {
             </div>
 
             <div className="flex flex-wrap gap-3 justify-center items-center py-2">
-              {/* Visa */}
-              <svg viewBox="0 0 48 32" className="h-8 w-12" fill="none"><rect width="48" height="32" rx="4" fill="#1A1F71"/><path d="M19.5 21h-3l1.9-11.5h3L19.5 21zm12.8-11.2c-.6-.2-1.5-.5-2.7-.5-3 0-5.1 1.5-5.1 3.7 0 1.6 1.5 2.5 2.6 3 1.2.6 1.5.9 1.5 1.4 0 .8-.9 1.1-1.8 1.1-1.2 0-1.8-.2-2.8-.6l-.4-.2-.4 2.4c.7.3 2 .6 3.3.6 3.2 0 5.2-1.5 5.2-3.8 0-1.3-.8-2.2-2.5-3-.6-.5-1.6-1-1.6-1.5 0-.5.5-1 1.6-1 .9 0 1.6.2 2.1.4l.3.1.4-2.1zM37.2 21h2.5l-2.2-11.5H35c-.7 0-1.2.4-1.5 1l-4.2 10.5h3l.6-1.6h3.6l.4 1.6zm-3.1-3.8l1.5-4 .8 4h-2.3zM14 9.5l-2.8 7.8-.3-1.5c-.5-1.7-2.2-3.6-4-4.5l2.5 9.7h3l4.6-11.5H14z" fill="#fff"/><path d="M9.2 9.5H4.6l-.1.3c3.6.9 5.9 3 6.9 5.5L10.5 11c-.2-.7-.7-1-1.3-1z" fill="#F7A600"/></svg>
-              {/* Mastercard */}
-              <svg viewBox="0 0 48 32" className="h-8 w-12" fill="none"><rect width="48" height="32" rx="4" fill="#252525"/><circle cx="19" cy="16" r="8" fill="#EB001B"/><circle cx="29" cy="16" r="8" fill="#F79E1B"/><path d="M24 9.8a8 8 0 010 12.4 8 8 0 000-12.4z" fill="#FF5F00"/></svg>
-              {/* Amex */}
-              <svg viewBox="0 0 48 32" className="h-8 w-12" fill="none"><rect width="48" height="32" rx="4" fill="#2E77BC"/><path d="M6 16.5l1.5-3.5h2l.8 2 .9-2h2L11.5 17l1.6 3.5h-2l-.9-2-.8 2h-2L8.9 17 6 16.5zm12-3.5h5.5l1 1.2 1-1.2H31l-2.5 3.5L31 20h-5.5l-1-1.2-1 1.2H18l2.5-3.5L18 13zm2.5 2v1h3.2l-1.2-1H20.5zm0 3v1h3.2l-1.2-1H20.5zM33 13h2.5l2.5 3.5L35.5 20H33l2.5-3.5L33 13z" fill="#fff"/></svg>
-              {/* UnionPay */}
-              <svg viewBox="0 0 48 32" className="h-8 w-12" fill="none"><rect width="48" height="32" rx="4" fill="#fff" stroke="#e5e7eb"/><rect x="6" y="6" width="12" height="20" rx="2" fill="#E21836"/><rect x="18" y="6" width="12" height="20" rx="2" fill="#00447C"/><rect x="30" y="6" width="12" height="20" rx="2" fill="#007B84"/><text x="24" y="19" textAnchor="middle" fill="#fff" fontSize="6" fontWeight="bold" fontFamily="Arial">UP</text></svg>
-              {/* Apple Pay */}
-              <svg viewBox="0 0 48 32" className="h-8 w-12" fill="none"><rect width="48" height="32" rx="4" fill="#000"/><text x="24" y="19" textAnchor="middle" fill="#fff" fontSize="9" fontFamily="Arial" fontWeight="600"> Pay</text><path d="M16.5 10.5c.6-.8 1-1.8.9-2.8-.9 0-2 .6-2.7 1.4-.6.7-1.1 1.7-.9 2.7.9.1 1.9-.5 2.7-1.3z" fill="#fff"/><path d="M17.4 13.2c-1.5-.1-2.8.8-3.5.8s-1.8-.8-3-.8c-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.7 1.1 8.9.8 1.1 1.7 2.3 2.9 2.2 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.2 0 2-1 2.8-2.1.5-.8.9-1.6 1.1-2.5-2.7-1-3.1-4.8-.4-6.2-.9-1-2.1-1.6-3.3-1.6z" fill="#fff" transform="translate(4,-2) scale(.7)"/></svg>
-              {/* Google Pay */}
-              <svg viewBox="0 0 48 32" className="h-8 w-12" fill="none"><rect width="48" height="32" rx="4" fill="#fff" stroke="#e5e7eb"/><text x="29" y="19" textAnchor="middle" fill="#5F6368" fontSize="8" fontFamily="Arial" fontWeight="500">Pay</text><path d="M14.3 16.7v3.1h-1V12h2.6c.6 0 1.2.2 1.7.6.5.4.7.9.7 1.6 0 .6-.2 1.2-.7 1.6-.5.4-1 .6-1.7.6h-1.6zm0-3.8v2.9h1.7c.4 0 .8-.2 1.1-.5.3-.3.4-.6.4-1 0-.4-.1-.7-.4-1a1.4 1.4 0 00-1.1-.4h-1.7z" fill="#5F6368"/><circle cx="10" cy="16" r="3.5" fill="#4285F4"/><path d="M10 13.5v1.7h2.4c-.1.7-.4 1.2-.8 1.6-.5.4-1 .7-1.6.7a2.8 2.8 0 010-5.6c.7 0 1.3.3 1.8.7l1.2-1.2c-.8-.7-1.8-1.1-3-1.1a4.3 4.3 0 000 8.6c1.2 0 2.2-.4 3-1.2.8-.8 1-1.8 1-3 0-.3 0-.6-.1-.8H10z" fill="#4285F4"/></svg>
-              {/* PayPal */}
-              <svg viewBox="0 0 48 32" className="h-8 w-12" fill="none"><rect width="48" height="32" rx="4" fill="#fff" stroke="#e5e7eb"/><path d="M19.2 8h5.7c1.9 0 3.4 1.4 3.2 3.3-.3 2.4-2.2 4.2-4.6 4.2H21l-.7 4.5h-2.7l1.6-12z" fill="#003087"/><path d="M22.2 8h5.7c1.9 0 3.4 1.4 3.2 3.3-.3 2.4-2.2 4.2-4.6 4.2H24l-.7 4.5h-2.7l1.6-12z" fill="#009CDE"/><path d="M15 24l.8-5h2.7l-.8 5H15z" fill="#003087"/><path d="M18 24l.8-5h2.7l-.8 5H18z" fill="#009CDE"/></svg>
+              <img src="/icons/payment/visa.svg" alt="Visa" className="h-8 rounded" />
+              <img src="/icons/payment/mastercard.svg" alt="Mastercard" className="h-8 rounded" />
+              <img src="/icons/payment/amex.svg" alt="Amex" className="h-8 rounded" />
+              <img src="/icons/payment/unionpay.svg" alt="UnionPay" className="h-8 rounded" />
+              <img src="/icons/payment/applepay.svg" alt="Apple Pay" className="h-8 rounded" />
+              <img src="/icons/payment/googlepay.svg" alt="Google Pay" className="h-8 rounded border" />
+              <img src="/icons/payment/paypal.svg" alt="PayPal" className="h-8 rounded" />
             </div>
 
             <Button
