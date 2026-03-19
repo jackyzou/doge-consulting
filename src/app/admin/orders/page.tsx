@@ -17,7 +17,7 @@ import {
 import {
   Package, Search, MapPin, Calendar, DollarSign, Eye, Edit,
   Loader2, FileDown, CreditCard, Clock, Download,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Send,
 } from "lucide-react";
 import { toast } from "sonner";
 import { generateCsv, downloadCsv } from "@/lib/utils";
@@ -167,6 +167,24 @@ export default function AdminOrdersPage() {
       toast.error(e instanceof Error ? e.message : "Failed to record payment");
     }
     setSaving(false);
+  };
+
+  const handleSendBalanceLink = async (order: Order) => {
+    if (order.balanceDue <= 0) {
+      toast.error("No balance due on this order");
+      return;
+    }
+    try {
+      const res = await fetch(`/api/admin/orders/${order.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "send_balance_link" }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      toast.success(`Balance payment link sent to ${order.customerEmail}`);
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Failed to send balance link");
+    }
   };
 
   const handleGenerateDoc = async (orderId: string, type: string) => {
@@ -337,7 +355,8 @@ export default function AdminOrdersPage() {
                     <div className="flex gap-1 flex-wrap">
                       <Button variant="outline" size="sm" className="gap-1" onClick={() => setShowDetail(order)}><Eye className="h-3 w-3" />View</Button>
                       <Button variant="outline" size="sm" className="gap-1" onClick={() => { setShowStatusUpdate(order); setNewStatus(order.status); setTrackingId(order.trackingId || ""); setVessel(order.vessel || ""); setEstimatedDelivery(order.estimatedDelivery ? order.estimatedDelivery.split("T")[0] : ""); }}><Edit className="h-3 w-3" />Status</Button>
-                      <Button variant="outline" size="sm" className="gap-1" onClick={() => { setShowPayment(order); setPayAmount(order.balanceDue); }}><CreditCard className="h-3 w-3" />Pay</Button>
+                      <Button variant="outline" size="sm" className="gap-1" onClick={() => { setShowPayment(order); setPayAmount(Math.round(order.balanceDue * 100) / 100); }}><CreditCard className="h-3 w-3" />Pay</Button>
+                      {order.balanceDue > 0 && <Button variant="outline" size="sm" className="gap-1" onClick={() => handleSendBalanceLink(order)}><Send className="h-3 w-3" />Balance Link</Button>}
                       <Button variant="outline" size="sm" className="gap-1" onClick={() => handleGenerateDoc(order.id, "invoice")}><FileDown className="h-3 w-3" />Invoice</Button>
                     </div>
                   </div>

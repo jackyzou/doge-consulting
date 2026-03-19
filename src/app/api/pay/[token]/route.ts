@@ -175,7 +175,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // ── Production: create real Airwallex Payment Intent ──
     const customerEmail = body.email || paymentLink.quote?.customerEmail || "";
     const customerName = body.name || paymentLink.quote?.customerName || "";
-    const orderId = paymentLink.quote?.quoteNumber || paymentLink.id;
+    const orderId = paymentLink.quote?.quoteNumber || paymentLink.description || paymentLink.id;
+    // Determine if this is a deposit (quote-linked) or balance payment
+    const paymentType = paymentLink.quoteId ? "deposit" : "balance";
 
     // Apply coupon discount if provided
     const discountAmount = Number(body.discountAmount) || 0;
@@ -192,6 +194,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       metadata: {
         paymentLinkToken: token,
         paymentLinkId: paymentLink.id,
+        paymentType,
         ...(body.couponCode ? { couponCode: body.couponCode, discountAmount: String(discountAmount) } : {}),
       },
     });

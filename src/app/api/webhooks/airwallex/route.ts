@@ -119,17 +119,91 @@ export async function POST(request: NextRequest) {
           include: { quote: { include: { items: true } } },
         });
 
-        if (!paymentLink?.quote || paymentLink.quote.status === "converted") {
-          console.warn(`⚠️ PaymentLink ${plToken} has no quote or already converted`);
-          // Still mark the link as used
-          if (paymentLink) await prisma.paymentLink.update({ where: { id: paymentLink.id }, data: { status: "used" } });
+        if (!paymentLink) {
+          console.warn(`⚠️ PaymentLink ${plToken} not found`);
           break;
         }
 
-        const quote = paymentLink.quote;
-        const depositAmount = Math.round(pi.amount * 100) / 100;
-        const orderNumber = await generateSequenceNumber("ORD");
+        const paidAmount = Math.round(pi.amount * 100) / 100;
         const paymentNumber = await generateSequenceNumber("PAY");
+        const paymentType = pi.metadata?.paymentType || (paymentLink.quoteId ? "deposit" : "balance");
+
+        // ── Balance payment on existing order (no quote) ──
+        if (!paymentLink.quoteId) {
+          // Find order by description pattern "Balance payment for ORD-XXXX-XXXX"
+          const orderNumberMatch = paymentLink.description?.match(/(ORD-\d{4}-\d{4})/);
+          let existingOrder = null;
+          if (orderNumberMatch) {
+            existingOrder = await prisma.order.findFirst({ where: { orderNumber: orderNumberMatch[1] } });
+          }
+
+          if (existingOrder) {
+            const newDeposit = Math.round((existingOrder.depositAmount + paidAmount) * 100) / 100;
+            const newBalance = Math.round(Math.max(0, existingOrder.totalAmount - newDeposit) * 100) / 100;
+
+            await prisma.payment.create({
+              data: {
+                paymentNumber,
+                orderId: existingOrder.id,
+                customerId: existingOrder.customerId,
+                amount: paidAmount,
+                currency: paymentLink.currency,
+                method: "credit_card",
+                status: "completed",
+                type: "balance",
+                externalId: pi.id,
+                paidAt: new Date(),
+              },
+            });
+
+            await prisma.order.update({
+              where: { id: existingOrder.id },
+              data: { depositAmount: newDeposit, balanceDue: newBalance },
+            });
+
+            await prisma.orderStatusHistory.create({
+              data: {
+                orderId: existingOrder.id,
+                status: existingOrder.status,
+                note: `Balance payment received: ${paymentLink.currency} ${paidAmount} via Airwallex`,
+                changedBy: "system",
+              },
+            });
+
+            console.log(`✅ Balance payment on ${existingOrder.orderNumber}: ${paidAmount} ${paymentLink.currency}`);
+
+            try {
+              await sendPaymentReceivedEmail({
+                paymentNumber,
+                orderNumber: existingOrder.orderNumber,
+                customerName: existingOrder.customerName,
+                customerEmail: existingOrder.customerEmail,
+                amount: paidAmount,
+                currency: paymentLink.currency,
+                method: "credit_card",
+                type: "balance",
+              });
+            } catch (emailErr) {
+              console.error("Failed to send payment receipt email (non-fatal):", emailErr);
+            }
+          } else {
+            console.warn(`⚠️ No order found for balance payment link ${plToken}`);
+          }
+
+          await prisma.paymentLink.update({ where: { id: paymentLink.id }, data: { status: "used" } });
+          break;
+        }
+
+        // ── Deposit payment: convert Quote → Order ──
+        if (paymentLink.quote!.status === "converted") {
+          console.warn(`⚠️ Quote already converted for payment link ${plToken}`);
+          await prisma.paymentLink.update({ where: { id: paymentLink.id }, data: { status: "used" } });
+          break;
+        }
+
+        const quote = paymentLink.quote!;
+        const orderNumber = await generateSequenceNumber("ORD");
+        const depositPaymentNumber = await generateSequenceNumber("PAY");
 
         const customer = await prisma.user.findUnique({ where: { email: quote.customerEmail } });
         const customerId = customer?.id || quote.customerId || null;
@@ -150,8 +224,8 @@ export async function POST(request: NextRequest) {
             discount: quote.discount,
             taxAmount: quote.taxAmount,
             totalAmount: quote.totalAmount,
-            depositAmount,
-            balanceDue: Math.round((quote.totalAmount - depositAmount) * 100) / 100,
+            depositAmount: paidAmount,
+            balanceDue: Math.round((quote.totalAmount - paidAmount) * 100) / 100,
             currency: quote.currency,
             shippingMethod: quote.shippingMethod,
             originCity: quote.originCity,
@@ -181,10 +255,10 @@ export async function POST(request: NextRequest) {
         // Create Payment record linked to the new Order
         await prisma.payment.create({
           data: {
-            paymentNumber,
+            paymentNumber: depositPaymentNumber,
             orderId: order.id,
             customerId,
-            amount: depositAmount,
+            amount: paidAmount,
             currency: paymentLink.currency,
             method: "credit_card",
             status: "completed",
@@ -206,7 +280,7 @@ export async function POST(request: NextRequest) {
           data: { status: "converted", customerId },
         });
 
-        console.log(`✅ Quote ${quote.quoteNumber} → Order ${orderNumber} (deposit: ${depositAmount} ${quote.currency})`);
+        console.log(`✅ Quote ${quote.quoteNumber} → Order ${orderNumber} (deposit: ${paidAmount} ${quote.currency})`);
 
         // Send order confirmation email
         try {
@@ -215,7 +289,7 @@ export async function POST(request: NextRequest) {
             customerName: quote.customerName,
             customerEmail: quote.customerEmail,
             totalAmount: quote.totalAmount,
-            depositAmount,
+            depositAmount: paidAmount,
             currency: quote.currency,
           });
         } catch (emailErr) {
@@ -225,11 +299,11 @@ export async function POST(request: NextRequest) {
         // Send payment receipt email
         try {
           await sendPaymentReceivedEmail({
-            paymentNumber,
+            paymentNumber: depositPaymentNumber,
             orderNumber,
             customerName: quote.customerName,
             customerEmail: quote.customerEmail,
-            amount: depositAmount,
+            amount: paidAmount,
             currency: paymentLink.currency,
             method: "credit_card",
             type: "deposit",

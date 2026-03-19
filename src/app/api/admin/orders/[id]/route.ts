@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
-import { sendOrderClosedEmail, sendOrderStatusEmail } from "@/lib/email-notifications";
+import { sendOrderClosedEmail, sendOrderStatusEmail, sendPaymentLinkEmail } from "@/lib/email-notifications";
 
 // GET /api/admin/orders/[id]
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -37,6 +37,43 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const order = await prisma.order.findUnique({ where: { id } });
     if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    // Action: send balance payment link to customer
+    if (body.action === "send_balance_link") {
+      if (order.balanceDue <= 0) {
+        return NextResponse.json({ error: "No balance due" }, { status: 400 });
+      }
+
+      const origin = request.headers.get("origin") || "https://doge-consulting.com";
+      const amount = Math.round(order.balanceDue * 100) / 100;
+
+      const paymentLink = await prisma.paymentLink.create({
+        data: {
+          amount,
+          currency: order.currency,
+          description: `Balance payment for ${order.orderNumber}`,
+        },
+      });
+
+      const paymentUrl = `${origin}/pay/${paymentLink.token}`;
+
+      // Send email to customer
+      try {
+        await sendPaymentLinkEmail({
+          customerName: order.customerName,
+          customerEmail: order.customerEmail,
+          quoteNumber: order.orderNumber,
+          amount,
+          currency: order.currency,
+          paymentUrl,
+          description: `Remaining balance for ${order.orderNumber}`,
+        });
+      } catch (emailErr) {
+        console.error("Failed to send balance payment link email (non-fatal):", emailErr);
+      }
+
+      return NextResponse.json({ ok: true, paymentUrl, paymentLinkToken: paymentLink.token });
+    }
 
     const updateData: Record<string, unknown> = {};
     const allowedFields = [

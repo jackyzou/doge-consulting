@@ -149,6 +149,13 @@ export async function createPaymentIntent(
         },
         return_url: request.returnUrl,
         request_id: requestId,
+        payment_method_options: {
+          card: { auto_capture: true },
+          applepay: { auto_capture: true },
+          googlepay: { auto_capture: true },
+          alipayhk: { auto_capture: true },
+          paypal: { auto_capture: true },
+        },
       }),
     }
   );
