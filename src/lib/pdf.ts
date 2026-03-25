@@ -13,7 +13,7 @@ const COMPANY: CompanyInfo = {
   name: "Doge Consulting Group Limited",
   address: "Rm 5, 27/F, China Resources Bldg, 26 Harbour Rd, Wan Chai, Hong Kong",
   email: "dogetech77@gmail.com",
-  phone: "+852-XXXX-XXXX",
+  phone: "+852-5765-6498",
   registration: "HK Reg. No. 78922296-000-10-25-2",
 };
 

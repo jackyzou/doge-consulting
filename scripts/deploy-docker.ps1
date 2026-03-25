@@ -26,9 +26,17 @@ $missing = @()
 foreach ($key in @("JWT_SECRET", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "CLOUDFLARE_TUNNEL_TOKEN")) {
     if ($envContent -notmatch "$key=\S+") { $missing += $key }
 }
+$missingAirwallex = @()
+foreach ($key in @("AIRWALLEX_CLIENT_ID", "AIRWALLEX_API_KEY", "AIRWALLEX_WEBHOOK_SECRET")) {
+    if ($envContent -notmatch "$key=\S+") { $missingAirwallex += $key }
+}
 if ($missing.Count -gt 0) {
     Write-Host "WARNING: Missing or empty in .env: $($missing -join ', ')" -ForegroundColor Yellow
     Write-Host "  Google OAuth won't work without GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET" -ForegroundColor Yellow
+}
+if ($missingAirwallex.Count -gt 0) {
+    Write-Host "WARNING: Missing Airwallex vars: $($missingAirwallex -join ', ')" -ForegroundColor Yellow
+    Write-Host "  Payments will run in DEMO mode without these!" -ForegroundColor Yellow
 }
 
 # 1. Hard-reset to latest remote code

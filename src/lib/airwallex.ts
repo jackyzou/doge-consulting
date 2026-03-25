@@ -227,8 +227,8 @@ export function verifyWebhookSignature(
   secret: string
 ): boolean {
   if (!secret) {
-    console.warn("⚠️ No webhook secret configured — skipping signature verification");
-    return true;
+    console.error("❌ No webhook secret configured — rejecting request");
+    return false;
   }
 
   try {
