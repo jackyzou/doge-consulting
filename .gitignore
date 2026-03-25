@@ -65,7 +65,7 @@ nssm/
 /agents/config.mjs
 /agents/templates/
 /agents/prompts/
-/agents/lib/
+/agents/memory/
 
 # Temp / debug output
 test-out.txt
