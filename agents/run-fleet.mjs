@@ -319,7 +319,8 @@ function generateChatReply(agentId, title, content) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// PHASE 2: ROUND 1 — Individual Agent Reports
+// PHASE 2: ROUND 1 — Individual Agent Reports (LLM-powered)
+// Each agent spawns its own Claude Code Opus 4.6 session
 // ═══════════════════════════════════════════════════════════
 
 console.log(`\n${"─".repeat(60)}`);
@@ -340,170 +341,164 @@ if (pullData?.ceoActions) {
   }
 }
 
-// Helper to generate agent report based on their role, project data, and CEO feedback
-function generateReport(agent) {
-  const report = { agent: agent.id, name: agent.name, role: agent.role, priorities: [], decisions: [], requests: [], blockers: [], ceoResponses: [] };
+// Build standup context shared by all agents
+const standupContext = `
+PROJECT STATE:
+- Version: v${version} | Pages: ${pageCount} | Branch: ${branch}
+- Blog posts: ${db?.blogPosts || "?"} published | Subscribers: ${db?.subscribers || "?"}
+- Quotes: ${db?.totalQuotes || 0} total, ${db?.pendingQuotes || 0} pending | Orders: ${db?.totalOrders || 0}
+- Revenue: $0 / $${CONFIG.revenue.target.toLocaleString()} target | Monthly: $${CONFIG.revenue.monthlyTarget.toLocaleString()}/mo
+- Days remaining: ${Math.ceil((new Date(CONFIG.revenue.deadline) - new Date()) / 86400000)}
+- New inquiries: ${db?.contactInquiries || 0} | Recent chats: ${db?.recentChats || 0}
 
-  // Attach CEO feedback for this agent
-  const myFeedback = ceoFeedback[agent.id] || [];
-  const recentFeedback = myFeedback.filter(f => f.action?.includes("3/16/2026") || f.action?.includes("3/17/2026"));
-  report.ceoResponses = recentFeedback;
+RECENT COMMITS:
+${recentCommits}
 
-  switch (agent.id) {
-    case "alex": {
-      report.priorities = [
-        "✅ Weekly pipeline review APPROVED by CEO — scheduling for every Monday",
-        "Close first $500 revenue from warm lead to prove model",
-        "Quality-check Onboarding SOP v1.0 — distribute to all agents today",
-        "Unblock Airwallex account setup (payment infra critical path)",
-        "Blog post topics APPROVED (10 of 12) by CEO — coordinate Seth on seeding",
-      ];
-      report.decisions = [
-        { text: "Execute on all APPROVED decisions from today's CEO review — assign owners and deadlines", status: "PROPOSED" },
-      ];
-      report.requests = [
-        "@seth: CEO asked 'why is auto-deploy critical?' — please respond with justification or withdraw",
-        "@tiffany: CEO approved quote followup reminders — coordinate with @seth on SMTP setup",
-        "@rachel: Reddit engagement APPROVED — start posting genuine answers this week",
-        "@seto: Blog topics APPROVED — begin writing the first 3 posts",
-      ];
-      report.blockers = [
-        "🔴 Airwallex account still not activated — 10+ days pending",
-        "⚠️ $0 revenue — waiting for first warm lead from CEO network",
-      ];
-      break;
-    }
-    case "amy": {
-      report.priorities = [
-        "✅ P&L template APPROVED by CEO — building Month 1 tracking spreadsheet",
-        "Pricing model finalized and communicated — free consulting, embedded margins",
-        "Airwallex blocked — CEO has sent followup email, awaiting response",
-        "Preparing: interim payment via bank wire/PayPal (previously approved)",
-        "Define margin thresholds: sourcing (15% product cost), shipping (10% freight, min $150)",
-      ];
-      report.decisions = [
-        { text: "Set up interim bank wire payment acceptance while Airwallex is pending — send wire details to Alex/Tiffany for first customer readiness", status: "PROPOSED" },
-      ];
-      report.requests = [
-        "@tiffany: Share bank wire payment details for inclusion in quote template once first customer arrives",
-        "@alex: Confirm margin thresholds — 10% freight (min $150) + 15% product cost per CEO's earlier approval",
-      ];
-      report.blockers = [
-        "🔴 Airwallex still pending — interim wire payment is the fallback",
-      ];
-      break;
-    }
-    case "seth": {
-      const commitLines = recentCommits.split("\n").filter(Boolean);
-      report.priorities = [
-        `Site health: v${version}, ${pageCount} pages, build passing, all tests green`,
-        "⚠️ CEO asked: 'why is auto-deploy critical?' — need to respond or withdraw decision",
-        "🔄 Tiffany's quote followup reminders need SMTP — CEO approved, assigned to Seth",
-        "Production deployment of P2+P3 SEO features confirmed — all pushed to GitHub",
-        `12 blog post drafts ready — Seto's topics APPROVED by CEO, seeding pending`,
-      ];
-      report.decisions = [
-        { text: "Respond to CEO: auto-deploy is LOW priority (not critical) — it automates manual Docker rebuild but site works fine with manual deploy. Withdraw as non-critical.", status: "PROPOSED" },
-        { text: "Set up SMTP email delivery using existing nodemailer config — required for Tiffany's automated quote follow-ups (CEO approved)", status: "PROPOSED" },
-      ];
-      report.requests = [
-        "@tiffany: Once SMTP is configured, I'll enable the Day 3/Day 7 quote followup scheduler",
-        "@seto: Ready to seed the 10 approved blog posts whenever you give the go-ahead",
-      ];
-      report.blockers = [];
-      if (commitLines.length > 0) report.recentWork = commitLines.slice(0, 5);
-      break;
-    }
-    case "rachel": {
-      report.priorities = [
-        "✅ Reddit engagement APPROVED by CEO — starting this week",
-        "Target: answer 3 genuine questions on r/FBA and r/importing",
-        "Blog topic review DONE — Seto's 10-of-12 approval is confirmed",
-        "SEO Sprint 1-3 all complete — monitoring organic traffic growth",
-        "Next: Google Search Console setup (waiting for CEO verification code)",
-      ];
-      report.decisions = [
-        { text: "Create Reddit account u/DogeConsulting (or similar) TODAY and post first 3 genuine answers — link CBM calculator and duty calculator where relevant", status: "PROPOSED" },
-      ];
-      report.requests = [
-        "@seth: Need CBM calculator and duty calculator direct URLs for Reddit posts",
-        "@seto: Coordinate on which blog posts to reference in Reddit answers",
-      ];
-      report.blockers = [];
-      break;
-    }
-    case "seto": {
-      report.priorities = [
-        `✅ Blog topic approval: 10 of 12 APPROVED by CEO — merging #3 and #6 into existing posts`,
-        `Content status: ${db?.blogPosts || "24"} published + 10 new posts to write`,
-        "First 3 to write: Alibaba supplier verification, Amazon FBA cost breakdown, QC inspection checklist",
-        "1688.com deep-dive guide also approved — scheduled after the first 3",
-        "Cover image audit: all clean, no duplicates",
-      ];
-      report.decisions = [
-        { text: "Begin writing first 3 approved posts this week — target 1 per day (Mon/Tue/Wed), each 1500-2500 words with unique Unsplash cover images", status: "PROPOSED" },
-      ];
-      report.requests = [
-        "@seth: Confirm seed-blog-expansion.mjs is ready — I'll update content for the 10 approved topics",
-        "@rachel: Need keyword research for the 3 posts I'm writing this week",
-      ];
-      report.blockers = [];
-      break;
-    }
-    case "tiffany": {
-      report.priorities = [
-        "Onboarding SOP v1.0 live at /docs/customer-onboarding-sop.html — sharing with team",
-        "🔄 Quote followup reminders APPROVED by CEO — finding @seth for SMTP setup",
-        "Quote-to-email pipeline test: PASSED all 5 steps",
-        `CRM status: ${db?.contactInquiries || 0} new inquiries, ${db?.pendingQuotes || 0} pending quotes`,
-        "Pipeline review: APPROVED — joining Alex's Monday cadence",
-      ];
-      report.decisions = [
-        { text: "Coordinate with Seth on SMTP setup this week — once live, enable Day 3 and Day 7 automated quote followup emails", status: "PROPOSED" },
-      ];
-      report.requests = [
-        "@seth: CEO approved my quote followup idea and assigned SMTP to you — when can we set this up?",
-        "@alex: SOP v1.0 is ready for team distribution — please review and approve for external use",
-        "@amy: Need bank wire payment details as interim solution for first customer",
-      ];
-      report.blockers = [
-        "⚠️ SMTP not configured — blocking automated email delivery (quote followups, notifications)",
-      ];
-      break;
-    }
-  }
+${yesterdayLog ? `YESTERDAY'S STANDUP (summary):\n${yesterdayLog.substring(0, 3000)}` : "No previous standup log available."}
+`.trim();
 
-  return report;
+// Try to load the LLM invocation engine
+let invokeAgent = null;
+let invokeParallel = null;
+let useLLM = true;
+try {
+  const lib = await import("./lib/invoke-agent.mjs");
+  invokeAgent = lib.invokeAgent;
+  invokeParallel = lib.invokeParallel;
+  console.log(`\n   🧠 Claude Code Opus 4.6 engine loaded — agents will think independently`);
+} catch (e) {
+  console.log(`\n   ⚠️ LLM engine unavailable (${e.message}) — using template reports`);
+  useLLM = false;
 }
 
-for (const agent of agentsToRun) {
-  const report = generateReport(agent);
-  reports.push(report);
+// Department heads run in parallel (excluding Alex — he synthesizes in Phase 3)
+const departmentHeads = agentsToRun.filter(a => a.id !== "alex");
+const alexAgent = agentsToRun.find(a => a.id === "alex");
 
-  console.log(`\n👤 ${report.name} — ${report.role}`);
-  console.log(`${"─".repeat(40)}`);
+if (useLLM && invokeAgent) {
+  // ── LLM-POWERED STANDUP ──
+  console.log(`   🚀 Spawning ${departmentHeads.length} parallel Claude Code sessions...\n`);
 
-  // Show CEO feedback first (CoC Part 5, Decision Ticket Protocol)
-  if (report.ceoResponses.length > 0) {
-    console.log("\n   📬 CEO Feedback (addressing per CoC §5 Decision Ticket Protocol):");
-    for (const f of report.ceoResponses) {
-      const icon = f.status === "completed" ? "✅" : f.status === "rejected" ? "❌" : f.status === "in_progress" ? "🔄" : "💬";
-      console.log(`      ${icon} ${f.title}`);
-      if (f.action) {
-        const actionText = f.action.replace(/\*\*/g, "").substring(0, 120);
-        console.log(`         → ${actionText}`);
+  const standupPrompt = (agent) => {
+    const feedback = ceoFeedback[agent.id] || [];
+    const feedbackText = feedback.length > 0
+      ? `\nCEO FEEDBACK ON YOUR TICKETS:\n${feedback.map(f => `- [${f.status}] ${f.title}: ${f.action || "no comment"}`).join("\n")}`
+      : "";
+
+    return `You are in a DAILY STANDUP meeting. Today is ${today}. Mode: ${mode}.
+
+${standupContext}
+${feedbackText}
+
+YOUR TASK: Produce your standup report following this EXACT format:
+
+## Report
+<Your analysis: what happened, what you see in the data, your domain priorities>
+
+## Decisions
+- [DECISION] <specific actionable proposal with expected impact> — PROPOSED
+(MINIMUM 1 decision required — this is mandatory per Code of Conduct)
+
+## Requests
+- @agentid: <what you need from them>
+
+## Status
+DONE
+
+IMPORTANT:
+- Be specific. Use real data, file paths, numbers.
+- Reference the project state above — don't make up metrics.
+- Propose decisions that MOVE THE BUSINESS FORWARD.
+- If you have in-progress tickets from CEO, address them specifically.
+- Keep it concise but substantive. No filler.`;
+  };
+
+  // Invoke all department heads in parallel
+  const llmResults = await Promise.allSettled(
+    departmentHeads.map(agent => invokeAgent({
+      agentId: agent.id,
+      prompt: standupPrompt(agent),
+      threadMessages: [],
+      recentDecisions: [],
+      standupSummary: yesterdayLog?.substring(0, 2000) || "",
+      gitLog: recentCommits,
+      mode: agent.id === "seth" ? "full" : "plan",
+    }))
+  );
+
+  // Process results
+  for (let i = 0; i < departmentHeads.length; i++) {
+    const agent = departmentHeads[i];
+    const result = llmResults[i];
+
+    console.log(`\n👤 ${agent.name} — ${agent.role}`);
+    console.log(`${"─".repeat(40)}`);
+
+    if (result.status === "fulfilled") {
+      const { response, decisions, mentions, memoryUpdate } = result.value;
+      console.log(`   🧠 (LLM-powered response)\n`);
+      // Print the full LLM response
+      response.split("\n").forEach(line => console.log(`   ${line}`));
+
+      // Extract structured data for logging
+      const report = {
+        agent: agent.id, name: agent.name, role: agent.role,
+        fullResponse: response,
+        decisions: decisions.map(d => ({ text: d.title, status: d.status })),
+        requests: mentions.map(m => `@${m}`),
+        priorities: [], blockers: [], // Embedded in fullResponse
+      };
+      reports.push(report);
+
+      // Track decisions and requests
+      for (const d of report.decisions) {
+        allDecisions.push({ agent: agent.id, ...d });
       }
+      for (const m of mentions) {
+        allRequests.push({ from: agent.id, text: `@${m}: (see report above)` });
+      }
+
+      // Persist agent memory
+      if (memoryUpdate) {
+        try {
+          const { updateMemory } = await import("./lib/build-context.mjs");
+          updateMemory(agent.id, memoryUpdate);
+        } catch {}
+      }
+    } else {
+      // LLM failed for this agent — fallback to a minimal template
+      console.log(`   ⚠️ LLM failed: ${result.reason?.message || "unknown"}`);
+      console.log(`   📝 Using template fallback\n`);
+      const report = generateTemplateReport(agent);
+      reports.push(report);
+      printTemplateReport(report);
+    }
+
+    console.log("\n   📊 Status: DONE");
+  }
+} else {
+  // ── TEMPLATE FALLBACK (no LLM) ──
+  for (const agent of departmentHeads) {
+    const report = generateTemplateReport(agent);
+    reports.push(report);
+    console.log(`\n👤 ${report.name} — ${report.role}`);
+    console.log(`${"─".repeat(40)}`);
+    printTemplateReport(report);
+    console.log("\n   📊 Status: DONE");
+  }
+}
+
+// Helper: print a template report
+function printTemplateReport(report) {
+  if (report.ceoResponses?.length > 0) {
+    console.log("\n   📬 CEO Feedback:");
+    for (const f of report.ceoResponses) {
+      const icon = f.status === "completed" ? "✅" : f.status === "rejected" ? "❌" : "🔄";
+      console.log(`      ${icon} ${f.title}`);
     }
   }
-
   console.log("\n   📌 Priorities:");
   report.priorities.forEach((p, i) => console.log(`      ${i + 1}. ${p}`));
-
-  if (report.recentWork) {
-    console.log("\n   🔧 Recent commits:");
-    report.recentWork.forEach(c => console.log(`      · ${c}`));
-  }
-
   if (report.decisions.length > 0) {
     console.log("\n   🎯 Decisions:");
     report.decisions.forEach(d => {
@@ -511,7 +506,6 @@ for (const agent of agentsToRun) {
       allDecisions.push({ agent: report.agent, ...d });
     });
   }
-
   if (report.requests.length > 0) {
     console.log("\n   📨 Requests:");
     report.requests.forEach(r => {
@@ -519,18 +513,52 @@ for (const agent of agentsToRun) {
       allRequests.push({ from: report.agent, text: r });
     });
   }
-
-  if (report.blockers.length > 0) {
+  if (report.blockers?.length > 0) {
     console.log("\n   🚫 Blockers:");
     report.blockers.forEach(b => console.log(`      ${b}`));
   }
+}
 
-  console.log("\n   📊 Status: DONE");
+// Template report generator (fallback when LLM unavailable)
+function generateTemplateReport(agent) {
+  const report = { agent: agent.id, name: agent.name, role: agent.role, priorities: [], decisions: [], requests: [], blockers: [], ceoResponses: ceoFeedback[agent.id] || [] };
+  switch (agent.id) {
+    case "amy":
+      report.priorities = [`Revenue: $0. Pricing finalized. Airwallex verified. Preparing March P&L close-out.`];
+      report.decisions = [{ text: "Draft warm lead email template for CEO to forward to contacts", status: "PROPOSED" }];
+      report.requests = ["@alex: Need first warm lead from CEO network"];
+      break;
+    case "seth":
+      report.priorities = [`Site v${version} stable. ${db?.blogPosts || "?"} blog posts. Build clean.`];
+      report.decisions = [{ text: "SMTP setup with nodemailer for automated emails", status: "PROPOSED" }];
+      report.requests = ["@seto: Send blog content for seeding"];
+      break;
+    case "rachel":
+      report.priorities = [`SEO sprints complete. ${db?.blogPosts || "?"} posts live. Monitoring organic growth.`];
+      report.decisions = [{ text: "Publish 3 high-intent blog posts this week targeting tool pages", status: "PROPOSED" }];
+      report.requests = ["@seto: Coordinate on blog content and timing"];
+      break;
+    case "seto":
+      report.priorities = [`${db?.blogPosts || "?"} posts published. Content pipeline active.`];
+      report.decisions = [{ text: "Write next approved blog post today with full research and citations", status: "PROPOSED" }];
+      report.requests = ["@rachel: Review draft for SEO optimization"];
+      break;
+    case "tiffany":
+      report.priorities = [`0 customers. Onboarding SOP live. Quote templates ready. Blocked on SMTP.`];
+      report.decisions = [{ text: "E2E test of customer onboarding flow once SMTP is live", status: "PROPOSED" }];
+      report.requests = ["@seth: ETA on SMTP setup?"];
+      break;
+    default:
+      report.priorities = ["Reviewing all agent reports and coordinating priorities."];
+      report.decisions = [{ text: "Assign owners and deadlines to approved decisions", status: "PROPOSED" }];
+      break;
+  }
+  return report;
 }
 
 // ═══════════════════════════════════════════════════════════
-// PHASE 2b: DECISION THREAD REPLIES (CoC §5 Decision Velocity)
-// Every in-progress ticket gets a [REPLY] from owner + @mentioned
+// PHASE 2b: DECISION THREAD REPLIES (LLM-powered)
+// Per CoC §5 Decision Velocity: every ticket gets a [REPLY] every standup
 // ═══════════════════════════════════════════════════════════
 
 const inProgressTickets = (pullData?.ceoActions || []).filter(a => a.status === "in_progress" || a.status === "open");
@@ -553,43 +581,48 @@ if (inProgressTickets.length > 0) {
       console.log(`      CEO: ${ceoText}`);
     }
 
-    // Generate reply based on the ticket owner
     let reply = "";
     let mentionedReplies = [];
 
-    switch (ticket.agent) {
-      case "alex":
-        reply = generateAlexReply(ticket);
-        break;
-      case "amy":
-        reply = generateAmyReply(ticket);
-        break;
-      case "seth":
-        reply = generateSethReply(ticket);
-        mentionedReplies = generateMentionedReplies(ticket, "seth");
-        break;
-      case "rachel":
-        reply = generateRachelReply(ticket);
-        break;
-      case "seto":
-        reply = generateSetoReply(ticket);
-        break;
-      case "tiffany":
-        reply = generateTiffanyReply(ticket);
-        mentionedReplies = generateMentionedReplies(ticket, "tiffany");
-        break;
-      default:
-        reply = `Reviewing this ticket. Will provide update by next standup.`;
+    if (useLLM && invokeAgent) {
+      // LLM-powered reply
+      try {
+        const replyPrompt = `You have an in-progress decision ticket that needs a [REPLY] update per CoC §5 Decision Velocity.
+
+TICKET: "${ticket.title}"
+STATUS: ${ticket.status}
+CEO COMMENT: ${ticket.action || "none"}
+
+Provide a concise [REPLY] with:
+1. What was DONE since last standup (specific: code committed, doc published, email sent)
+2. What's NEXT
+3. What's BLOCKING (if anything)
+
+Do NOT say "working on it" or "in progress" — those are NOT meaningful updates.
+Keep it to 2-3 sentences max.`;
+
+        const result = await invokeAgent({
+          agentId: ticket.agent,
+          prompt: replyPrompt,
+          threadMessages: [],
+          recentDecisions: [],
+          standupSummary: "",
+          gitLog: recentCommits,
+          mode: ticket.agent === "seth" ? "full" : "plan",
+        });
+        reply = result.response.replace(/^\*\*.*?\*\*:?\s*/m, "").trim(); // Strip agent name prefix if present
+        console.log(`      🧠 [REPLY from ${ownerName}]: ${reply}`);
+      } catch (e) {
+        reply = `Reviewing this ticket. Update pending. (LLM error: ${e.message?.substring(0, 50)})`;
+        console.log(`      📝 [REPLY from ${ownerName}]: ${reply}`);
+      }
+    } else {
+      // Template fallback
+      reply = generateTemplateTicketReply(ticket);
+      console.log(`      📝 [REPLY from ${ownerName}]: ${reply}`);
     }
 
-    console.log(`      [REPLY from ${ownerName}]: ${reply}`);
     allReplies.push({ ticket: ticket.title, agent: ticket.agent, reply });
-
-    for (const mr of mentionedReplies) {
-      const mName = CONFIG.agents.find(a => a.id === mr.agent)?.name || mr.agent;
-      console.log(`      [REPLY from ${mName}]: ${mr.reply}`);
-      allReplies.push({ ticket: ticket.title, agent: mr.agent, reply: mr.reply });
-    }
 
     // Check staleness
     const dateMatch = ticket.action?.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
@@ -605,86 +638,133 @@ if (inProgressTickets.length > 0) {
   }
 }
 
-// Reply generators per agent
-function generateAlexReply(ticket) {
+// Template fallback for ticket replies
+function generateTemplateTicketReply(ticket) {
   const t = ticket.title.toLowerCase();
-  if (t.includes("pipeline")) return "Weekly Monday pipeline review is now on the calendar. First session scheduled for next Monday. Will include: active quotes, conversion funnel, blockers.";
-  if (t.includes("pricing")) return "Pricing model finalized per CEO directive. Free consulting, embedded margins. All agents have been notified. Closing this ticket.";
-  if (t.includes("warm lead")) return "Still waiting on CEO for first warm lead introduction. This is CEO-dependent — proposing we prepare a 'first customer readiness checklist' while we wait.";
-  return "Working on this. Specific update: reviewed the ticket scope and assigned sub-tasks to relevant agents.";
-}
-
-function generateAmyReply(ticket) {
-  const t = ticket.title.toLowerCase();
-  if (t.includes("airwallex") || t.includes("revenue clock")) return "Airwallex still pending. CEO confirmed he sent followup on 3/15. I've drafted a second followup email. Meanwhile, preparing bank wire as interim payment method per previous CEO approval.";
-  if (t.includes("p&l")) return "P&L template created in Google Sheets. Columns: date, customer, product cost, shipping cost, our margin, total revenue, gross profit %. Ready for first transaction.";
-  if (t.includes("pricing")) return "Pricing is DONE. Free consulting, 10% freight margin (min $150), 15% product cost. Updated in SOP and services page. Proposing to close this ticket.";
-  if (t.includes("wire") || t.includes("bank")) return "HSBC bank wire details prepared. Account: Doge Consulting Group Limited. Ready to share with first customer via Tiffany.";
-  return "Reviewing financials for this item. Will have specific numbers by next standup.";
-}
-
-function generateSethReply(ticket) {
-  const t = ticket.title.toLowerCase();
-  if (t.includes("auto-deploy")) return "Withdrawing this as non-critical per CEO question. Auto-deploy is convenience, not necessity — current manual deploy via Docker works fine. Closing.";
-  if (t.includes("smtp")) return "Investigating SMTP setup. Need SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS in .env.local. Will use nodemailer (already installed). Can configure with Gmail SMTP or any provider. Target: complete by tomorrow's standup.";
-  if (t.includes("blog") || t.includes("seed")) return "seed-blog-expansion.mjs is ready with all 10 approved topics. Waiting for Seto's go-ahead to run the seed command.";
-  if (t.includes("deploy") || t.includes("production")) return "All P2+P3 SEO features pushed to GitHub. Production will pick up on next Docker rebuild. Build verified clean locally.";
-  return "Investigating this technical item. Will have implementation plan by next standup.";
-}
-
-function generateRachelReply(ticket) {
-  const t = ticket.title.toLowerCase();
-  if (t.includes("reddit")) return "Creating Reddit account today. Target subreddits: r/FBA (470K members), r/importing, r/ecommerce. Will answer 3 genuine questions this week linking to our CBM calculator and duty calculator.";
-  if (t.includes("search console") || t.includes("gsc")) return "GSC setup code deployed in codebase (GOOGLE_SITE_VERIFICATION env var). Waiting for CEO to provide the actual verification code from Google Search Console.";
-  if (t.includes("newsletter")) return "Newsletter template drafted. Will share with Alex + CEO for approval before first send.";
-  return "Reviewing marketing metrics for this item. Will have specific plan by next standup.";
-}
-
-function generateSetoReply(ticket) {
-  const t = ticket.title.toLowerCase();
-  if (t.includes("blog") && t.includes("topic")) return "10 of 12 topics approved. Merging #3 and #6 into existing posts as updates. Starting with: 1) Alibaba supplier verification, 2) Amazon FBA cost breakdown, 3) QC inspection checklist. Target: 1 post per day this week.";
-  if (t.includes("1688")) return "1688.com deep-dive guide outlined. Will include: registration walkthrough, payment methods, price comparison, agent options. Scheduled after the first 3 long-tail posts.";
-  if (t.includes("cover image")) return "All 24 posts verified — unique Unsplash photo IDs, all HTTP 200. No duplicates found.";
-  return "Researching content for this item. Will have draft or outline by next standup.";
-}
-
-function generateTiffanyReply(ticket) {
-  const t = ticket.title.toLowerCase();
-  if (t.includes("sop") || t.includes("onboarding")) return "SOP v1.0 is live at /docs/customer-onboarding-sop.html. Sharing link with all agents today. Includes: 8-stage process, pricing table, escalation matrix, email templates. Link: https://doge-consulting.com/docs/customer-onboarding-sop.html";
-  if (t.includes("quote follow") || t.includes("smtp")) return "Quote followup reminders approved by CEO. @seth assigned for SMTP setup. Once SMTP is configured, I'll test Day 3 and Day 7 templates. Target: enabled by end of this week.";
-  if (t.includes("pipeline")) return "Pipeline test passed all 5 steps (create/read/update/delete/email-log). System is operational. Weekly testing cadence established per Alex's Monday review.";
-  return "Reviewing customer workflow for this item. Will have update by next standup.";
-}
-
-function generateMentionedReplies(ticket, owner) {
-  const replies = [];
-  const t = ticket.title.toLowerCase();
-
-  // If Tiffany's ticket mentions Seth (SMTP)
-  if (owner === "tiffany" && (t.includes("smtp") || t.includes("quote follow"))) {
-    replies.push({ agent: "seth", reply: "Acknowledged. SMTP setup is on my priority list. Will configure with nodemailer and test delivery by tomorrow's standup. Need: SMTP credentials in .env.local." });
-  }
-  // If Seth's ticket mentions Tiffany
-  if (owner === "seth" && t.includes("smtp")) {
-    replies.push({ agent: "tiffany", reply: "Standing by. Once Seth confirms SMTP is working, I'll test the Day 3 followup email template with a mock quote." });
-  }
-  // If ticket mentions Seto/Rachel for blog
-  if (t.includes("blog") && (owner === "seth" || owner === "seto")) {
-    if (owner !== "rachel") replies.push({ agent: "rachel", reply: "Confirmed — keyword research for the 3 blog posts in progress. Will share target keywords by EOD." });
-  }
-
-  return replies;
+  if (t.includes("smtp")) return "Investigating SMTP setup. Nodemailer available. Need credentials in .env.local.";
+  if (t.includes("blog")) return "Content pipeline active. Posts being written and reviewed.";
+  if (t.includes("airwallex") || t.includes("payment")) return "Payment setup in progress. Awaiting external response.";
+  if (t.includes("sop") || t.includes("onboarding")) return "SOP live and shared with team. Ready for first customer.";
+  if (t.includes("reddit")) return "Reddit account creation pending CEO approval.";
+  return "Reviewing ticket scope. Specific update in next standup.";
 }
 
 // ═══════════════════════════════════════════════════════════
-// PHASE 3: ROUND 2 — Alex Synthesis
+// PHASE 3: ROUND 2 — Alex Synthesis (LLM-powered)
+// Alex receives all Round 1 reports and produces unified picture
 // ═══════════════════════════════════════════════════════════
 
 console.log(`\n${"─".repeat(60)}`);
 console.log(`🎯 PHASE 3: Alex Chen — Synthesis & Priorities`);
 console.log(`${"─".repeat(60)}`);
 
-console.log(`
+let alexSynthesis = "";
+
+if (useLLM && invokeAgent && alexAgent) {
+  // Build the full context: all agent reports + decisions + CEO feedback
+  const allReportsText = reports.map(r => {
+    if (r.fullResponse) return `### ${r.name} (${r.role})\n${r.fullResponse}`;
+    return `### ${r.name} (${r.role})\nPriorities: ${r.priorities.join("; ")}\nDecisions: ${r.decisions.map(d => d.text).join("; ")}\nRequests: ${r.requests.join("; ")}`;
+  }).join("\n\n---\n\n");
+
+  const ticketRepliesText = allReplies.length > 0
+    ? `\nIN-PROGRESS TICKET UPDATES:\n${allReplies.map(r => `- [${r.agent}] "${r.ticket}": ${r.reply}`).join("\n")}`
+    : "";
+
+  const alexPrompt = `You are in the SYNTHESIS round of the daily standup. Today is ${today}.
+
+ALL AGENT REPORTS FROM ROUND 1:
+${allReportsText}
+
+${ticketRepliesText}
+
+${standupContext}
+
+YOUR TASK as Co-CEO/COO: Produce the Alex Synthesis following this EXACT format:
+
+## Business Assessment
+<2-3 sentences: unified picture, revenue status, critical path>
+
+## Top 3 Priorities
+1. <highest revenue-impact item with owner>
+2. <second priority with owner>
+3. <third priority with owner>
+
+## Decisions Made
+| # | Decision | Status | Owner | Rationale |
+|---|----------|--------|-------|-----------|
+<table of all decisions from agent reports — mark APPROVED/REJECTED/MODIFIED/NEEDS_CEO with your reasoning>
+
+## CEO Items Requiring Decision
+<numbered list of items ONLY the CEO can unblock>
+
+## KPIs
+| Metric | Current | Target | Status |
+|--------|---------|--------|--------|
+<use real data from PROJECT STATE above>
+
+## Action Items
+| # | Priority | Owner | Action | Status |
+|---|----------|-------|--------|--------|
+<ranked list of all action items from this standup>
+
+IMPORTANT:
+- Use your HIGHEST-LEVEL JUDGMENT to evaluate each agent's proposals
+- APPROVE decisions within your authority, REJECT weak ones with reason
+- Identify conflicts between agents and resolve them
+- Be decisive. Don't defer everything to CEO.`;
+
+  try {
+    console.log(`   🧠 Alex synthesizing with Opus 4.6...\n`);
+    const alexResult = await invokeAgent({
+      agentId: "alex",
+      prompt: alexPrompt,
+      threadMessages: [],
+      recentDecisions: [],
+      standupSummary: "",
+      gitLog: recentCommits,
+      mode: "plan",
+    });
+    alexSynthesis = alexResult.response;
+
+    // Print Alex's full synthesis
+    alexSynthesis.split("\n").forEach(line => console.log(`   ${line}`));
+
+    // Track any decisions Alex made
+    for (const d of alexResult.decisions) {
+      allDecisions.push({ agent: "alex", text: d.title, status: d.status });
+    }
+
+    // Add Alex's report to the reports array
+    reports.push({
+      agent: "alex", name: "Alex Chen", role: "Co-CEO / COO",
+      fullResponse: alexSynthesis,
+      decisions: alexResult.decisions.map(d => ({ text: d.title, status: d.status })),
+      requests: alexResult.mentions.map(m => `@${m}`),
+      priorities: [], blockers: [],
+    });
+
+    // Persist Alex's memory
+    if (alexResult.memoryUpdate) {
+      try {
+        const { updateMemory } = await import("./lib/build-context.mjs");
+        updateMemory("alex", alexResult.memoryUpdate);
+      } catch {}
+    }
+  } catch (e) {
+    console.log(`   ⚠️ Alex LLM synthesis failed: ${e.message}`);
+    console.log(`   📝 Using template synthesis\n`);
+    alexSynthesis = generateTemplateSynthesis();
+    console.log(alexSynthesis);
+  }
+} else {
+  // Template fallback
+  alexSynthesis = generateTemplateSynthesis();
+  console.log(alexSynthesis);
+}
+
+function generateTemplateSynthesis() {
+  return `
    🏢 UNIFIED BUSINESS PICTURE — ${today}
 
    Revenue: $0 / $${CONFIG.revenue.target.toLocaleString()} target (0.0%)
@@ -692,29 +772,12 @@ console.log(`
    Days remaining: ${Math.ceil((new Date(CONFIG.revenue.deadline) - new Date()) / 86400000)}
    First milestone: Close $500 trial shipment from warm lead
 
-   TOP 5 PRIORITIES (ranked by revenue impact):
-   ════════════════════════════════════════════
-
-   1. 🔴 CRITICAL: Unblock Airwallex account — zero revenue possible without
-      payment processing. CEO must send drafted followup TODAY.
-      Owner: Amy → CEO | Blocker: external (Airwallex support)
-
-   2. 🟡 HIGH: CEO to provide first warm lead from personal network.
-      The entire sales funnel starts with ONE warm introduction.
-      Owner: CEO → Alex/Tiffany
-
-   3. 🟢 READY: Onboarding SOP v1.0 live — team must review and internalize.
-      When first customer comes, every agent knows the playbook.
-      Owner: Tiffany | Status: Published, needs team review
-
-   4. 🟢 READY: 12 blog posts pending Seto+Rachel review.
-      Content pipeline is healthy but needs editorial approval.
-      Owner: Seto + Rachel | Deadline: EOD Wednesday
-
-   5. 🟢 READY: Production deployment of P2+P3 SEO features.
-      Web Vitals, link checker, FAQ expansion, RSS feed — all built, tested.
-      Owner: Seth | Status: Awaiting deployment confirmation
-`);
+   TOP 3 PRIORITIES (ranked by revenue impact):
+   1. 🔴 CEO: Provide first warm lead — Day 18, all systems ready
+   2. 🟡 SMTP setup — unblocks automated customer followups
+   3. 🟡 Blog pipeline — continue publishing high-intent content
+`;
+}
 
 // ═══════════════════════════════════════════════════════════
 // PHASE 4: Active TODOs from CEO

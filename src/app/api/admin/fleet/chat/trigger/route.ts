@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
+import { execFileSync } from "child_process";
+import { readFileSync, existsSync } from "fs";
+import { resolve } from "path";
 
 // POST /api/admin/fleet/chat/trigger — trigger agent responses for a thread
+// Each agent spawns its own Claude Code Opus 4.6 session for real thinking
 export async function POST(request: NextRequest) {
   try {
     await requireAdmin();
@@ -16,7 +20,7 @@ export async function POST(request: NextRequest) {
     const thread = await prisma.chatThread.findUnique({
       where: { id: threadId },
       include: {
-        messages: { orderBy: { createdAt: "desc" }, take: 5 },
+        messages: { orderBy: { createdAt: "desc" }, take: 10 },
       },
     });
 
@@ -34,14 +38,24 @@ export async function POST(request: NextRequest) {
     const participants = thread.participants.split(",").filter(Boolean).filter(p => p !== "jacky");
     const respondingAgents = mentionedAgents.length > 0 ? mentionedAgents : participants.length > 0 ? participants : ["alex"];
 
-    // Get recent context for better responses
-    const recentMessages = thread.messages.reverse(); // Oldest first
-    const conversationContext = recentMessages.map(m => `${m.sender}: ${m.content}`).join("\n");
+    // Get conversation context
+    const recentMessages = [...thread.messages].reverse(); // Oldest first
+    const conversationContext = recentMessages.map(m => `${m.sender}: ${m.content}`).join("\n\n");
 
-    // Generate and store responses directly
+    // Generate and store responses
     const responses: { agent: string; content: string }[] = [];
+
     for (const agentId of respondingAgents) {
-      const content = generateResponse(agentId, lastMsg.content, conversationContext);
+      let content: string;
+
+      // Try LLM-powered response via Claude CLI
+      try {
+        content = invokeClaude(agentId, lastMsg.content, conversationContext);
+      } catch (e) {
+        // Fallback to template if CLI unavailable
+        console.warn(`[trigger] Claude CLI failed for ${agentId}:`, e instanceof Error ? e.message : e);
+        content = generateTemplateFallback(agentId, lastMsg.content);
+      }
 
       await prisma.chatMessage.create({
         data: {
@@ -80,7 +94,81 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function generateResponse(agentId: string, userMessage: string, context: string): string {
+/**
+ * Invoke Claude CLI for an agent response.
+ * Spawns a real Claude Code Opus 4.6 session with the agent's full context.
+ */
+function invokeClaude(agentId: string, userMessage: string, conversationContext: string): string {
+  const agentNames: Record<string, string> = {
+    alex: "Alex Chen (Co-CEO/COO)",
+    amy: "Amy Lin (CFO)",
+    seth: "Seth Parker (CTO)",
+    rachel: "Rachel Morales (CMO)",
+    seto: "Seto Nakamura (PRO/Editor)",
+    tiffany: "Tiffany Wang (CSO)",
+  };
+
+  const name = agentNames[agentId] || agentId;
+
+  // Load agent profile if available
+  const root = process.cwd();
+  const profilePath = resolve(root, "agents", "profiles", `${agentId === "alex" ? "alex-chen" : agentId === "amy" ? "amy-lin" : agentId === "seth" ? "seth-parker" : agentId === "rachel" ? "rachel-morales" : agentId === "seto" ? "seto-nakamura" : "tiffany-wang"}.md`);
+  let profile = "";
+  if (existsSync(profilePath)) {
+    profile = readFileSync(profilePath, "utf8").substring(0, 3000);
+  }
+
+  // Load agent memory if available
+  const memoryPath = resolve(root, "agents", "memory", `${agentId}.md`);
+  let memory = "";
+  if (existsSync(memoryPath)) {
+    memory = readFileSync(memoryPath, "utf8").substring(0, 2000);
+  }
+
+  const prompt = `You are ${name} at Doge Consulting. You are responding in a team chat.
+You are powered by Claude Code Opus 4.6 (1M context).
+
+${profile ? `YOUR PROFILE:\n${profile}\n` : ""}
+${memory ? `YOUR MEMORY:\n${memory}\n` : ""}
+
+CONVERSATION SO FAR:
+${conversationContext.substring(0, 4000)}
+
+RULES:
+- Stay in character as ${name}. Use first person.
+- Be concise but substantive. 2-5 sentences typical.
+- If you need input from another agent, use @agentid (e.g., @seth).
+- If proposing a decision, use [DECISION] tag.
+- Reference specific data, files, or metrics when relevant.
+- Address the CEO (Jacky) directly when relevant.
+
+RESPOND TO THIS MESSAGE:
+${userMessage}`;
+
+  // Spawn claude CLI with a 2-minute timeout for chat responses
+  const isSeth = agentId === "seth";
+  const result = execFileSync("claude", [
+    "-p",
+    "--output-format", "text",
+    "--no-session-persistence",
+    "--model", "claude-opus-4-6",
+    "--permission-mode", isSeth ? "full" : "plan",
+    "--max-turns", isSeth ? "3" : "1",
+  ], {
+    input: prompt,
+    encoding: "utf8",
+    timeout: 120_000, // 2 minutes for chat (shorter than standup)
+    cwd: root,
+    shell: true,
+  });
+
+  return result.trim();
+}
+
+/**
+ * Template fallback when Claude CLI is unavailable.
+ */
+function generateTemplateFallback(agentId: string, userMessage: string): string {
   const agentNames: Record<string, string> = {
     alex: "Alex Chen (COO)",
     amy: "Amy Lin (CFO)",
@@ -89,36 +177,6 @@ function generateResponse(agentId: string, userMessage: string, context: string)
     seto: "Seto Nakamura (PRO)",
     tiffany: "Tiffany Wang (CSO)",
   };
-
   const name = agentNames[agentId] || agentId;
-  const msg = userMessage.toLowerCase();
-
-  // Domain-specific template responses
-  if (agentId === "seth") {
-    if (msg.includes("health") || msg.includes("status") || msg.includes("site"))
-      return `**${name}:** Site health check — v1.5.0 running, build clean, 201 tests passing, 0 errors. Production Docker healthy. All payment systems operational (Airwallex live + webhook hardened). No blockers on tech side.`;
-    if (msg.includes("blog") || msg.includes("seo"))
-      return `**${name}:** Blog system ready — 26 posts published, JSON-LD schemas active, sitemap auto-updates, RSS feed live. Ready to seed any new posts from Seto.`;
-    return `**${name}:** Acknowledged. I'll review the technical aspects and report back with specifics.`;
-  }
-  if (agentId === "alex") {
-    if (msg.includes("status") || msg.includes("report"))
-      return `**${name}:** Summary — all systems green. v1.5.0 deployed, payments verified, 26 blog posts live. Primary blocker: $0 revenue, Day 18. Awaiting first warm lead from CEO network. All agent tasks on track.`;
-    return `**${name}:** Received. I'll coordinate with the team and provide a consolidated update.`;
-  }
-  if (agentId === "amy") {
-    return `**${name}:** Noted. I'll review the financial implications and update the analysis.`;
-  }
-  if (agentId === "rachel") {
-    return `**${name}:** On it. I'll evaluate the marketing angle and coordinate with Seto on content strategy.`;
-  }
-  if (agentId === "seto") {
-    if (msg.includes("blog") || msg.includes("post") || msg.includes("content") || msg.includes("summarize"))
-      return `**${name}:** Let me review our current blog inventory (26 published posts) and provide a summary with performance analysis. Our latest posts cover: US-China tariffs (Compliance), landed cost calculation (Import Guide), and the FIFA World Cup sourcing opportunity (Business).`;
-    return `**${name}:** I'll research this and prepare a detailed analysis with citations and actionable recommendations.`;
-  }
-  if (agentId === "tiffany") {
-    return `**${name}:** Acknowledged. I'll check our CRM and customer pipeline status and report back.`;
-  }
-  return `**${agentId}:** Message received. Processing and will respond with details.`;
+  return `**${name}:** I've received your message and will provide a detailed response in the next standup. The real-time intelligence engine is currently warming up.`;
 }
