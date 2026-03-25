@@ -36,9 +36,9 @@ export default function AdminChatPage() {
   const [triggering, setTriggering] = useState(false);
   const [loading, setLoading] = useState(true);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const endRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const prevMsgCount = useRef(0);
+  const prevMsgCount = useRef(-1); // -1 = initial load (don't scroll)
 
   // Load thread list
   const loadThreads = useCallback(() => {
@@ -52,7 +52,14 @@ export default function AdminChatPage() {
   }, []);
 
   // Load a specific thread's messages — only scroll if new messages arrived
-  const loadThread = useCallback((threadId: string) => {
+  const scrollToBottom = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (container) {
+      setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
+    }
+  }, []);
+
+  const loadThread = useCallback((threadId: string, shouldScroll = false) => {
     fetch(`/api/admin/fleet/chat?threadId=${threadId}`)
       .then(r => r.json())
       .then(data => {
@@ -60,15 +67,15 @@ export default function AdminChatPage() {
           setActiveThread(data.thread);
           const newMsgs = data.thread.messages || [];
           setMessages(newMsgs);
-          // Only scroll if message count changed (new messages arrived)
-          if (newMsgs.length > prevMsgCount.current) {
-            setTimeout(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+          // Only scroll if explicitly requested (new message sent) or new messages arrived during polling
+          if (shouldScroll || (prevMsgCount.current >= 0 && newMsgs.length > prevMsgCount.current)) {
+            scrollToBottom();
           }
           prevMsgCount.current = newMsgs.length;
         }
       })
       .catch(() => {});
-  }, []);
+  }, [scrollToBottom]);
 
   // Initial load
   useEffect(() => {
@@ -114,17 +121,16 @@ export default function AdminChatPage() {
       setMentions([]);
       setImage(null);
       setImagePreview(null);
-      // Reload — scroll will happen because message count changed
+      // Reload — scroll to bottom since user just sent a message
       if (activeThread) {
-        prevMsgCount.current = messages.length; // Will scroll since count increases by 1
-        loadThread(activeThread.id);
+        loadThread(activeThread.id, true);
       } else {
-        prevMsgCount.current = 0;
+        prevMsgCount.current = -1;
         setTimeout(() => {
           fetch("/api/admin/fleet/chat").then(r => r.json()).then(data => {
             if (data.threads?.length > 0) {
               setThreads(data.threads);
-              loadThread(data.threads[0].id);
+              loadThread(data.threads[0].id, true);
             }
           });
         }, 300);
@@ -145,9 +151,8 @@ export default function AdminChatPage() {
       });
       const data = await res.json();
       if (data.triggered) {
-        // Responses were created — reload to show them
-        prevMsgCount.current = messages.length; // Will scroll for new agent msgs
-        loadThread(activeThread.id);
+        // Responses were created — reload and scroll to see them
+        loadThread(activeThread.id, true);
         loadThreads();
       }
     } catch { /* ignore */ }
@@ -159,7 +164,7 @@ export default function AdminChatPage() {
     setMessages([]);
     setMentions([]);
     setText("");
-    prevMsgCount.current = 0;
+    prevMsgCount.current = -1;
     inputRef.current?.focus();
   };
 
@@ -217,7 +222,7 @@ export default function AdminChatPage() {
                 const isActive = activeThread?.id === thread.id;
                 const participants = thread.participants.split(",").filter(Boolean);
                 return (
-                  <button key={thread.id} onClick={() => { prevMsgCount.current = 0; loadThread(thread.id); }}
+                  <button key={thread.id} onClick={() => { prevMsgCount.current = -1; loadThread(thread.id); }}
                     className={`w-full text-left p-2.5 rounded-lg transition-colors ${isActive ? "bg-navy/10 border border-navy/20" : "hover:bg-muted/60"}`}>
                     <div className="flex items-center gap-2 mb-1">
                       <div className="flex -space-x-1.5">
@@ -275,7 +280,7 @@ export default function AdminChatPage() {
           )}
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 && !activeThread && (
               <div className="text-center py-12 text-muted-foreground">
                 <Send className="h-10 w-10 mx-auto mb-3 opacity-30" />
@@ -337,7 +342,6 @@ export default function AdminChatPage() {
                 </div>
               );
             })}
-            <div ref={endRef} />
           </div>
 
           {/* Mention bar */}
