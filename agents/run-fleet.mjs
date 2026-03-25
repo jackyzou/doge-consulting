@@ -1018,6 +1018,15 @@ try {
 } catch {}
 console.log(`\n📝 Log saved: agents/logs/${today}.md`);
 
+// ═══════════════════════════════════════════════════════════
+// PHASE 7: MEMORY MANAGEMENT — Compaction, learning, performance
+// ═══════════════════════════════════════════════════════════
+
+try {
+  const { runMemoryManagement } = await import("./lib/memory-manager.mjs");
+  await runMemoryManagement({ verbose: true });
+} catch (e) { console.log(`   ⚠️ Memory management: ${e.message}`); }
+
 console.log(`\n${"═".repeat(60)}`);
 console.log(`✅ Fleet ${mode} complete — ${timestamp} PST`);
 console.log(`   ${agentsToRun.length} agents | ${allDecisions.length} decisions | ${allRequests.length} requests | ${allReplies.length} ticket replies | ${chatProcessed} chats→tickets`);

@@ -163,10 +163,24 @@ Each agent invocation should:
 _This section is updated by Claude Code after each session._
 
 ```
-Last run: March 25, 2026 — Session 4: Phase 3 Production Site Triggers
-Status: FULLY OPERATIONAL — standups + chat + execution + triggers + health monitoring
+Last run: March 25, 2026 — Session 5: Phase 4 Agent Memory & Learning
+Status: FULLY OPERATIONAL — all 5 phases built (Foundation → Execution → Triggers → Memory → ready for Orchestration)
 Branch: feature/agent-chat-v2
 ```
+
+### Session 5 — Phase 4: Agent Memory & Learning (March 25, 2026)
+
+**New file:**
+- **`agents/lib/memory-manager.mjs`** — Unified memory evolution system:
+  - **Compaction**: When memory exceeds 30 entries, LLM summarizes old entries into 5-8 bullet points, keeps last 10 verbatim
+  - **Cross-agent sharing**: Agents read colleagues' recent memories during standups (Alex reads all, Rachel↔Seto, Seth↔Rachel, Amy↔Tiffany)
+  - **CEO feedback learning**: Extracts approval/rejection patterns from last 7 days, writes learned preferences to agent memory
+  - **Performance tracking**: Per-agent proposal acceptance rate, execution velocity, collaboration score → `agents/logs/performance.json`
+  - CLI: `node agents/lib/memory-manager.mjs [compact|learn|performance|all]`
+
+**Modified files:**
+- **`agents/lib/build-context.mjs`** — Now imports `getCrossAgentMemory()` and injects team memory into agent context (section 8)
+- **`agents/run-fleet.mjs`** — Added Phase 7: Memory Management runs at end of every standup (compaction + learning + performance)
 
 ### Session 4 — Phase 3: Production Site Triggers (March 25, 2026)
 

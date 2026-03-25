@@ -2,6 +2,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
+import { getCrossAgentMemory } from "./memory-manager.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const AGENTS_DIR = resolve(__dirname, "..");
@@ -75,12 +76,20 @@ export function buildContext({ agentId, threadMessages = [], recentDecisions = [
     sections.push(`## RECENT COMMITS\n\n${gitLog.substring(0, 1000)}`);
   }
 
-  // 7. Agent memory
+  // 7. Agent memory (own)
   const memoryPath = resolve(AGENTS_DIR, "memory", `${agentId}.md`);
   if (existsSync(memoryPath)) {
     const memory = readFileSync(memoryPath, "utf8");
     sections.push(`## YOUR MEMORY (Persistent Context)\n\n${memory.substring(0, 3000)}`);
   }
+
+  // 8. Cross-agent memory (what colleagues remember — for collaboration)
+  try {
+    const crossMemory = getCrossAgentMemory(agentId);
+    if (crossMemory) {
+      sections.push(crossMemory.substring(0, 2000));
+    }
+  } catch {} // Silently skip if memory-manager not available
 
   return sections.join("\n\n---\n\n");
 }
