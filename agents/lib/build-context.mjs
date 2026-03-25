@@ -1,5 +1,5 @@
 // agents/lib/build-context.mjs — Assembles context for LLM agent invocation
-import { readFileSync, existsSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -111,17 +111,25 @@ function extractPartialSection(text, sectionName, maxLength = 2000) {
  * Update an agent's persistent memory file (append-only).
  */
 export function updateMemory(agentId, entry) {
-  const memoryPath = resolve(AGENTS_DIR, "memory", `${agentId}.md`);
+  const memoryDir = resolve(AGENTS_DIR, "memory");
+  if (!existsSync(memoryDir)) {
+    mkdirSync(memoryDir, { recursive: true });
+  }
+
+  const memoryPath = resolve(memoryDir, `${agentId}.md`);
   const timestamp = new Date().toISOString().split("T")[0];
   const line = `\n- **${timestamp}:** ${entry}\n`;
-  
+
   let existing = "";
   if (existsSync(memoryPath)) {
     existing = readFileSync(memoryPath, "utf8");
   } else {
-    existing = `# ${agentId} — Persistent Memory\n\nKey decisions, learnings, and context preserved across conversations.\n`;
+    const AGENT_NAMES = {
+      alex: "Alex Chen", amy: "Amy Lin", seth: "Seth Parker",
+      rachel: "Rachel Morales", seto: "Seto Nakamura", tiffany: "Tiffany Wang",
+    };
+    existing = `# ${AGENT_NAMES[agentId] || agentId} — Persistent Memory\n\nKey decisions, learnings, and context preserved across conversations.\n`;
   }
-  
-  const { writeFileSync } = await import("fs");
+
   writeFileSync(memoryPath, existing + line, "utf8");
 }

@@ -11,7 +11,15 @@ const AGENT_NAMES = {
   tiffany: "Tiffany Wang (CSO)",
 };
 
-const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+const TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes (Opus needs room for deep thinking)
+
+// Claude Code model and permission config per agent role
+const AGENT_CLI_CONFIG = {
+  // Seth (CTO) gets full read-write access for code changes
+  seth: { model: "claude-opus-4-6", permissionMode: "full", maxTurns: 5 },
+  // All other agents are read-only planners
+  default: { model: "claude-opus-4-6", permissionMode: "plan", maxTurns: 3 },
+};
 
 /**
  * Invoke an agent via the Claude CLI with full context.
@@ -47,7 +55,16 @@ export async function invokeAgent({
   });
 
   // Build the full prompt for Claude CLI
+  const config = AGENT_CLI_CONFIG[agentId] || AGENT_CLI_CONFIG.default;
   const systemPrompt = `You are ${agentName} at Doge Consulting. You are responding in a team chat.
+You are powered by Claude Code Opus 4.6 (1M context) — the most capable AI model available.
+
+CAPABILITIES (Claude Code Skill):
+- You have full access to the codebase at C:\\Users\\jiaqizou\\doge-consulting
+- You can read files, search code, analyze the project structure, and understand context deeply
+- ${agentId === "seth" ? "You have FULL read-write permission — you can edit files, run builds, commit code, and deploy changes" : "You operate in PLAN mode — you can read and analyze but cannot modify files directly. For code changes, @seth with specific instructions."}
+- You can access git history, database state, and project configuration
+- Think deeply before responding. Use your full reasoning capacity.
 
 RULES:
 - Stay in character as ${agentName}. Use first person.
@@ -87,12 +104,15 @@ ${prompt}`;
  */
 function runClaudeCLI(prompt, agentId, mode = "plan") {
   return new Promise((resolve, reject) => {
-    // Check if 'claude' is available
+    const config = AGENT_CLI_CONFIG[agentId] || AGENT_CLI_CONFIG.default;
+    const effectiveMode = mode === "full" ? "full" : config.permissionMode;
     const args = [
       "-p",
       "--output-format", "text",
       "--no-session-persistence",
-      "--max-turns", "3",
+      "--model", config.model,
+      "--permission-mode", effectiveMode,
+      "--max-turns", String(config.maxTurns),
     ];
 
     const child = spawn("claude", args, {

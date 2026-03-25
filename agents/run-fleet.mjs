@@ -126,7 +126,8 @@ console.log(`🔖 v${version} | 📄 ${pageCount} pages | 📝 ${db?.blogPosts |
 console.log(`${"═".repeat(60)}`);
 
 // ═══════════════════════════════════════════════════════════
-// PHASE 1b: PROCESS OPEN CHAT → DECISION TICKETS + AGENT REPLIES
+// PHASE 1b: PROCESS OPEN CHAT → DECISION TICKETS + LLM AGENT REPLIES
+// Each agent spawns its own Claude Code Opus 4.6 session for real thinking
 // ═══════════════════════════════════════════════════════════
 
 let chatProcessed = 0;
@@ -139,8 +140,28 @@ try {
     const conn = new Database(dbPath);
     const openChats = conn.prepare(`SELECT id, agent, title, content, assignedTo FROM AgentLog WHERE type='chat' AND status='open' ORDER BY createdAt ASC`).all();
     if (openChats.length > 0) {
-      console.log(`\n📨 Processing ${openChats.length} open chat messages → tickets + agent replies`);
+      console.log(`\n📨 Processing ${openChats.length} open chat messages → tickets + LLM agent replies`);
       console.log(`${"─".repeat(50)}`);
+
+      // Import LLM invocation engine
+      let invokeAgent = null;
+      let useLLM = true;
+      try {
+        const lib = await import("./lib/invoke-agent.mjs");
+        invokeAgent = lib.invokeAgent;
+        console.log(`   🧠 Claude Code Opus 4.6 engine loaded — agents will think independently`);
+      } catch (e) {
+        console.log(`   ⚠️ LLM engine unavailable (${e.message}) — falling back to templates`);
+        useLLM = false;
+      }
+
+      // Get shared context for LLM invocations
+      const gitLog = run("git log --oneline -10 --format=\"%h %ar | %s\" 2>nul") || "";
+      let standupSummary = "";
+      try {
+        const row = conn.prepare("SELECT content FROM AgentLog WHERE type='standup' ORDER BY createdAt DESC LIMIT 1").get();
+        standupSummary = row?.content?.substring(0, 3000) || "";
+      } catch {}
 
       for (const chat of openChats) {
         const assigned = (chat.assignedTo || '').split(',').filter(Boolean);
@@ -163,20 +184,82 @@ try {
         );
         console.log(`      📋 Decision ticket created`);
 
-        // Generate agent replies in the chat thread
-        for (const agentId of (assigned.length > 0 ? assigned : ['alex'])) {
-          const reply = generateChatReply(agentId, cleanTitle, chatContent);
-          if (reply) {
+        // Generate agent replies — LLM-powered (parallel) or template fallback
+        const respondingAgents = assigned.length > 0 ? assigned : ['alex'];
+
+        if (useLLM && invokeAgent) {
+          // Spawn parallel Claude Code sessions — each agent thinks independently
+          console.log(`      🚀 Spawning ${respondingAgents.length} parallel Claude Code session(s)...`);
+          const llmResults = await Promise.allSettled(
+            respondingAgents.map(agentId => {
+              const recentDecisions = (() => {
+                try {
+                  return conn.prepare("SELECT title, status FROM AgentLog WHERE type='decision' AND (agent=? OR assignedTo LIKE ?) ORDER BY createdAt DESC LIMIT 10")
+                    .all(agentId, `%${agentId}%`);
+                } catch { return []; }
+              })();
+
+              return invokeAgent({
+                agentId,
+                prompt: `[FROM CEO CHAT] ${cleanTitle}\n\n${chatContent}`,
+                threadMessages: [],
+                recentDecisions,
+                standupSummary,
+                gitLog,
+                mode: agentId === "seth" ? "full" : "plan",
+              });
+            })
+          );
+
+          for (let i = 0; i < respondingAgents.length; i++) {
+            const agentId = respondingAgents[i];
             const agentNames = { alex: 'Alex Chen', amy: 'Amy Lin', seth: 'Seth Parker', rachel: 'Rachel Morales', seto: 'Seto Nakamura', tiffany: 'Tiffany Wang' };
             const agentName = agentNames[agentId] || agentId;
-            conn.prepare(`INSERT INTO AgentLog (id,agent,type,priority,title,content,status,assignedTo,tags,relatedTo,createdAt,updatedAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(
-              randomUUID(), agentId, 'chat', 'normal',
-              `RE: ${cleanTitle.substring(0, 80)}`,
-              reply,
-              'completed', chat.agent, `@${chat.agent}`, `chat:${chat.id}`, ts, ts
-            );
-            console.log(`      💬 ${agentName}: ${reply.substring(0, 100)}...`);
-            chatRepliesPosted++;
+            const result = llmResults[i];
+
+            let reply;
+            if (result.status === "fulfilled") {
+              reply = result.value.response;
+              // Update agent memory if LLM produced one
+              if (result.value.memoryUpdate) {
+                try {
+                  const { updateMemory } = await import("./lib/build-context.mjs");
+                  updateMemory(agentId, result.value.memoryUpdate);
+                } catch {}
+              }
+              console.log(`      🧠 ${agentName} (LLM): ${reply.substring(0, 120)}...`);
+            } else {
+              // LLM failed for this agent — use template fallback
+              reply = generateChatReply(agentId, cleanTitle, chatContent);
+              console.log(`      📝 ${agentName} (template fallback): ${(reply || "no reply").substring(0, 100)}...`);
+            }
+
+            if (reply) {
+              conn.prepare(`INSERT INTO AgentLog (id,agent,type,priority,title,content,status,assignedTo,tags,relatedTo,createdAt,updatedAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+                randomUUID(), agentId, 'chat', 'normal',
+                `RE: ${cleanTitle.substring(0, 80)}`,
+                reply,
+                'completed', chat.agent, `@${chat.agent}`, `chat:${chat.id}`, ts, ts
+              );
+              chatRepliesPosted++;
+            }
+          }
+        } else {
+          // Template fallback path (no LLM available)
+          for (const agentId of respondingAgents) {
+            const reply = generateChatReply(agentId, cleanTitle, chatContent);
+            if (reply) {
+              const agentNames = { alex: 'Alex Chen', amy: 'Amy Lin', seth: 'Seth Parker', rachel: 'Rachel Morales', seto: 'Seto Nakamura', tiffany: 'Tiffany Wang' };
+              const agentName = agentNames[agentId] || agentId;
+              conn.prepare(`INSERT INTO AgentLog (id,agent,type,priority,title,content,status,assignedTo,tags,relatedTo,createdAt,updatedAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+                randomUUID(), agentId, 'chat', 'normal',
+                `RE: ${cleanTitle.substring(0, 80)}`,
+                reply,
+                'completed', chat.agent, `@${chat.agent}`, `chat:${chat.id}`, ts, ts
+              );
+              console.log(`      📝 ${agentName}: ${reply.substring(0, 100)}...`);
+              chatRepliesPosted++;
+            }
           }
         }
 

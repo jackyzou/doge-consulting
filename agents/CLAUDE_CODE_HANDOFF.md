@@ -163,9 +163,62 @@ Each agent invocation should:
 _This section is updated by Claude Code after each session._
 
 ```
-Last run: (not yet run)
-Status: (pending initial setup)
-Notes: (Claude Code has not yet been initialized on this project)
+Last run: March 25, 2026 — initial setup + Opus 4.6 integration
+Status: OPERATIONAL — all agent lib modules upgraded
+Branch: feature/agent-chat-v2
+```
+
+### What Claude Code Did (March 25, 2026)
+
+**Files modified (Claude Code ownership zone — safe, no conflicts):**
+
+1. **`agents/lib/invoke-agent.mjs`** — Upgraded agent invocation engine:
+   - All agents now use `--model claude-opus-4-6` (1M context, most capable model)
+   - Seth (CTO) gets `--permission-mode full` + 5 max turns (can edit code, run builds)
+   - All other agents get `--permission-mode plan` + 3 max turns (read-only analysis)
+   - Timeout increased from 5min → 10min (Opus needs room for deep reasoning)
+   - System prompt enhanced with capability awareness per agent role
+   - Each agent spawn is a fully independent Claude Code CLI session
+
+2. **`agents/lib/build-context.mjs`** — Fixed bug in `updateMemory()`:
+   - Was using `await import("fs")` in non-async context — replaced with proper static import
+   - Added `mkdirSync` to auto-create memory directory if missing
+   - Agent names now used in memory file headers instead of raw IDs
+
+3. **`agents/run-fleet.mjs`** — Wired LLM-powered chat responses:
+   - Phase 1b now attempts real Claude Code Opus 4.6 invocation for each agent
+   - Multiple agents spawn **in parallel** via `Promise.allSettled()` — true concurrent thinking
+   - Graceful fallback: if LLM engine fails to load, falls back to template responses
+   - Per-agent fallback: if one agent's LLM call fails, only that agent uses templates
+   - Agent memory updates are persisted after each LLM response
+   - Console output clearly shows `🧠 (LLM)` vs `📝 (template)` for each reply
+
+4. **`agents/memory/*.md`** — Created persistent memory files for all 6 agents:
+   - alex.md, amy.md, seth.md, rachel.md, seto.md, tiffany.md
+   - Seeded with current state from March 25 standup (revenue, blog count, blockers)
+   - These are append-only — each agent's LLM session adds [MEMORY] entries automatically
+
+**Files NOT touched (VS Code ownership — no conflicts):**
+- `src/app/**` — all frontend pages untouched
+- `src/app/api/**` — all API routes untouched
+- `prisma/schema.prisma` — no schema changes
+- `src/app/admin/chat/` — chat UI untouched
+
+### How to Sync (for VS Code CLI)
+
+No action needed — all changes are in the agent runtime layer (gitignored files + agents/lib/).
+The `agents/lib/*.mjs` files are git-tracked and safe to pull. Memory files are gitignored.
+
+If VS Code wants to test the LLM-powered agent responses:
+```bash
+# Test a single agent's LLM invocation
+node -e "import('./agents/lib/invoke-agent.mjs').then(async m => { const r = await m.invokeAgent({ agentId: 'alex', prompt: 'What are our top priorities?' }); console.log(r.response); })"
+
+# Process pending chat messages with LLM
+node agents/lib/process-chat.mjs
+
+# Run full standup (includes LLM chat processing)
+node agents/run-fleet.mjs
 ```
 
 ---
