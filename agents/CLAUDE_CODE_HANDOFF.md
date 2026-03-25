@@ -163,10 +163,35 @@ Each agent invocation should:
 _This section is updated by Claude Code after each session._
 
 ```
-Last run: March 25, 2026 — Session 5: Phase 4 Agent Memory & Learning
-Status: FULLY OPERATIONAL — all 5 phases built (Foundation → Execution → Triggers → Memory → ready for Orchestration)
+Last run: March 25, 2026 — Session 6: Phase 5 Multi-Agent Orchestration (FINAL)
+Status: ALL 5 PHASES COMPLETE — full autonomous agent system operational
 Branch: feature/agent-chat-v2
 ```
+
+### Session 6 — Phase 5: Multi-Agent Orchestration (March 25, 2026) — FINAL PHASE
+
+**New files:**
+
+1. **`agents/lib/workstreams.mjs`** — Parallel workstream engine:
+   - **Content** (Seto + Rachel + Seth): research → write → SEO → publish
+   - **Sales** (Amy + Tiffany + Alex): leads → outreach → quote → close
+   - **Tech** (Seth solo): bugs, features, deployments, health
+   - Each workstream spawns agents in parallel, lead synthesizes output
+   - Cross-workstream @mentions auto-chain to the other stream
+   - CLI: `node agents/lib/workstreams.mjs [content|sales|tech|all]`
+
+2. **`agents/lib/agent-chain.mjs`** — Agent-to-agent conversation chains:
+   - When agent A @mentions agent B → auto-spawn B's Claude session
+   - Chains recurse up to 5 rounds deep
+   - Alex auto-synthesizes when 3+ agents are involved
+   - Prevents ping-pong (source agent excluded from re-mention)
+   - CLI: `node agents/lib/agent-chain.mjs <sender> "<message with @mentions>"`
+
+**Modified:**
+- **`agents/run-fleet.mjs`** — Workstream mode added:
+  - `--workstream content|sales|tech` runs a specific workstream
+  - `--workstreams` runs all 3 in parallel
+  - These are ALTERNATIVE to the normal standup flow (not in addition to)
 
 ### Session 5 — Phase 4: Agent Memory & Learning (March 25, 2026)
 

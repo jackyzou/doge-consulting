@@ -31,6 +31,28 @@ for (let i = 0; i < args.length; i++) {
   if (args[i] === "--agent" && args[i + 1]) { flags.agent = args[++i]; }
   else if (args[i] === "--mode" && args[i + 1]) { flags.mode = args[++i]; }
   else if (args[i] === "--list") { flags.list = true; }
+  else if (args[i] === "--workstream" && args[i + 1]) { flags.workstream = args[++i]; }
+  else if (args[i] === "--workstreams") { flags.workstream = "all"; }
+}
+
+// Workstream mode — runs workstreams instead of normal standup
+if (flags.workstream) {
+  (async () => {
+    try {
+      const { runWorkstream, runAllWorkstreams } = await import("./lib/workstreams.mjs");
+      if (flags.workstream === "all") {
+        await runAllWorkstreams({ verbose: true });
+      } else {
+        await runWorkstream(flags.workstream, { verbose: true });
+      }
+    } catch (e) {
+      console.error(`❌ Workstream error: ${e.message}`);
+      process.exit(1);
+    }
+    process.exit(0);
+  })();
+  // Prevent the rest of the standup from running
+  await new Promise(() => {}); // Block (the IIFE above calls process.exit)
 }
 
 if (flags.list) {
