@@ -163,10 +163,45 @@ Each agent invocation should:
 _This section is updated by Claude Code after each session._
 
 ```
-Last run: March 25, 2026 — Session 3: Phase 2 Autonomous Execution Engine
-Status: FULLY OPERATIONAL — standups + chat + autonomous code/blog execution
+Last run: March 25, 2026 — Session 4: Phase 3 Production Site Triggers
+Status: FULLY OPERATIONAL — standups + chat + execution + triggers + health monitoring
 Branch: feature/agent-chat-v2
 ```
+
+### Session 4 — Phase 3: Production Site Triggers (March 25, 2026)
+
+**New files (all in agents/lib/, Claude Code ownership):**
+
+1. **`agents/lib/contact-triage.mjs`** — Auto-triage contact form submissions:
+   - Polls `ContactInquiry` table for `status = 'new'` records
+   - Routes to agents: Tiffany always (CSO), Alex (first-contact rule), Amy (pricing), Seth (technical)
+   - Spawns parallel agent sessions to draft response, classify, set priority
+   - Stores triage result in AgentLog, marks inquiry as `contacted`
+   - CLI: `node agents/lib/contact-triage.mjs`
+
+2. **`agents/lib/quote-lifecycle.mjs`** — Automated quote lifecycle management:
+   - **New quotes** (<24h, draft): Tiffany sends confirmation email draft
+   - **Day 3**: Tiffany sends warm followup for quotes with no response
+   - **Day 7**: Tiffany sends urgency email + Alex escalation review
+   - **Day 14**: Tiffany sends "closing the loop" email, quote archived as expired
+   - Deduplication: each stage tracked via AgentLog `relatedTo` field
+   - CLI: `node agents/lib/quote-lifecycle.mjs`
+
+3. **`agents/lib/health-check.mjs`** — Seth's automated site monitoring:
+   - **Build check**: runs `npx next build`
+   - **Uptime**: checks homepage returns 200, measures response time
+   - **Critical pages**: tests 12 key pages (homepage, tools, admin, account)
+   - **APIs**: verifies contact, quote, blog endpoints respond
+   - **Database**: SQLite integrity check + table/post counts
+   - Critical failures auto-escalate to Seth via LLM for triage
+   - CLI: `node agents/lib/health-check.mjs [--local]`
+
+**Modified files:**
+- **`agents/run-fleet.mjs`** — Added Phase 1c before agent reports:
+  - Contact triage, quote lifecycle, and health check (morning only) run at start of every standup
+  - Each wrapped in try/catch — failures don't block the standup
+- **`agents/lib/invoke-agent.mjs`** — Mode split (from Session 3):
+  - Seth/Seto: `plan` for standups, `execute` (bypassPermissions) for approved decisions
 
 ### Session 3 — Autonomous Execution Engine (March 25, 2026)
 

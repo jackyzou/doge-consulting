@@ -319,6 +319,36 @@ function generateChatReply(agentId, title, content) {
 }
 
 // ═══════════════════════════════════════════════════════════
+// PHASE 1c: PRODUCTION TRIGGERS — Contact triage + Quote lifecycle + Health check
+// ═══════════════════════════════════════════════════════════
+
+try {
+  console.log(`\n${"─".repeat(60)}`);
+  console.log(`🔔 PHASE 1c: Production Triggers`);
+  console.log(`${"─".repeat(60)}`);
+
+  // Contact form triage — check for new inquiries
+  try {
+    const { triageNewContacts } = await import("./lib/contact-triage.mjs");
+    await triageNewContacts({ verbose: true });
+  } catch (e) { console.log(`   ⚠️ Contact triage: ${e.message}`); }
+
+  // Quote lifecycle — followups, escalations, archives
+  try {
+    const { processQuoteLifecycle } = await import("./lib/quote-lifecycle.mjs");
+    await processQuoteLifecycle({ verbose: true });
+  } catch (e) { console.log(`   ⚠️ Quote lifecycle: ${e.message}`); }
+
+  // Health check (skip during evening summary to save time)
+  if (mode === "morning") {
+    try {
+      const { runHealthCheck } = await import("./lib/health-check.mjs");
+      await runHealthCheck({ verbose: true, useLocal: false });
+    } catch (e) { console.log(`   ⚠️ Health check: ${e.message}`); }
+  }
+} catch (e) { console.log(`   ⚠️ Production triggers error: ${e.message}`); }
+
+// ═══════════════════════════════════════════════════════════
 // PHASE 2: ROUND 1 — Individual Agent Reports (LLM-powered)
 // Each agent spawns its own Claude Code Opus 4.6 session
 // ═══════════════════════════════════════════════════════════
