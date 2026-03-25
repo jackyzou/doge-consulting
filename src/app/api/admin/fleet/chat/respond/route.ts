@@ -1,13 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 
-// POST /api/admin/fleet/chat/respond — agent posts a reply (called by fleet runner)
-// Protected by FLEET_SYNC_SECRET header
+// POST /api/admin/fleet/chat/respond — agent posts a reply
+// Auth: either x-fleet-secret header OR admin session cookie
 export async function POST(request: NextRequest) {
   try {
+    // Auth option 1: Fleet sync secret
     const secret = request.headers.get("x-fleet-secret");
     const expected = process.env.FLEET_SYNC_SECRET;
-    if (!expected || secret !== expected) {
+    let authed = !!(expected && secret === expected);
+
+    // Auth option 2: Admin session (for testing and direct calls)
+    if (!authed) {
+      try {
+        await requireAdmin();
+        authed = true;
+      } catch {
+        // Not authenticated via session either
+      }
+    }
+
+    if (!authed) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
