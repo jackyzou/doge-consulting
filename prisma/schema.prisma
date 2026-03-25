@@ -563,3 +563,41 @@ model AgentLog {
   @@index([status])
   @@index([createdAt])
 }
+
+// ──────────────────────────────────────────
+// Agent Fleet — Chat Threads & Messages
+// ──────────────────────────────────────────
+model ChatThread {
+  id            String   @id @default(cuid())
+  title         String                       // auto-generated from first message
+  triggerType   String   @default("user_message") // "user_message", "standup", "decision", "onboarding"
+  participants  String   @default("")        // comma-separated agent IDs
+  relatedId     String?                      // link to decision ID, standup date, etc.
+  status        String   @default("active")  // "active", "resolved", "archived"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  messages      ChatMessage[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([triggerType])
+}
+
+model ChatMessage {
+  id          String      @id @default(cuid())
+  threadId    String
+  thread      ChatThread  @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  parentId    String?                        // reply to specific message (optional)
+  sender      String                         // "jacky", "alex", "amy", "seth", "rachel", "seto", "tiffany", "system"
+  content     String                         // markdown content
+  mentions    String?                        // comma-separated: "seth,rachel"
+  attachments String?                        // JSON array of file paths
+  metadata    String?                        // JSON: CLI output, code refs, decisions made
+  status      String   @default("delivered") // "pending_response", "delivered", "thinking", "error"
+  createdAt   DateTime @default(now())
+
+  @@index([threadId])
+  @@index([sender])
+  @@index([createdAt])
+  @@index([status])
+}
