@@ -14,11 +14,27 @@ const AGENT_NAMES = {
 const TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes (Opus needs room for deep thinking)
 
 // Claude Code model and permission config per agent role
+// Valid permission modes: acceptEdits, bypassPermissions, default, dontAsk, plan, auto
+//
+// Mode parameter in invokeAgent() controls behavior:
+//   "plan"    → read-only analysis (standup reports, chat responses)
+//   "execute" → full read-write with code changes (only for approved decisions)
 const AGENT_CLI_CONFIG = {
-  // Seth (CTO) gets full read-write access for code changes
-  seth: { model: "claude-opus-4-6", permissionMode: "full", maxTurns: 5 },
-  // All other agents are read-only planners
-  default: { model: "claude-opus-4-6", permissionMode: "plan", maxTurns: 3 },
+  seth: {
+    model: "claude-opus-4-6",
+    plan: { permissionMode: "plan", maxTurns: 3 },         // Standup/chat: read-only
+    execute: { permissionMode: "bypassPermissions", maxTurns: 10 }, // Approved decisions: full access
+  },
+  seto: {
+    model: "claude-opus-4-6",
+    plan: { permissionMode: "plan", maxTurns: 3 },
+    execute: { permissionMode: "bypassPermissions", maxTurns: 5 },  // Blog publishing: can run seed scripts
+  },
+  default: {
+    model: "claude-opus-4-6",
+    plan: { permissionMode: "plan", maxTurns: 3 },
+    execute: { permissionMode: "plan", maxTurns: 3 },      // Other agents: always read-only
+  },
 };
 
 /**
@@ -55,14 +71,15 @@ export async function invokeAgent({
   });
 
   // Build the full prompt for Claude CLI
-  const config = AGENT_CLI_CONFIG[agentId] || AGENT_CLI_CONFIG.default;
+  const isExecuteMode = mode === "execute";
+  const canWrite = isExecuteMode && (agentId === "seth" || agentId === "seto");
   const systemPrompt = `You are ${agentName} at Doge Consulting. You are responding in a team chat.
 You are powered by Claude Code Opus 4.6 (1M context) — the most capable AI model available.
 
 CAPABILITIES (Claude Code Skill):
 - You have full access to the codebase at C:\\Users\\jiaqizou\\doge-consulting
 - You can read files, search code, analyze the project structure, and understand context deeply
-- ${agentId === "seth" ? "You have FULL read-write permission — you can edit files, run builds, commit code, and deploy changes" : "You operate in PLAN mode — you can read and analyze but cannot modify files directly. For code changes, @seth with specific instructions."}
+- ${canWrite ? `You are in EXECUTE MODE — you have FULL read-write permission. You can edit files, run builds, run scripts, commit code, and deploy changes. Use this power to IMPLEMENT the approved decision.` : `You operate in PLAN mode — you can read and analyze but cannot modify files directly. For code changes, @seth with specific instructions.`}
 - You can access git history, database state, and project configuration
 - Think deeply before responding. Use your full reasoning capacity.
 
@@ -104,22 +121,27 @@ ${prompt}`;
  */
 function runClaudeCLI(prompt, agentId, mode = "plan") {
   return new Promise((resolve, reject) => {
-    const config = AGENT_CLI_CONFIG[agentId] || AGENT_CLI_CONFIG.default;
-    const effectiveMode = mode === "full" ? "full" : config.permissionMode;
+    const agentConfig = AGENT_CLI_CONFIG[agentId] || AGENT_CLI_CONFIG.default;
+    // mode "plan" = standup/chat (read-only), "execute" = approved decisions (read-write)
+    const modeKey = mode === "execute" ? "execute" : "plan";
+    const modeConfig = agentConfig[modeKey] || agentConfig.plan;
     const args = [
       "-p",
       "--output-format", "text",
       "--no-session-persistence",
-      "--model", config.model,
-      "--permission-mode", effectiveMode,
-      "--max-turns", String(config.maxTurns),
+      "--model", agentConfig.model,
+      "--permission-mode", modeConfig.permissionMode,
+      "--max-turns", String(modeConfig.maxTurns),
     ];
+
+    // Remove CLAUDECODE env var to allow spawning from within a Claude Code session
+    const childEnv = { ...process.env };
+    delete childEnv.CLAUDECODE;
 
     const child = spawn("claude", args, {
       stdio: ["pipe", "pipe", "pipe"],
       timeout: TIMEOUT_MS,
-      env: { ...process.env },
-      shell: true,
+      env: childEnv,
     });
 
     let stdout = "";

@@ -780,6 +780,48 @@ function generateTemplateSynthesis() {
 }
 
 // ═══════════════════════════════════════════════════════════
+// PHASE 3b: AUTONOMOUS EXECUTION of approved decisions
+// Seth executes code changes, Seto publishes blog posts
+// ═══════════════════════════════════════════════════════════
+
+const autoExecute = !process.argv.includes("--no-execute");
+
+if (autoExecute && allDecisions.length > 0) {
+  try {
+    const { executeApprovedDecisions } = await import("./lib/execute-decision.mjs");
+
+    // Only execute decisions that Alex explicitly approved in his synthesis
+    // The allDecisions array contains raw proposals — we need to check which ones Alex approved
+    // For now, execute decisions tagged as approved by the agent or by Alex
+    const approvedForExecution = allDecisions.filter(d => {
+      const status = (d.status || "").toLowerCase();
+      return status === "approved" || status === "modified";
+    });
+
+    if (approvedForExecution.length > 0) {
+      console.log(`\n${"═".repeat(60)}`);
+      console.log(`⚡ PHASE 3b: Autonomous Execution`);
+      console.log(`   ${approvedForExecution.length} approved decision(s) — checking for executable items`);
+      console.log(`${"═".repeat(60)}`);
+
+      const results = await executeApprovedDecisions(approvedForExecution, { dryRun: false, verbose: true });
+
+      const succeeded = results.filter(r => r.success).length;
+      const failed = results.filter(r => !r.success).length;
+      if (results.length > 0) {
+        console.log(`\n   📊 Execution summary: ${succeeded} succeeded, ${failed} failed, ${approvedForExecution.length - results.length} skipped (non-executable)`);
+      }
+    } else {
+      console.log(`\n   📭 No approved decisions to auto-execute. (Proposals are pending Alex's review.)`);
+    }
+  } catch (e) {
+    console.log(`\n   ⚠️ Execution engine error: ${e.message}`);
+  }
+} else if (!autoExecute) {
+  console.log(`\n   ⏸️ Auto-execution disabled (--no-execute flag). Decisions logged but not executed.`);
+}
+
+// ═══════════════════════════════════════════════════════════
 // PHASE 4: Active TODOs from CEO
 // ═══════════════════════════════════════════════════════════
 

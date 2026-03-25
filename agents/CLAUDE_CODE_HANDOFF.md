@@ -163,10 +163,33 @@ Each agent invocation should:
 _This section is updated by Claude Code after each session._
 
 ```
-Last run: March 25, 2026 — Session 2: Full LLM wiring for standups + chat trigger
-Status: FULLY OPERATIONAL — all phases LLM-powered with template fallbacks
+Last run: March 25, 2026 — Session 3: Phase 2 Autonomous Execution Engine
+Status: FULLY OPERATIONAL — standups + chat + autonomous code/blog execution
 Branch: feature/agent-chat-v2
 ```
+
+### Session 3 — Autonomous Execution Engine (March 25, 2026)
+
+**New files:**
+- **`agents/lib/execute-decision.mjs`** — Core autonomous execution engine:
+  - `executeDecision()` — Takes an approved decision, resolves executor (Seth=code, Seto=blog), runs with guard rails
+  - `executeApprovedDecisions()` — Batch processor for standup output
+  - Guard rails: feature branch only, build verification, auto-revert on failure
+  - Seth gets `bypassPermissions` + 10 max turns for code execution
+  - Seto gets `bypassPermissions` + 5 max turns for blog seeding
+  - Execution logged to `agents/logs/YYYY-MM-DD.md`
+  - CLI entry point: `node agents/lib/execute-decision.mjs "implement X" code [--dry-run]`
+
+**Modified files:**
+- **`agents/lib/invoke-agent.mjs`** — Mode split: `plan` (standup/chat) vs `execute` (approved decisions)
+  - Seth: plan=3 turns read-only, execute=10 turns bypassPermissions
+  - Seto: plan=3 turns read-only, execute=5 turns bypassPermissions
+  - All others: always plan mode regardless
+- **`agents/run-fleet.mjs`** — Added Phase 3b: Autonomous Execution
+  - After Alex synthesis, scans for approved decisions
+  - Auto-classifies as code/blog/other
+  - Spawns Seth or Seto to execute
+  - Disable with `--no-execute` flag
 
 ### Session 2 — What Claude Code Did (March 25, 2026)
 

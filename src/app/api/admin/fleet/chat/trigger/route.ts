@@ -152,14 +152,14 @@ ${userMessage}`;
     "--output-format", "text",
     "--no-session-persistence",
     "--model", "claude-opus-4-6",
-    "--permission-mode", isSeth ? "full" : "plan",
+    "--permission-mode", isSeth ? "bypassPermissions" : "plan",
     "--max-turns", isSeth ? "3" : "1",
   ], {
     input: prompt,
     encoding: "utf8",
     timeout: 120_000, // 2 minutes for chat (shorter than standup)
     cwd: root,
-    shell: true,
+    env: { ...process.env, CLAUDECODE: "" }, // Allow spawning from within Claude Code sessions
   });
 
   return result.trim();
