@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, Eye, EyeOff, Loader2, FileText } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, EyeOff, Loader2, FileText, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 interface BlogPost {
@@ -149,6 +149,9 @@ export default function AdminBlogPage() {
                   <p className="text-xs text-muted-foreground mt-1">/{post.slug} · {post.readTime} · {new Date(post.createdAt).toLocaleDateString()}</p>
                 </div>
                 <div className="flex gap-1 shrink-0">
+                  <Button size="icon" variant="ghost" onClick={() => window.open(`/blog/${post.slug}?preview=1`, "_blank")} title="Preview">
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
                   <Button size="icon" variant="ghost" onClick={() => togglePublish(post)} title={post.published ? "Unpublish" : "Publish"}>
                     {post.published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>

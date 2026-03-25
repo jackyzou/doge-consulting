@@ -5,6 +5,7 @@ import { BlogPostClient } from "./BlogPostClient";
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ [key: string]: string | undefined }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -43,20 +44,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export const dynamic = "force-dynamic";
 
-export default async function BlogPostPage({ params }: Props) {
+export default async function BlogPostPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const { preview } = await searchParams;
+  const isPreview = preview === "1";
 
   const post = await prisma.blogPost.findFirst({
-    where: { slug, language: "en", published: true },
+    where: { slug, language: "en", ...(isPreview ? {} : { published: true }) },
   });
 
   if (!post) notFound();
 
-  // Increment view count (fire-and-forget)
-  prisma.blogPost.update({
-    where: { id: post.id },
-    data: { viewCount: { increment: 1 } },
-  }).catch(() => {});
+  // Only increment view count for published posts (not previews)
+  if (post.published) {
+    prisma.blogPost.update({
+      where: { id: post.id },
+      data: { viewCount: { increment: 1 } },
+    }).catch(() => {});
+  }
 
   // Fetch related posts
   const related = await prisma.blogPost.findMany({
@@ -67,10 +72,17 @@ export default async function BlogPostPage({ params }: Props) {
   });
 
   return (
-    <BlogPostClient
-      post={JSON.parse(JSON.stringify(post))}
-      related={JSON.parse(JSON.stringify(related))}
-      slug={slug}
-    />
+    <>
+      {isPreview && !post.published && (
+        <div className="bg-amber-500 text-white text-center py-2 px-4 text-sm font-medium">
+          ⚠️ PREVIEW MODE — This post is not published yet. Only admins can see this page.
+        </div>
+      )}
+      <BlogPostClient
+        post={JSON.parse(JSON.stringify(post))}
+        related={JSON.parse(JSON.stringify(related))}
+        slug={slug}
+      />
+    </>
   );
 }

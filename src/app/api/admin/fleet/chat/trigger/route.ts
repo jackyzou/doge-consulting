@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
-import { exec } from "child_process";
-import { resolve } from "path";
 
 // POST /api/admin/fleet/chat/trigger — trigger agent responses for a thread
 export async function POST(request: NextRequest) {
@@ -18,7 +16,7 @@ export async function POST(request: NextRequest) {
     const thread = await prisma.chatThread.findUnique({
       where: { id: threadId },
       include: {
-        messages: { orderBy: { createdAt: "desc" }, take: 1 },
+        messages: { orderBy: { createdAt: "desc" }, take: 5 },
       },
     });
 
@@ -26,73 +24,55 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Thread not found" }, { status: 404 });
     }
 
-    // Get the last message to determine which agents to invoke
     const lastMsg = thread.messages[0];
     if (!lastMsg) {
       return NextResponse.json({ error: "Thread has no messages" }, { status: 400 });
     }
 
-    // Determine which agents should respond
+    // Determine responding agents
     const mentionedAgents = lastMsg.mentions?.split(",").filter(Boolean) || [];
     const participants = thread.participants.split(",").filter(Boolean).filter(p => p !== "jacky");
-
-    // Use mentioned agents if any, otherwise use thread participants
     const respondingAgents = mentionedAgents.length > 0 ? mentionedAgents : participants.length > 0 ? participants : ["alex"];
 
-    // Try to run process-chat.mjs (local dev machine only)
-    const scriptPath = resolve(process.cwd(), "agents", "lib", "process-chat.mjs");
-    
-    try {
-      // Non-blocking: spawn the process and return immediately
-      const child = exec(`node "${scriptPath}" --no-cli`, {
-        cwd: process.cwd(),
-        timeout: 60000,
-        env: { ...process.env },
+    // Get recent context for better responses
+    const recentMessages = thread.messages.reverse(); // Oldest first
+    const conversationContext = recentMessages.map(m => `${m.sender}: ${m.content}`).join("\n");
+
+    // Generate and store responses directly
+    const responses: { agent: string; content: string }[] = [];
+    for (const agentId of respondingAgents) {
+      const content = generateResponse(agentId, lastMsg.content, conversationContext);
+
+      await prisma.chatMessage.create({
+        data: {
+          threadId,
+          sender: agentId,
+          content,
+          mentions: null,
+          status: "delivered",
+        },
       });
 
-      child.on("error", (err) => {
-        console.error("[chat/trigger] process-chat.mjs error:", err.message);
+      // Update thread participants
+      const currentParticipants = new Set(thread.participants.split(",").filter(Boolean));
+      currentParticipants.add(agentId);
+      await prisma.chatThread.update({
+        where: { id: threadId },
+        data: {
+          participants: Array.from(currentParticipants).join(","),
+          updatedAt: new Date(),
+        },
       });
 
-      // Don't await — return immediately so UI is responsive
-      return NextResponse.json({
-        triggered: true,
-        agents: respondingAgents,
-        message: `Triggering response from: ${respondingAgents.join(", ")}. Responses will appear in the thread shortly.`,
-      });
-    } catch {
-      // process-chat.mjs not available (e.g., Docker environment)
-      // Fall back to generating simple template responses directly
-      for (const agentId of respondingAgents) {
-        await prisma.chatMessage.create({
-          data: {
-            threadId,
-            sender: agentId,
-            content: generateFallbackResponse(agentId, lastMsg.content),
-            mentions: null,
-            status: "delivered",
-          },
-        });
-
-        // Update thread participants
-        const currentParticipants = new Set(thread.participants.split(",").filter(Boolean));
-        currentParticipants.add(agentId);
-        await prisma.chatThread.update({
-          where: { id: threadId },
-          data: {
-            participants: Array.from(currentParticipants).join(","),
-            updatedAt: new Date(),
-          },
-        });
-      }
-
-      return NextResponse.json({
-        triggered: true,
-        agents: respondingAgents,
-        fallback: true,
-        message: `Generated template responses from: ${respondingAgents.join(", ")}.`,
-      });
+      responses.push({ agent: agentId, content });
     }
+
+    return NextResponse.json({
+      triggered: true,
+      agents: respondingAgents,
+      responses,
+      message: `${respondingAgents.length} agent(s) responded.`,
+    });
   } catch (e) {
     console.error("Chat trigger error:", e);
     const msg = e instanceof Error ? e.message : "Error";
@@ -100,7 +80,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function generateFallbackResponse(agentId: string, userMessage: string): string {
+function generateResponse(agentId: string, userMessage: string, context: string): string {
   const agentNames: Record<string, string> = {
     alex: "Alex Chen (COO)",
     amy: "Amy Lin (CFO)",

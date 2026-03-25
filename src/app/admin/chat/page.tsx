@@ -114,11 +114,12 @@ export default function AdminChatPage() {
       setMentions([]);
       setImage(null);
       setImagePreview(null);
-      prevMsgCount.current = 0; // Force scroll on next load
-      loadThreads();
+      // Reload — scroll will happen because message count changed
       if (activeThread) {
+        prevMsgCount.current = messages.length; // Will scroll since count increases by 1
         loadThread(activeThread.id);
       } else {
+        prevMsgCount.current = 0;
         setTimeout(() => {
           fetch("/api/admin/fleet/chat").then(r => r.json()).then(data => {
             if (data.threads?.length > 0) {
@@ -128,6 +129,7 @@ export default function AdminChatPage() {
           });
         }, 300);
       }
+      loadThreads();
     } catch { /* ignore */ }
     setSending(false);
   };
@@ -136,17 +138,18 @@ export default function AdminChatPage() {
     if (!activeThread) return;
     setTriggering(true);
     try {
-      // Run the process-chat script via API or directly trigger agent responses
-      await fetch("/api/admin/fleet/chat/trigger", {
+      const res = await fetch("/api/admin/fleet/chat/trigger", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ threadId: activeThread.id }),
       });
-      // Reload after a short delay to see responses
-      setTimeout(() => {
+      const data = await res.json();
+      if (data.triggered) {
+        // Responses were created — reload to show them
+        prevMsgCount.current = messages.length; // Will scroll for new agent msgs
         loadThread(activeThread.id);
         loadThreads();
-      }, 2000);
+      }
     } catch { /* ignore */ }
     setTriggering(false);
   };
