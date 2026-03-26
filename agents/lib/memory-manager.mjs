@@ -8,16 +8,15 @@
 // 4. CEO feedback patterns are extracted and stored as learned preferences
 
 import { invokeAgent } from "./invoke-agent.mjs";
+import { queryDb } from "./db-helper.mjs";
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
-import { execSync } from "child_process";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const AGENTS_DIR = resolve(__dirname, "..");
 const MEMORY_DIR = resolve(AGENTS_DIR, "memory");
 const ROOT = resolve(__dirname, "../..");
-const SYSTEM_NODE = process.env.SYSTEM_NODE || "node";
 
 const COMPACTION_THRESHOLD = 30;  // Compact when > 30 entries
 const KEEP_RECENT = 10;           // Keep last 10 entries verbatim
@@ -336,17 +335,6 @@ function appendToMemory(agentId, entry) {
     existing = `# ${AGENT_NAMES[agentId] || agentId} — Persistent Memory\n\nKey decisions, learnings, and context preserved across conversations.\n`;
   }
   writeFileSync(memFile, existing + line, "utf8");
-}
-
-function queryDb(sql) {
-  try {
-    const escaped = sql.replace(/`/g, "\\`").replace(/\n/g, " ");
-    const script = `const Database=require('better-sqlite3'),path=require('path'),fs=require('fs');const p=path.join('${ROOT.replace(/\\/g, "\\\\")}','data','production.db');const d=path.join('${ROOT.replace(/\\/g, "\\\\")}','dev.db');const dbPath=fs.existsSync(p)?p:d;if(!fs.existsSync(dbPath)){console.log('[]');process.exit(0);}const db=new Database(dbPath,{readonly:true});try{console.log(JSON.stringify(db.prepare(\`${escaped}\`).all()));}catch(e){console.log('[]');}db.close();`;
-    const result = execSync(`"${SYSTEM_NODE}" -e "${script.replace(/"/g, '\\"')}"`, {
-      cwd: ROOT, encoding: "utf8", timeout: 10000,
-    });
-    return JSON.parse(result.trim() || "[]");
-  } catch { return []; }
 }
 
 /**

@@ -838,22 +838,19 @@ function generateTemplateSynthesis() {
 
 const autoExecute = !process.argv.includes("--no-execute");
 
-if (autoExecute && allDecisions.length > 0) {
+if (autoExecute && alexSynthesis) {
   try {
     const { executeApprovedDecisions } = await import("./lib/execute-decision.mjs");
 
-    // Only execute decisions that Alex explicitly approved in his synthesis
-    // The allDecisions array contains raw proposals — we need to check which ones Alex approved
-    // For now, execute decisions tagged as approved by the agent or by Alex
-    const approvedForExecution = allDecisions.filter(d => {
-      const status = (d.status || "").toLowerCase();
-      return status === "approved" || status === "modified";
-    });
+    // Parse Alex's synthesis for approved/modified decisions
+    // Alex produces a markdown table like: | # | Decision | Status | Owner | Rationale |
+    // We extract rows where Status contains APPROVED or MODIFIED
+    const approvedForExecution = parseAlexDecisions(alexSynthesis);
 
     if (approvedForExecution.length > 0) {
       console.log(`\n${"═".repeat(60)}`);
       console.log(`⚡ PHASE 3b: Autonomous Execution`);
-      console.log(`   ${approvedForExecution.length} approved decision(s) — checking for executable items`);
+      console.log(`   ${approvedForExecution.length} Alex-approved decision(s) — checking for executable items`);
       console.log(`${"═".repeat(60)}`);
 
       const results = await executeApprovedDecisions(approvedForExecution, { dryRun: false, verbose: true });
@@ -864,13 +861,41 @@ if (autoExecute && allDecisions.length > 0) {
         console.log(`\n   📊 Execution summary: ${succeeded} succeeded, ${failed} failed, ${approvedForExecution.length - results.length} skipped (non-executable)`);
       }
     } else {
-      console.log(`\n   📭 No approved decisions to auto-execute. (Proposals are pending Alex's review.)`);
+      console.log(`\n   📭 No executable approved decisions found in Alex's synthesis.`);
     }
   } catch (e) {
     console.log(`\n   ⚠️ Execution engine error: ${e.message}`);
   }
 } else if (!autoExecute) {
   console.log(`\n   ⏸️ Auto-execution disabled (--no-execute flag). Decisions logged but not executed.`);
+}
+
+/**
+ * Parse approved decisions from Alex's synthesis markdown.
+ * Looks for table rows with APPROVED or MODIFIED status.
+ */
+function parseAlexDecisions(synthesis) {
+  const decisions = [];
+  const lines = synthesis.split("\n");
+
+  for (const line of lines) {
+    // Match markdown table rows: | # | Decision text | APPROVED | Owner | Rationale |
+    const match = line.match(/\|\s*\d+\s*\|\s*(.+?)\s*\|\s*\*{0,2}(APPROVED|MODIFIED)\*{0,2}\s*\|\s*(.+?)\s*\|/i);
+    if (match) {
+      const title = match[1].replace(/\*{1,2}/g, "").trim();
+      const status = match[2].toLowerCase();
+      const owner = match[3].replace(/\*{1,2}/g, "").trim();
+
+      // Determine the agent from owner field
+      const agentMap = { seth: "seth", seto: "seto", amy: "amy", rachel: "rachel", tiffany: "tiffany", alex: "alex" };
+      const ownerLower = owner.toLowerCase();
+      const agent = Object.keys(agentMap).find(a => ownerLower.includes(a)) || "alex";
+
+      decisions.push({ title, status, agent, rationale: "", type: "auto" });
+    }
+  }
+
+  return decisions;
 }
 
 // ═══════════════════════════════════════════════════════════

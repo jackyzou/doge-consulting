@@ -4,6 +4,7 @@
 // Alerts via agents/logs/ and escalates critical issues to Alex
 
 import { invokeAgent } from "./invoke-agent.mjs";
+import { queryDb, updateDb } from "./db-helper.mjs";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -205,30 +206,17 @@ async function checkDatabase(verbose) {
   if (verbose) console.log("\n   🗄️ Database check...");
 
   try {
-    const script = `
-      const Database=require('better-sqlite3'),path=require('path'),fs=require('fs');
-      const p=path.join('${ROOT.replace(/\\/g, "\\\\")}','data','production.db');
-      const d=path.join('${ROOT.replace(/\\/g, "\\\\")}','dev.db');
-      const dbPath=fs.existsSync(p)?p:d;
-      if(!fs.existsSync(dbPath)){console.log(JSON.stringify({ok:false,error:'no db'}));process.exit(0);}
-      const db=new Database(dbPath,{readonly:true});
-      try{
-        const integrity=db.pragma('integrity_check');
-        const tables=db.prepare("SELECT count(*) as c FROM sqlite_master WHERE type='table'").get();
-        const blogPosts=db.prepare("SELECT count(*) as c FROM BlogPost WHERE published=1").get();
-        console.log(JSON.stringify({ok:integrity[0].integrity_check==='ok',tables:tables.c,blogPosts:blogPosts.c}));
-      }catch(e){console.log(JSON.stringify({ok:false,error:e.message}));}
-      db.close();
-    `;
-    const result = execSync(`"${process.env.SYSTEM_NODE || "node"}" -e "${script.replace(/"/g, '\\"').replace(/\n/g, " ")}"`, {
-      cwd: ROOT, encoding: "utf8", timeout: 10000,
-    });
-    const data = JSON.parse(result.trim());
+    const tables = queryDb("SELECT count(*) as c FROM sqlite_master WHERE type='table'");
+    const blogPosts = queryDb("SELECT count(*) as c FROM BlogPost WHERE published=1");
+    const tableCount = tables?.[0]?.c || 0;
+    const blogCount = blogPosts?.[0]?.c || 0;
+    const ok = tableCount > 0;
+
     if (verbose) {
-      console.log(`      ${data.ok ? "✅" : "❌"} Integrity: ${data.ok ? "OK" : data.error}`);
-      if (data.tables) console.log(`      📊 ${data.tables} tables, ${data.blogPosts} blog posts`);
+      console.log(`      ${ok ? "✅" : "❌"} Integrity: ${ok ? "OK" : "no tables found"}`);
+      if (ok) console.log(`      📊 ${tableCount} tables, ${blogCount} blog posts`);
     }
-    return [{ name: "database", ok: data.ok, severity: "critical", ...data }];
+    return [{ name: "database", ok, severity: "critical", tables: tableCount, blogPosts: blogCount }];
   } catch (e) {
     if (verbose) console.log(`      ❌ DB check failed: ${e.message}`);
     return [{ name: "database", ok: false, severity: "critical", error: e.message }];
@@ -269,10 +257,8 @@ Respond with a triage report: what's broken, why, and how to fix it.`,
 
     // Log as critical AgentLog
     const id = `health_${Date.now()}`;
-    const logScript = `const Database=require('better-sqlite3'),path=require('path'),fs=require('fs');const p=path.join('${ROOT.replace(/\\/g, "\\\\")}','data','production.db');const d=path.join('${ROOT.replace(/\\/g, "\\\\")}','dev.db');const dbPath=fs.existsSync(p)?p:d;if(!fs.existsSync(dbPath))process.exit(0);const db=new Database(dbPath);db.prepare("INSERT INTO AgentLog (id,agent,type,priority,title,content,status,assignedTo,createdAt,updatedAt) VALUES (?,?,?,?,?,?,?,?,datetime('now'),datetime('now'))").run('${id}','seth','alert','critical','HEALTH CHECK FAILURE','${result.response.replace(/'/g, "''").substring(0, 2000)}','open','seth,alex');db.close();`;
-    execSync(`"${process.env.SYSTEM_NODE || "node"}" -e "${logScript.replace(/"/g, '\\"')}"`, {
-      cwd: ROOT, encoding: "utf8", timeout: 10000,
-    });
+    const content = result.response.replace(/'/g, "''").substring(0, 2000);
+    updateDb(`INSERT INTO AgentLog (id,agent,type,priority,title,content,status,assignedTo,createdAt,updatedAt) VALUES ('${id}','seth','alert','critical','HEALTH CHECK FAILURE','${content}','open','seth,alex',datetime('now'),datetime('now'))`);
   } catch (e) {
     if (verbose) console.log(`      ⚠️ Seth escalation failed: ${e.message}`);
   }

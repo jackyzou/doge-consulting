@@ -6,17 +6,14 @@
 // 4. Marks the inquiry as "contacted" after processing
 
 import { invokeAgent } from "./invoke-agent.mjs";
+import { queryDb, updateDb } from "./db-helper.mjs";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
-import { execSync } from "child_process";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "../..");
 const LOGS_DIR = resolve(__dirname, "../logs");
-
-// Use system Node for DB access (better-sqlite3 compiled for v24)
-const SYSTEM_NODE = process.env.SYSTEM_NODE || "node";
 
 /**
  * Check for new contact inquiries and triage to agents.
@@ -218,58 +215,6 @@ ${responses.map(r => `### ${r.agent}\n${r.response.substring(0, 500)}`).join("\n
 
   const existing = existsSync(logFile) ? readFileSync(logFile, "utf8") : "";
   writeFileSync(logFile, existing + entry, "utf8");
-}
-
-/**
- * Query the database using a child process (handles Node version mismatch).
- */
-function queryDb(sql) {
-  try {
-    const script = `
-      const Database = require('better-sqlite3');
-      const path = require('path');
-      const prodDb = path.join('${ROOT.replace(/\\/g, "\\\\")}', 'data', 'production.db');
-      const devDb = path.join('${ROOT.replace(/\\/g, "\\\\")}', 'dev.db');
-      const fs = require('fs');
-      const dbPath = fs.existsSync(prodDb) ? prodDb : devDb;
-      if (!fs.existsSync(dbPath)) { console.log('[]'); process.exit(0); }
-      const db = new Database(dbPath, { readonly: true });
-      try {
-        const rows = db.prepare(\`${sql.replace(/`/g, "\\`")}\`).all();
-        console.log(JSON.stringify(rows));
-      } catch(e) { console.log('[]'); }
-      db.close();
-    `;
-    const result = execSync(`"${SYSTEM_NODE}" -e "${script.replace(/"/g, '\\"').replace(/\n/g, " ")}"`, {
-      cwd: ROOT, encoding: "utf8", timeout: 10000,
-    });
-    return JSON.parse(result.trim() || "[]");
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Execute a write query on the database.
- */
-function updateDb(sql) {
-  try {
-    const script = `
-      const Database = require('better-sqlite3');
-      const path = require('path');
-      const prodDb = path.join('${ROOT.replace(/\\/g, "\\\\")}', 'data', 'production.db');
-      const devDb = path.join('${ROOT.replace(/\\/g, "\\\\")}', 'dev.db');
-      const fs = require('fs');
-      const dbPath = fs.existsSync(prodDb) ? prodDb : devDb;
-      if (!fs.existsSync(dbPath)) process.exit(0);
-      const db = new Database(dbPath);
-      db.prepare(\`${sql.replace(/`/g, "\\`")}\`).run();
-      db.close();
-    `;
-    execSync(`"${SYSTEM_NODE}" -e "${script.replace(/"/g, '\\"').replace(/\n/g, " ")}"`, {
-      cwd: ROOT, encoding: "utf8", timeout: 10000,
-    });
-  } catch {}
 }
 
 // CLI entry point

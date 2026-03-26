@@ -7,15 +7,14 @@
 // Also handles: new quote confirmations, quote-to-order celebrations
 
 import { invokeAgent } from "./invoke-agent.mjs";
+import { queryDb, updateDb } from "./db-helper.mjs";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
-import { execSync } from "child_process";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "../..");
 const LOGS_DIR = resolve(__dirname, "../logs");
-const SYSTEM_NODE = process.env.SYSTEM_NODE || "node";
 
 /**
  * Run the full quote lifecycle check.
@@ -330,27 +329,6 @@ Draft a brief, graceful "closing the loop" email:
   }
 
   return { processed };
-}
-
-// ── Database helpers (same pattern as contact-triage.mjs) ──
-
-function queryDb(sql) {
-  try {
-    const script = `const Database=require('better-sqlite3'),path=require('path'),fs=require('fs');const p=path.join('${ROOT.replace(/\\/g, "\\\\")}','data','production.db');const d=path.join('${ROOT.replace(/\\/g, "\\\\")}','dev.db');const dbPath=fs.existsSync(p)?p:d;if(!fs.existsSync(dbPath)){console.log('[]');process.exit(0);}const db=new Database(dbPath,{readonly:true});try{console.log(JSON.stringify(db.prepare(\`${sql.replace(/`/g, "\\`").replace(/\n/g, " ")}\`).all()));}catch(e){console.log('[]');}db.close();`;
-    const result = execSync(`"${SYSTEM_NODE}" -e "${script.replace(/"/g, '\\"')}"`, {
-      cwd: ROOT, encoding: "utf8", timeout: 10000,
-    });
-    return JSON.parse(result.trim() || "[]");
-  } catch { return []; }
-}
-
-function updateDb(sql) {
-  try {
-    const script = `const Database=require('better-sqlite3'),path=require('path'),fs=require('fs');const p=path.join('${ROOT.replace(/\\/g, "\\\\")}','data','production.db');const d=path.join('${ROOT.replace(/\\/g, "\\\\")}','dev.db');const dbPath=fs.existsSync(p)?p:d;if(!fs.existsSync(dbPath))process.exit(0);const db=new Database(dbPath);db.prepare(\`${sql.replace(/`/g, "\\`").replace(/\n/g, " ")}\`).run();db.close();`;
-    execSync(`"${SYSTEM_NODE}" -e "${script.replace(/"/g, '\\"')}"`, {
-      cwd: ROOT, encoding: "utf8", timeout: 10000,
-    });
-  } catch {}
 }
 
 function logAgentAction(agent, type, priority, title, content, assignedTo, relatedTo) {
