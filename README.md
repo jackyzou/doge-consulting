@@ -2,7 +2,7 @@
 
 **AI-powered product sourcing & shipping from China to the USA.**
 
-Full-stack web application for a logistics company connecting US businesses with China's manufacturing hubs. Features instant freight quotes, live vessel tracking, AI product matching, 8 free import tools, 22 SEO blog posts, and a full admin CRM.
+Full-stack web application for a logistics company connecting US businesses with China's manufacturing hubs. Features instant freight quotes, live vessel tracking, AI product matching, 8 free import tools, 26 SEO blog posts, an autonomous AI agent fleet, and a full admin CRM.
 
 **Live:** [doge-consulting.com](https://doge-consulting.com)
 
@@ -17,11 +17,12 @@ Full-stack web application for a logistics company connecting US businesses with
 | Auth | JWT sessions + Google OAuth, bcrypt password hashing |
 | Styling | [Tailwind CSS v4](https://tailwindcss.com) + [shadcn/ui](https://ui.shadcn.com) (25+ components) |
 | Animations | [Framer Motion 12](https://www.framer.com/motion/) |
-| Payments | [Airwallex](https://www.airwallex.com) (demo mode) |
-| Email | [Nodemailer](https://nodemailer.com) — branded transactional emails |
+| Payments | [Airwallex](https://www.airwallex.com) (live — credit card + balance links) |
+| Email | [Nodemailer](https://nodemailer.com) — branded transactional emails (7 templates, 5 languages) |
 | 3D | [Three.js](https://threejs.org) + [React Three Fiber](https://docs.pmnd.rs/react-three-fiber) |
 | PDF | [jsPDF](https://github.com/parallax/jsPDF) — invoice, receipt, PO generation |
-| Tests | [Vitest](https://vitest.dev) (17 suites / 191 tests) + [Playwright](https://playwright.dev) |
+| Agent AI | Claude Code Opus 4.6 (1M context) — 6 autonomous agents |
+| Tests | [Vitest](https://vitest.dev) (201 tests) + [Playwright](https://playwright.dev) |
 | Deploy | Docker Compose + Cloudflare Tunnel, zero-downtime blue-green deploy |
 | i18n | 5 languages (EN, 中文简, 中文繁, ES, FR) |
 
@@ -62,8 +63,8 @@ Homepage, About, Services, Contact, FAQ, Quote Calculator, Blog (22 posts), Case
 - Shipping Tracker — route & transit time lookup
 - 3D Room Visualizer — furniture layout in Three.js
 
-**Admin Panel (12 pages):**
-Dashboard, Orders, Quotes, Products, Customers, Documents, Payments, Coupons, Blog Manager, Shipments, Analytics, Settings
+**Admin Panel (14 pages):**
+Dashboard, Orders, Quotes, Products, Customers, Documents, Payments, Coupons, Blog Manager, Shipments, Analytics, SEO (5 tabs), Agent Chat, Operations (fleet standups/decisions)
 
 **Customer Portal (6 pages):**
 Dashboard, Quotes, Orders, Tracking, Documents, Profile
@@ -71,13 +72,13 @@ Dashboard, Quotes, Orders, Tracking, Documents, Profile
 **APIs (40+ endpoints):**
 Auth, admin CRUD, customer-scoped data, public blog/catalog, payment processing, contact form, newsletter, webhooks
 
-### Blog (22 Posts)
+### Blog (26 Posts)
 
 SEO-optimized long-form content covering:
-- Import guides (shipping, customs, tariffs, FBA)
+- Import guides (shipping, customs, tariffs, FBA, landed cost calculator)
 - Sourcing guides (Shenzhen, Yiwu, Guangzhou, Foshan, Dongguan)
 - Market analysis (freight rates, humanoid robots, DDR memory, LED lighting)
-- Trade policy (Section 301 tariffs, front-loading strategy, tariff impact)
+- Trade policy (Section 301 tariffs, compliance, US-China 2026 guide)
 
 ### SEO
 
@@ -89,7 +90,35 @@ SEO-optimized long-form content covering:
 
 ---
 
-## Project Structure
+## Agent Fleet
+
+Autonomous AI employee fleet powered by Claude Code Opus 4.6 (1M context). 6 specialist agents operate as a collaborative leadership team with daily standups, decision tracking, and autonomous execution.
+
+| Agent | Role | Capabilities |
+|-------|------|-------------|
+| Alex Chen | Co-CEO/COO | Synthesizes reports, approves decisions, coordinates team |
+| Amy Lin | CFO | Finance, pricing, sales operations, P&L |
+| Seth Parker | CTO | Code changes, deployments, site health, SEO tech |
+| Rachel Morales | CMO | SEO strategy, content distribution, Reddit, analytics |
+| Seto Nakamura | PRO/Editor | Blog content, deep research, news monitoring, PR |
+| Tiffany Wang | CSO | Customer service, CRM, quote management, onboarding |
+
+**12 Runtime Modules** (`agents/lib/`):
+- `invoke-agent` — Spawn Claude CLI sessions per agent with full context
+- `build-context` — Assemble profile + CoC + memory + cross-agent context
+- `execute-decision` — Autonomous code/blog execution with guard rails
+- `agent-chain` — Real-time @mention conversation chains (5-round depth)
+- `workstreams` — Parallel content/sales/tech pipeline orchestration
+- `contact-triage` / `quote-lifecycle` / `health-check` — Operational automation
+- `memory-manager` — Compaction, CEO feedback learning, performance tracking
+
+```bash
+node agents/run-fleet.mjs                      # Full standup (7 phases)
+node agents/run-fleet.mjs --workstream content  # Content pipeline
+node agents/run-fleet.mjs --agent seth          # Single agent
+```
+
+---
 
 ```
 src/
@@ -120,7 +149,12 @@ prisma/
 ├── seed-blog.mjs             # 22 blog posts
 └── migrations/               # Migration history
 
-agents/                       # AI agent fleet (runner scripts only — config is local)
+agents/                       # AI agent fleet
+│   ├── run-fleet.mjs         # Standup runner (7 phases)
+│   ├── lib/                  # 12 runtime modules (invoke, execute, triage, etc.)
+│   ├── profiles/             # Agent personas (local only)
+│   ├── memory/               # Persistent agent memory (local only)
+│   └── logs/                 # Daily standup logs (local only)
 scripts/                      # Deployment & ops scripts
 docs/                         # Deployment guides
 e2e/                          # Playwright E2E tests
