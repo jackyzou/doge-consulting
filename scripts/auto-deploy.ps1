@@ -93,7 +93,6 @@ function Get-LatestSuccessfulRun {
 function Send-DeployEmail($version, $commit, $title, $success, $duration) {
     try {
         $status = if ($success) { "SUCCESS" } else { "FAILED" }
-        $statusIcon = if ($success) { "[OK]" } else { "[FAIL]" }
         $statusColor = if ($success) { "#059669" } else { "#dc2626" }
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss UTC"
 
@@ -110,7 +109,7 @@ function Send-DeployEmail($version, $commit, $title, $success, $duration) {
 
         $htmlBody = @"
 <div style="font-family:system-ui;max-width:600px;margin:0 auto;padding:20px;">
-<h2 style="color:#0f2b46;">$statusIcon Site Deployment - v$version</h2>
+<h2 style="color:#0f2b46;">Site Deployment - v$version</h2>
 <table style="width:100%;border-collapse:collapse;margin:16px 0;">
 <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;color:#6b7280;">Status</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;font-weight:bold;color:$statusColor;">$status</td></tr>
 <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;color:#6b7280;">Version</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;font-weight:bold;">v$version</td></tr>
@@ -127,7 +126,7 @@ function Send-DeployEmail($version, $commit, $title, $success, $duration) {
 
         $body = @{
             to = "dogetech77@gmail.com"
-            subject = "$statusIcon Doge Consulting v$version deployed - $status"
+            subject = "Doge Consulting v$version deployed - $status"
             html = $htmlBody
             type = "deployment"
         } | ConvertTo-Json -Depth 3
