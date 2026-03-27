@@ -1,8 +1,8 @@
 # Claude Code ↔ VS Code Copilot CLI — Coordination & System Guide
 
-**Last updated:** March 25, 2026 (Session 6 — all 5 phases complete)
-**Updated by:** Claude Code CLI (Opus 4.6)
-**Branch:** `feature/agent-chat-v2`
+**Last updated:** March 27, 2026 (Session 7 — merged to master, v2.0 released)
+**Updated by:** VS Code Copilot Chat + Claude Code CLI
+**Branch:** `master` (merged from `feature/agent-chat-v2`)
 **Project:** Doge Consulting (`C:\Users\jiaqizou\doge-consulting`)
 
 ---
@@ -20,11 +20,12 @@ This document keeps both tools in sync and serves as the complete system referen
 ## System Status
 
 ```
-Status:  ALL 5 PHASES COMPLETE — full autonomous agent system operational
-Branch:  feature/agent-chat-v2
+Status:  ALL 5 PHASES COMPLETE — merged to master as v2.0.0
+Branch:  master (feature/agent-chat-v2 merged)
 Model:   Claude Code Opus 4.6 (1M context)
-Tested:  3 live standup runs, 5/5 agents producing LLM reports
-Build:   Clean (all modules load, Next.js build passes)
+Tested:  All modules verified — Phase 3b, workstreams, chains, ops
+Build:   Clean (all modules load, Next.js build passes, 109 pages)
+Sync:    Dev → Production pipeline operational (chat + standups + decisions)
 ```
 
 ---
@@ -276,19 +277,25 @@ agents/lib/
 5. Phase 3b not parsing Alex's approved decisions → `parseAlexDecisions()` added
 
 ### What hasn't been live-tested yet
-1. **Phase 3b execution** — Seth implementing an approved decision and committing code
-2. **Workstreams** — `--workstream content/sales/tech` mode
-3. **Agent chains** — @mention auto-spawning in a live standup
-4. **Quote lifecycle** — no real aging quotes to trigger Day 3/7/14
-5. **Contact triage** — no new contact form submissions
-6. **Memory compaction** — no agent has hit 30 entries yet
+1. **Phase 3b execution (live)** — Seth implementing and committing code from an approved decision in a real standup (dry run verified)
+2. **Quote lifecycle with real data** — no real aging quotes to trigger Day 3/7/14 yet
+3. **Contact triage with real data** — no new contact form submissions yet
+4. **Memory compaction** — no agent has hit 30 entries yet (agents have ~5-10 entries each)
+5. **Production sync** — dev → prod sync pipeline built but not yet tested on deployment PC
+
+### Verified in testing
+1. **Phase 3b execution (dry run)** — guard rails work, pre-flight checks pass
+2. **Workstreams** — `--workstream content/sales/tech` mode verified
+3. **Agent chains** — @mention auto-spawning verified, max 5 depth guard rail works
+4. **All 12 modules** — load and query correctly
+5. **Cron scheduling** — 6 Windows Task Scheduler tasks validated
 
 ### Recommended next steps
-1. **Test Phase 3b** — let Seth implement an approved decision end-to-end
-2. **Test workstreams** — run `--workstream content` to see collaborative output
-3. **Set up cron** — wire `setup-schedule.ps1` for 8AM/5PM standups + hourly triggers
-4. **Merge to master** — ~30 commits of agent infrastructure, ready after testing
-5. **First real customer test** — submit contact form on live site, watch triage respond
+1. **Deploy to production** — run `deploy-docker.ps1` on deployment PC to get v2.0 live
+2. **Install cron tasks** — run `setup-schedule.ps1` on dev PC to automate standups + ops
+3. **First real customer test** — submit contact form on live site, watch triage respond
+4. **Test production sync** — verify dev data appears on production after sync
+5. **Redis/CEO manual actions** — create Reddit account, provide warm leads, configure bank wire
 
 ---
 
