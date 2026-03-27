@@ -26,7 +26,10 @@ fi
 echo "Syncing blog posts..."
 node prisma/seed-blog.mjs
 for f in prisma/seed-blog-*.mjs; do
-  [ -f "$f" ] && echo "  Running $f..." && node "$f"
+  if [ -f "$f" ]; then
+    echo "  Running $f..."
+    node "$f" || echo "  Warning: $f failed (non-fatal)"
+  fi
 done
 
 echo "Starting Next.js server..."

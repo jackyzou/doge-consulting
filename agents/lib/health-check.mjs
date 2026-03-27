@@ -200,10 +200,11 @@ async function checkCriticalAPIs(baseUrl, verbose) {
 }
 
 /**
- * Check database integrity.
+ * Check database integrity (local DB on dev machine).
+ * Note: This checks the DEV PC's database, not the production server's DB.
  */
 async function checkDatabase(verbose) {
-  if (verbose) console.log("\n   🗄️ Database check...");
+  if (verbose) console.log("\n   🗄️ Database check (local dev DB)...");
 
   try {
     const tables = queryDb("SELECT count(*) as c FROM sqlite_master WHERE type='table'");
@@ -214,9 +215,9 @@ async function checkDatabase(verbose) {
 
     if (verbose) {
       console.log(`      ${ok ? "✅" : "❌"} Integrity: ${ok ? "OK" : "no tables found"}`);
-      if (ok) console.log(`      📊 ${tableCount} tables, ${blogCount} blog posts`);
+      if (ok) console.log(`      📊 ${tableCount} tables, ${blogCount} blog posts (local dev DB)`);
     }
-    return [{ name: "database", ok, severity: "critical", tables: tableCount, blogPosts: blogCount }];
+    return [{ name: "database (local)", ok, severity: "critical", tables: tableCount, blogPosts: blogCount }];
   } catch (e) {
     if (verbose) console.log(`      ❌ DB check failed: ${e.message}`);
     return [{ name: "database", ok: false, severity: "critical", error: e.message }];

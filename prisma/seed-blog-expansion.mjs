@@ -3,9 +3,19 @@ import Database from "better-sqlite3";
 import { randomUUID } from "crypto";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
+import { existsSync } from "fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const db = new Database(resolve(__dirname, "dev.db"));
+let dbPath;
+if (process.env.DATABASE_PATH) {
+  dbPath = process.env.DATABASE_PATH;
+} else {
+  const prodPath = resolve(__dirname, "..", "data", "production.db");
+  const devPath = resolve(__dirname, "dev.db");
+  dbPath = existsSync(prodPath) ? prodPath : devPath;
+}
+console.log(`[seed-blog-expansion] Using database: ${dbPath}`);
+const db = new Database(dbPath);
 db.pragma("journal_mode = WAL");
 
 const posts = [
