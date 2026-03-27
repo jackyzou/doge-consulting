@@ -1,0 +1,24 @@
+=== Test 7: Quote Lifecycle ===
+Quotes in DB: 5
+  QT-TEST-PAY | sent | dogetech77@gmail.com | 2026-03-19T06:51:37.228Z
+  QT-2026-0006 | draft | christina.chou.sq@gmail.com | 2026-03-08T20:48:01.113+00:00
+  QT-2026-0005 | draft | christina.chou.sq@gmail.com | 2026-03-08T20:45:49.563+00:00
+  QT-2026-0004 | draft | christina.chou.sq@gmail.com | 2026-03-07T20:51:30.790+00:00
+  QT-2026-0003 | draft | christina.chou.sq@gmail.com | 2026-03-03T06:36:53.803+00:00
+Quotes pending >3 days: 1
+Result: TESTABLE — real aging quotes found
+
+=== Test 8: Contact Triage ===
+ContactInquiry table: TABLE NOT FOUND — need to create
+
+=== Test 9: Memory Compaction ===
+  alex: 8 memory entries
+  amy: 8 memory entries
+  seth: 6 memory entries
+  rachel: 8 memory entries
+  seto: 10 memory entries
+  tiffany: 8 memory entries
+Max entries: 10
+Result: BELOW THRESHOLD — need 20 more entries to trigger compaction
+
+=== All Tests Complete ===
