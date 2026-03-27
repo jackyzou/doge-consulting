@@ -61,6 +61,9 @@ COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 # Copy seed scripts
 COPY --from=builder /app/prisma/seed.mjs ./prisma/seed.mjs
 COPY --from=builder /app/prisma/seed-blog.mjs ./prisma/seed-blog.mjs
+COPY --from=builder /app/prisma/seed-blog-expansion.mjs ./prisma/seed-blog-expansion.mjs
+COPY --from=builder /app/prisma/seed-blog-tariffs-2026.mjs ./prisma/seed-blog-tariffs-2026.mjs
+COPY --from=builder /app/prisma/seed-blog-landed-cost.mjs ./prisma/seed-blog-landed-cost.mjs
 
 # Copy VERSION file for health endpoint
 COPY --from=builder /app/VERSION ./VERSION

@@ -150,10 +150,13 @@ export default function AdminChatPage() {
         body: JSON.stringify({ threadId: activeThread.id }),
       });
       const data = await res.json();
-      if (data.triggered) {
-        // Responses were created — reload and scroll to see them
+      if (res.status === 503) {
+        alert(data.error || "Claude CLI not available. Use the dev PC for agent chat.");
+      } else if (data.triggered) {
         loadThread(activeThread.id, true);
         loadThreads();
+      } else if (data.error) {
+        alert(`Trigger failed: ${data.error}`);
       }
     } catch { /* ignore */ }
     setTriggering(false);

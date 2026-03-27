@@ -1,12 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
-import { execFileSync } from "child_process";
+import { execFileSync, execSync } from "child_process";
 import { readFileSync, existsSync } from "fs";
 import { resolve } from "path";
 
+const agentNames: Record<string, string> = {
+  alex: "Alex Chen (Co-CEO/COO)",
+  amy: "Amy Lin (CFO)",
+  seth: "Seth Parker (CTO)",
+  rachel: "Rachel Morales (CMO)",
+  seto: "Seto Nakamura (PRO/Editor)",
+  tiffany: "Tiffany Wang (CSO)",
+};
+
+/**
+ * Check if Claude CLI is available on this machine.
+ * Cached after first check for the lifetime of the process.
+ */
+let _claudeAvailable: boolean | null = null;
+function isClaudeAvailable(): boolean {
+  if (_claudeAvailable !== null) return _claudeAvailable;
+  try {
+    execSync("claude --version", { stdio: "pipe", timeout: 5000 });
+    _claudeAvailable = true;
+  } catch {
+    _claudeAvailable = false;
+  }
+  return _claudeAvailable;
+}
+
 // POST /api/admin/fleet/chat/trigger — trigger agent responses for a thread
 // Each agent spawns its own Claude Code Opus 4.6 session for real thinking
+// Requires Claude CLI on this machine. On production (no CLI), returns an error
+// telling the user to use the dev PC's localhost admin chat instead.
 export async function POST(request: NextRequest) {
   try {
     await requireAdmin();
@@ -45,16 +72,23 @@ export async function POST(request: NextRequest) {
     // Generate and store responses
     const responses: { agent: string; content: string }[] = [];
 
+    // Check if Claude CLI is available on this machine
+    if (!isClaudeAvailable()) {
+      return NextResponse.json({
+        error: "Claude CLI not available on this server. Agent chat requires the dev PC. Use http://localhost:3000/admin/chat on the dev machine where Claude CLI is installed.",
+        triggered: false,
+      }, { status: 503 });
+    }
+
     for (const agentId of respondingAgents) {
       let content: string;
 
-      // Try LLM-powered response via Claude CLI
       try {
         content = invokeClaude(agentId, lastMsg.content, conversationContext);
       } catch (e) {
-        // Fallback to template if CLI unavailable
-        console.warn(`[trigger] Claude CLI failed for ${agentId}:`, e instanceof Error ? e.message : e);
-        content = generateTemplateFallback(agentId, lastMsg.content);
+        const error = e instanceof Error ? e.message : String(e);
+        console.warn(`[trigger] Claude CLI failed for ${agentId}:`, error);
+        content = `**${agentNames[agentId] || agentId}:** [LLM Error] Claude session failed: ${error.substring(0, 200)}. Try again or check Claude CLI status.`;
       }
 
       await prisma.chatMessage.create({
@@ -99,15 +133,6 @@ export async function POST(request: NextRequest) {
  * Spawns a real Claude Code Opus 4.6 session with the agent's full context.
  */
 function invokeClaude(agentId: string, userMessage: string, conversationContext: string): string {
-  const agentNames: Record<string, string> = {
-    alex: "Alex Chen (Co-CEO/COO)",
-    amy: "Amy Lin (CFO)",
-    seth: "Seth Parker (CTO)",
-    rachel: "Rachel Morales (CMO)",
-    seto: "Seto Nakamura (PRO/Editor)",
-    tiffany: "Tiffany Wang (CSO)",
-  };
-
   const name = agentNames[agentId] || agentId;
 
   // Load agent profile if available
@@ -163,20 +188,4 @@ ${userMessage}`;
   });
 
   return result.trim();
-}
-
-/**
- * Template fallback when Claude CLI is unavailable.
- */
-function generateTemplateFallback(agentId: string, userMessage: string): string {
-  const agentNames: Record<string, string> = {
-    alex: "Alex Chen (COO)",
-    amy: "Amy Lin (CFO)",
-    seth: "Seth Parker (CTO)",
-    rachel: "Rachel Morales (CMO)",
-    seto: "Seto Nakamura (PRO)",
-    tiffany: "Tiffany Wang (CSO)",
-  };
-  const name = agentNames[agentId] || agentId;
-  return `**${name}:** I've received your message and will provide a detailed response in the next standup. The real-time intelligence engine is currently warming up.`;
 }

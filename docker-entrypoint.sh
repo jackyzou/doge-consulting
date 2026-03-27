@@ -25,6 +25,9 @@ fi
 # Seed blog posts (uses INSERT OR IGNORE, safe to run multiple times)
 echo "Syncing blog posts..."
 node prisma/seed-blog.mjs
+for f in prisma/seed-blog-*.mjs; do
+  [ -f "$f" ] && echo "  Running $f..." && node "$f"
+done
 
 echo "Starting Next.js server..."
 exec "$@"
