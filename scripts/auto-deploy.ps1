@@ -174,7 +174,7 @@ function Deploy($run) {
 
     # 3. Build new image IN THE BACKGROUND (old container keeps serving traffic)
     Write-Log "Building new Docker image (old app still running)..." "Yellow"
-    $buildResult = docker compose build app 2>&1
+    $buildResult = docker compose build --no-cache app 2>&1
     if ($LASTEXITCODE -ne 0) {
         Write-Log "ERROR: Docker build failed!" "Red"
         Write-Log ($buildResult | Select-Object -Last 20 | Out-String) "Red"

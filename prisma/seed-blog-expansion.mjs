@@ -1520,7 +1520,16 @@ Your commercial invoice should clearly state:
 
 const now = new Date().toISOString();
 
-const insert = db.prepare(`
+try {
+  // Verify table exists before inserting
+  const tableCheck = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='BlogPost'").get();
+  if (!tableCheck) {
+    console.log("[seed-blog-expansion] BlogPost table not found, skipping. Run Prisma migrations first.");
+    db.close();
+    process.exit(0);
+  }
+
+  const insert = db.prepare(`
   INSERT OR IGNORE INTO BlogPost (id, slug, language, title, excerpt, content, category, emoji, published, authorName, readTime, viewCount, createdAt, updatedAt)
   VALUES (?, ?, 'en', ?, ?, ?, ?, ?, 1, ?, ?, 0, ?, ?)
 `);
@@ -1544,5 +1553,8 @@ const tx = db.transaction(() => {
 });
 
 tx();
-console.log(`✅ Seeded ${posts.length} new blog posts`);
+console.log(`[seed-blog-expansion] Seeded ${posts.length} blog posts`);
+} catch (e) {
+  console.log(`[seed-blog-expansion] Warning: ${e.message} (non-fatal)`);
+}
 db.close();

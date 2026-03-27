@@ -230,24 +230,36 @@ Or [request a free quote](/quote) and our team will calculate your complete land
 const now = new Date().toISOString();
 const id = randomUUID().replace(/-/g, "").slice(0, 25);
 
-const existing = db.prepare("SELECT id FROM BlogPost WHERE slug = ? AND language = ?").get(post.slug, "en");
+try {
+  // Verify table exists before inserting
+  const tableCheck = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='BlogPost'").get();
+  if (!tableCheck) {
+    console.log("[seed-blog-landed-cost] BlogPost table not found, skipping.");
+    db.close();
+    process.exit(0);
+  }
 
-if (existing) {
-  console.log(`Post "${post.title}" already exists — updating...`);
-  db.prepare(`
-    UPDATE BlogPost SET title = ?, excerpt = ?, content = ?, category = ?, emoji = ?,
-    readTime = ?, authorName = ?, published = 1, updatedAt = ?
-    WHERE slug = ? AND language = ?
-  `).run(post.title, post.excerpt, post.content, post.category, post.emoji,
-    post.readTime, post.authorName, now, post.slug, "en");
-} else {
-  console.log(`Creating post: "${post.title}"`);
-  db.prepare(`
-    INSERT INTO BlogPost (id, slug, language, title, excerpt, content, category, emoji, published, authorName, readTime, viewCount, createdAt, updatedAt)
-    VALUES (?, ?, 'en', ?, ?, ?, ?, ?, 1, ?, ?, 0, ?, ?)
-  `).run(id, post.slug, post.title, post.excerpt, post.content, post.category,
-    post.emoji, post.authorName, post.readTime, now, now);
+  const existing = db.prepare("SELECT id FROM BlogPost WHERE slug = ? AND language = ?").get(post.slug, "en");
+
+  if (existing) {
+    console.log(`Post "${post.title}" already exists — updating...`);
+    db.prepare(`
+      UPDATE BlogPost SET title = ?, excerpt = ?, content = ?, category = ?, emoji = ?,
+      readTime = ?, authorName = ?, published = 1, updatedAt = ?
+      WHERE slug = ? AND language = ?
+    `).run(post.title, post.excerpt, post.content, post.category, post.emoji,
+      post.readTime, post.authorName, now, post.slug, "en");
+  } else {
+    console.log(`Creating post: "${post.title}"`);
+    db.prepare(`
+      INSERT INTO BlogPost (id, slug, language, title, excerpt, content, category, emoji, published, authorName, readTime, viewCount, createdAt, updatedAt)
+      VALUES (?, ?, 'en', ?, ?, ?, ?, ?, 1, ?, ?, 0, ?, ?)
+    `).run(id, post.slug, post.title, post.excerpt, post.content, post.category,
+      post.emoji, post.authorName, post.readTime, now, now);
+  }
+
+  console.log("[seed-blog-landed-cost] Blog post seeded successfully!");
+} catch (e) {
+  console.log(`[seed-blog-landed-cost] Warning: ${e.message} (non-fatal)`);
 }
-
-console.log("✅ Blog post seeded successfully!");
 db.close();
