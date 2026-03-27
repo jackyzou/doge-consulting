@@ -70,5 +70,7 @@ nssm/
 # Temp / debug output
 test-out.txt
 test-output.txt
+test-result.txt
+test-ops-output.txt
 test-features.mjs
 check-*.js

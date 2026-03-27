@@ -8,6 +8,7 @@
         "/^node agents/watch-issues\\.mjs --once$/": {
             "approve": true,
             "matchCommandLine": true
-        }
+        },
+        "git rm": true
     }
 }
