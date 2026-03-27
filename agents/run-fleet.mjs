@@ -990,44 +990,80 @@ allRequests.forEach(r => {
 const recentLogFile = join(logsDir, `${today}.md`);
 const existingLog = existsSync(recentLogFile) ? readFileSync(recentLogFile, "utf-8") : "";
 
+// Build CEO items list from agent reports
+const ceoItems = [];
+for (const r of reports) {
+  for (const d of r.decisions) {
+    if (d.status === "NEEDS_CEO") ceoItems.push(d.text);
+  }
+}
+
 const logEntry = `
 # ${mode === "morning" ? "Morning Brief" : "Evening Summary"} — ${timestamp}
 
+> Fleet standup for **${new Date(today).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}**
+
+---
+
 ## Fleet Status
-- **Version:** v${version} | **Pages:** ${pageCount} | **Blog Posts:** ${db?.blogPosts || "?"}
-- **Revenue:** $0 / $${CONFIG.revenue.target.toLocaleString()} | **Subscribers:** ${db?.subscribers || "?"}
+
+| Metric | Value |
+|--------|-------|
+| **Version** | v${version} |
+| **Pages** | ${pageCount} |
+| **Blog Posts** | ${db?.blogPosts || "?"} published |
+| **Revenue** | $0 / $${CONFIG.revenue.target.toLocaleString()} |
+| **Subscribers** | ${db?.subscribers || "?"} |
+| **Quotes** | ${db?.quotes || "?"} total, ${db?.pendingQuotes || "?"} pending |
+| **Orders** | ${db?.orders || "?"} |
+| **Inquiries** | ${db?.newInquiries || "?"} new |
+
+---
 
 ## Agent Reports
 
-${reports.map(r => `### ${r.name} (${r.role})
-**Priorities:**
-${r.priorities.map((p, i) => `${i + 1}. ${p}`).join("\n")}
+${reports.map(r => {
+  // Prefer the full LLM response for rich content; fall back to parsed fields
+  if (r.fullResponse) {
+    return `### ${r.name} — ${r.role}\n\n${r.fullResponse}`;
+  }
+  // Structured fallback when no full response
+  return `### ${r.name} — ${r.role}
 
-**Decisions:**
-${r.decisions.map(d => `- [DECISION] ${d.text} — ${d.status}`).join("\n") || "- (none)"}
+#### Priorities
+${r.priorities.map((p, i) => `${i + 1}. ${p}`).join("\n") || "- (none)"}
 
-**Requests:**
+#### Decisions
+${r.decisions.map(d => `- **\\[DECISION\\]** ${d.text} — \`${d.status}\``).join("\n") || "- (none)"}
+
+#### Requests
 ${r.requests.map(req => `- ${req}`).join("\n") || "- (none)"}
 
-**Blockers:**
-${r.blockers?.map(b => `- ${b}`).join("\n") || "- (none)"}
-`).join("\n")}
+${r.blockers?.length ? `#### Blockers\n${r.blockers.map(b => `- 🔴 ${b}`).join("\n")}` : ""}`;
+}).join("\n\n---\n\n")}
+
+---
 
 ## CEO Brief — Items Requiring Decision
-1. Send Airwallex followup email (draft in fleet chat)
-2. Provide first warm lead from personal network
-3. Share Google Search Console verification code
 
-## In-Progress Decision Threads (CoC §5 Decision Velocity)
-${allReplies.map(r => {
+${ceoItems.length > 0 ? ceoItems.map((item, i) => `${i + 1}. ${item}`).join("\n") : "> No items requiring CEO decision this standup."}
+
+---
+
+## In-Progress Decision Threads
+
+${allReplies.length > 0 ? allReplies.map(r => {
   const name = CONFIG.agents.find(a => a.id === r.agent)?.name || r.agent;
-  return `- **${r.ticket}**\n  - [REPLY from ${name}]: ${r.reply}`;
-}).join("\n") || "- (no in-progress tickets)"}
+  return `> **${r.ticket}**\n> \n> *[REPLY from ${name}]:* ${r.reply}`;
+}).join("\n\n") : "> No in-progress tickets."}
+
+---
 
 ## Decisions Log
+
 | # | Agent | Decision | Status |
 |---|-------|----------|--------|
-${allDecisions.map((d, i) => `| ${i + 1} | ${CONFIG.agents.find(a => a.id === d.agent)?.name || d.agent} | ${d.text.substring(0, 80)} | ${d.status} |`).join("\n")}
+${allDecisions.map((d, i) => `| ${i + 1} | ${CONFIG.agents.find(a => a.id === d.agent)?.name || d.agent} | ${d.text.substring(0, 100)} | \`${d.status}\` |`).join("\n")}
 
 ---
 `;
