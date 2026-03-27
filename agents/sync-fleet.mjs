@@ -145,13 +145,31 @@ if (flags.dryRun) {
   process.exit(0);
 }
 
+// ── Read ChatThreads + ChatMessages from dev DB ──
+let chatThreads = [];
+try {
+  const dbHelper = await import("./lib/db-helper.mjs");
+  const threads = dbHelper.queryDb("SELECT * FROM ChatThread ORDER BY updatedAt DESC LIMIT 100");
+  if (threads.length > 0) {
+    for (const t of threads) {
+      const messages = dbHelper.queryDb(`SELECT * FROM ChatMessage WHERE threadId = '${t.id}' ORDER BY createdAt ASC`);
+      chatThreads.push({ ...t, messages });
+    }
+    console.log(`💬 Chat: ${chatThreads.length} threads, ${chatThreads.reduce((sum, t) => sum + t.messages.length, 0)} messages`);
+  } else {
+    console.log("💬 No chat threads found in local DB");
+  }
+} catch (err) {
+  console.log(`⚠️  Could not read chat data from local DB: ${err.message}`);
+}
+
 console.log(`\n🚀 Pushing...`);
 
 try {
   const res = await fetch(targetUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-fleet-secret": syncSecret },
-    body: JSON.stringify({ standups, decisions, coc, resetDecisions: flags.resetDecisions || false, replies }),
+    body: JSON.stringify({ standups, decisions, coc, resetDecisions: flags.resetDecisions || false, replies, chatThreads }),
   });
   const data = await res.json();
   if (res.ok) {

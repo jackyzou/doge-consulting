@@ -9,7 +9,8 @@
     2. "Doge Fleet - Evening Summary" at 5:00 PM PST daily (evening mode)
     3. "Doge Fleet - Hourly Ops" every hour (contact triage + quote lifecycle)
     4. "Doge Fleet - Health Check" every 6 hours (site health monitoring)
-    5. "Doge Fleet - DB Sync" every 30 minutes (sync fleet logs to DB)
+    5. "Doge Fleet - DB Sync" every 30 minutes (sync fleet logs to local DB)
+    6. "Doge Fleet - Prod Sync" every 30 minutes (push data to production server)
 
 .EXAMPLE
     .\agents\setup-schedule.ps1
@@ -181,6 +182,34 @@ Register-ScheduledTask `
 
 Write-Host "  OK: DB Sync: every 30 minutes" -ForegroundColor Green
 
+# -- Task 6: Production Sync (every 30 minutes) --
+Write-Host "Creating Production Sync task..." -ForegroundColor Yellow
+
+$prodSyncAction = New-ScheduledTaskAction `
+    -Execute $nodePath `
+    -Argument "agents\sync-fleet.mjs" `
+    -WorkingDirectory $ProjectPath
+
+$prodSyncTrigger = New-ScheduledTaskTrigger -Once -At "00:15AM" `
+    -RepetitionInterval (New-TimeSpan -Minutes 30) `
+    -RepetitionDuration (New-TimeSpan -Days 365)
+
+$prodSyncSettings = New-ScheduledTaskSettingsSet `
+    -AllowStartIfOnBatteries `
+    -DontStopIfGoingOnBatteries `
+    -StartWhenAvailable `
+    -ExecutionTimeLimit (New-TimeSpan -Minutes 3)
+
+Register-ScheduledTask `
+    -TaskName "Doge Fleet - Prod Sync" `
+    -Action $prodSyncAction `
+    -Trigger $prodSyncTrigger `
+    -Settings $prodSyncSettings `
+    -Description "Doge Consulting - Push standups, chat threads, and decisions to production server" `
+    -Force | Out-Null
+
+Write-Host "  OK: Prod Sync: every 30 minutes" -ForegroundColor Green
+
 # -- Verify --
 Write-Host ""
 Write-Host "Scheduled Tasks Created:" -ForegroundColor Cyan
@@ -192,7 +221,8 @@ Write-Host "   Morning brief:   8:00 AM daily  (full standup, all 7 phases)" -Fo
 Write-Host "   Evening summary: 5:00 PM daily  (evening mode)" -ForegroundColor Gray
 Write-Host "   Hourly ops:      every 1 hour   (contact triage + quote lifecycle)" -ForegroundColor Gray
 Write-Host "   Health check:    every 6 hours   (site monitoring)" -ForegroundColor Gray
-Write-Host "   DB sync:         every 30 min    (fleet logs to production DB)" -ForegroundColor Gray
+Write-Host "   DB sync:         every 30 min    (fleet logs to local DB)" -ForegroundColor Gray
+Write-Host "   Prod sync:       every 30 min    (push to production server)" -ForegroundColor Gray
 Write-Host ""
 Write-Host "To remove all: Get-ScheduledTask 'Doge Fleet*' | Unregister-ScheduledTask -Confirm" -ForegroundColor Gray
 Write-Host "To test now: node agents\run-fleet.mjs" -ForegroundColor Gray

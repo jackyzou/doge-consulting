@@ -1,19 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
-// POST /api/admin/fleet/sync — receive standup logs + decisions from local dev machine
+function authCheck(request: NextRequest): boolean {
+  const secret = request.headers.get("x-fleet-secret") || "";
+  const expected = process.env.FLEET_SYNC_SECRET || process.env.JWT_SECRET || "";
+  return !!(expected && secret === expected);
+}
+
+// POST /api/admin/fleet/sync — receive standup logs + decisions + chat data from local dev machine
 // Authenticated via a shared secret (FLEET_SYNC_SECRET env var)
 export async function POST(request: NextRequest) {
   try {
-    // Auth: check sync secret
-    const secret = request.headers.get("x-fleet-secret") || "";
-    const expected = process.env.FLEET_SYNC_SECRET || process.env.JWT_SECRET || "";
-    if (!expected || secret !== expected) {
+    if (!authCheck(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
-    const { standups, decisions, coc, resetDecisions, replies } = body;
+    const { standups, decisions, coc, resetDecisions, replies, chatThreads } = body;
 
     let standupsCreated = 0;
     let decisionsCreated = 0;
@@ -131,12 +134,75 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ── Sync ChatThreads + ChatMessages ──
+    let threadsCreated = 0;
+    let messagesCreated = 0;
+    if (Array.isArray(chatThreads)) {
+      for (const t of chatThreads) {
+        if (!t.id || !Array.isArray(t.messages)) continue;
+
+        // Upsert thread
+        const existingThread = await prisma.chatThread.findUnique({ where: { id: t.id } });
+        if (!existingThread) {
+          await prisma.chatThread.create({
+            data: {
+              id: t.id,
+              title: t.title || "Untitled",
+              triggerType: t.triggerType || "user_message",
+              participants: t.participants || "",
+              relatedId: t.relatedId || null,
+              status: t.status || "active",
+              createdAt: t.createdAt ? new Date(t.createdAt) : new Date(),
+              updatedAt: t.updatedAt ? new Date(t.updatedAt) : new Date(),
+            },
+          });
+          threadsCreated++;
+        } else {
+          // Update thread metadata if newer
+          await prisma.chatThread.update({
+            where: { id: t.id },
+            data: {
+              title: t.title || existingThread.title,
+              participants: t.participants || existingThread.participants,
+              status: t.status || existingThread.status,
+              updatedAt: t.updatedAt ? new Date(t.updatedAt) : new Date(),
+            },
+          });
+        }
+
+        // Upsert messages
+        for (const m of t.messages) {
+          if (!m.id) continue;
+          const existingMsg = await prisma.chatMessage.findUnique({ where: { id: m.id } });
+          if (!existingMsg) {
+            await prisma.chatMessage.create({
+              data: {
+                id: m.id,
+                threadId: t.id,
+                parentId: m.parentId || null,
+                sender: m.sender || "system",
+                content: m.content || "",
+                mentions: m.mentions || null,
+                attachments: m.attachments || null,
+                metadata: m.metadata || null,
+                status: m.status || "delivered",
+                createdAt: m.createdAt ? new Date(m.createdAt) : new Date(),
+              },
+            });
+            messagesCreated++;
+          }
+        }
+      }
+    }
+
     return NextResponse.json({
       ok: true,
       standupsCreated,
       decisionsCreated,
       repliesAppended,
-      message: `Synced ${standupsCreated} standups, ${decisionsCreated} decisions, ${repliesAppended} replies`,
+      threadsCreated,
+      messagesCreated,
+      message: `Synced ${standupsCreated} standups, ${decisionsCreated} decisions, ${repliesAppended} replies, ${threadsCreated} threads, ${messagesCreated} messages`,
     });
   } catch (e) {
     console.error("Fleet sync error:", e);
@@ -148,9 +214,7 @@ export async function POST(request: NextRequest) {
 // GET /api/admin/fleet/sync — pull CEO decisions/feedback back to dev machine
 export async function GET(request: NextRequest) {
   try {
-    const secret = request.headers.get("x-fleet-secret") || "";
-    const expected = process.env.FLEET_SYNC_SECRET || process.env.JWT_SECRET || "";
-    if (!expected || secret !== expected) {
+    if (!authCheck(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

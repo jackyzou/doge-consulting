@@ -73,4 +73,4 @@ test-output.txt
 test-result.txt
 test-ops-output.txt
 test-features.mjs
-check-*.js
+check-*.jstmp-issue-body.md
