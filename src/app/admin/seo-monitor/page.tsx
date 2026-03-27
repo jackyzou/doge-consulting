@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Loader2, Globe, Activity, Link2, Shield, AlertTriangle,
-  CheckCircle, ExternalLink, RefreshCw, TrendingUp, TrendingDown,
+  CheckCircle, ExternalLink, RefreshCw, TrendingUp, TrendingDown, FileText,
 } from "lucide-react";
+import Link from "next/link";
 
 // ── Types ──────────────────────────────────────────────────────
 interface VitalSummary {
@@ -71,7 +72,7 @@ function ratingBadge(name: string, value: number) {
 
 // ── Component ─────────────────────────────────────────────────
 export default function SeoMonitorPage() {
-  const [tab, setTab] = useState<"gsc" | "vitals" | "links" | "schema">("gsc");
+  const [tab, setTab] = useState<"gsc" | "vitals" | "links" | "schema" | "audit">("gsc");
   const [vitals, setVitals] = useState<VitalSummary[]>([]);
   const [pages, setPages] = useState<PageVital[]>([]);
   const [totalSamples, setTotalSamples] = useState(0);
@@ -79,6 +80,11 @@ export default function SeoMonitorPage() {
   const [linkReport, setLinkReport] = useState<LinkReport | null>(null);
   const [linksLoading, setLinksLoading] = useState(false);
   const [days, setDays] = useState(7);
+
+  // Content audit state
+  interface PostAudit { slug: string; title: string; category: string; wordCount: number; internalLinks: number; toolLinkCount: number; imageCount: number; viewCount: number; readTime: string; daysSincePublish: number; daysSinceUpdate: number; score: number; issues: string[]; }
+  const [auditPosts, setAuditPosts] = useState<PostAudit[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
 
   const loadVitals = () => {
     setVitalsLoading(true);
@@ -103,6 +109,13 @@ export default function SeoMonitorPage() {
 
   useEffect(() => {
     if (tab === "vitals") loadVitals();
+    if (tab === "audit" && auditPosts.length === 0) {
+      setAuditLoading(true);
+      fetch("/api/admin/content-audit")
+        .then(r => r.json())
+        .then(data => { setAuditPosts(data.posts || []); setAuditLoading(false); })
+        .catch(() => setAuditLoading(false));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, days]);
 
@@ -111,13 +124,14 @@ export default function SeoMonitorPage() {
     { id: "vitals" as const, label: "Web Vitals", icon: Activity },
     { id: "links" as const, label: "Link Health", icon: Link2 },
     { id: "schema" as const, label: "Schema", icon: Shield },
+    { id: "audit" as const, label: "Content Audit", icon: FileText },
   ];
 
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">SEO Monitor</h1>
-        <p className="text-sm text-muted-foreground mt-1">Performance monitoring, link health, and structured data validation</p>
+        <h1 className="text-2xl font-bold">SEO</h1>
+        <p className="text-sm text-muted-foreground mt-1">Search performance, content audit, link health, and structured data</p>
       </div>
 
       {/* Tabs */}
@@ -387,6 +401,66 @@ export default function SeoMonitorPage() {
               </div>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* ── Content Audit Tab ─────────────── */}
+      {tab === "audit" && (
+        <div className="space-y-4">
+          {auditLoading ? (
+            <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-teal" /></div>
+          ) : (
+            <>
+              <div className="grid grid-cols-4 gap-4">
+                <Card><CardContent className="py-4 text-center"><p className="text-2xl font-bold">{auditPosts.length}</p><p className="text-xs text-muted-foreground">Total Posts</p></CardContent></Card>
+                <Card><CardContent className="py-4 text-center"><p className="text-2xl font-bold">{auditPosts.filter(p => p.score >= 80).length}</p><p className="text-xs text-muted-foreground text-emerald-600">Score 80+</p></CardContent></Card>
+                <Card><CardContent className="py-4 text-center"><p className="text-2xl font-bold">{auditPosts.filter(p => p.issues.length > 0).length}</p><p className="text-xs text-muted-foreground text-amber-600">Need Attention</p></CardContent></Card>
+                <Card><CardContent className="py-4 text-center"><p className="text-2xl font-bold">{Math.round(auditPosts.reduce((s, p) => s + p.wordCount, 0) / Math.max(auditPosts.length, 1))}</p><p className="text-xs text-muted-foreground">Avg Words</p></CardContent></Card>
+              </div>
+              <Card>
+                <CardHeader><CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5 text-teal" /> Blog Post Quality Audit</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b text-left">
+                          <th className="py-2 px-2">Post</th>
+                          <th className="py-2 px-2 text-right">Words</th>
+                          <th className="py-2 px-2 text-right">Links</th>
+                          <th className="py-2 px-2 text-right">Tools</th>
+                          <th className="py-2 px-2 text-right">Views</th>
+                          <th className="py-2 px-2 text-right">Score</th>
+                          <th className="py-2 px-2">Issues</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {auditPosts.sort((a, b) => a.score - b.score).map(post => (
+                          <tr key={post.slug} className="border-b hover:bg-muted/30">
+                            <td className="py-2 px-2">
+                              <Link href={`/blog/${post.slug}`} className="text-teal hover:underline text-xs font-medium" target="_blank">{post.title.substring(0, 50)}{post.title.length > 50 ? "..." : ""}</Link>
+                              <p className="text-[10px] text-muted-foreground">{post.category} · {post.readTime}</p>
+                            </td>
+                            <td className="py-2 px-2 text-right text-xs">{post.wordCount.toLocaleString()}</td>
+                            <td className="py-2 px-2 text-right text-xs">{post.internalLinks}</td>
+                            <td className="py-2 px-2 text-right text-xs">{post.toolLinkCount}</td>
+                            <td className="py-2 px-2 text-right text-xs">{post.viewCount.toLocaleString()}</td>
+                            <td className="py-2 px-2 text-right">
+                              <Badge variant="secondary" className={post.score >= 80 ? "bg-emerald-100 text-emerald-700" : post.score >= 60 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}>
+                                {post.score}
+                              </Badge>
+                            </td>
+                            <td className="py-2 px-2 text-xs text-muted-foreground">
+                              {post.issues.length > 0 ? post.issues.slice(0, 2).join(", ") : <span className="text-emerald-600">✓ OK</span>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
       )}
     </div>
