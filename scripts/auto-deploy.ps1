@@ -54,19 +54,27 @@ function Set-LastDeployedRunId($id) {
 }
 
 function Get-CurrentVersion {
+    $pkgJson = Join-Path $ServicePath "package.json"
+    if (Test-Path $pkgJson) {
+        $pkg = Get-Content $pkgJson -Raw | ConvertFrom-Json
+        return $pkg.version
+    }
     if (Test-Path $VersionFile) { return (Get-Content $VersionFile -Raw).Trim() }
     return "0.0.0"
 }
 
-function Bump-Version {
-    $current = Get-CurrentVersion
-    $parts = $current.Split(".")
-    $major = [int]$parts[0]
-    $minor = [int]$parts[1]
-    $patch = [int]$parts[2] + 1
-    $new = "$major.$minor.$patch"
-    Set-Content -Path $VersionFile -Value $new
-    return $new
+function Get-DeployDiff {
+    # Get lines changed and feature summary from recent commits
+    try {
+        $diffStat = git diff HEAD~1 --stat 2>&1 | Select-Object -Last 1
+        $summary = git log -1 --format="%s" 2>&1
+        # Sanitize non-ASCII characters for email
+        $summary = $summary -replace '[^\x20-\x7E]', '-'
+        $diffStat = $diffStat -replace '[^\x20-\x7E]', ' '
+        return @{ summary = $summary; diffStat = $diffStat }
+    } catch {
+        return @{ summary = "Update"; diffStat = "" }
+    }
 }
 
 function Get-LatestSuccessfulRun {
@@ -84,29 +92,45 @@ function Get-LatestSuccessfulRun {
 
 function Send-DeployEmail($version, $commit, $title, $success, $duration) {
     try {
-        # Use the app's own API to send the email (reuses SMTP config)
         $status = if ($success) { "SUCCESS" } else { "FAILED" }
-        $emoji = if ($success) { "✅" } else { "❌" }
-        $body = @{
-            to = "dogetech77@gmail.com"
-            subject = "$emoji Doge Consulting v$version deployed — $status"
-            html = @"
+        $statusIcon = if ($success) { "[OK]" } else { "[FAIL]" }
+        $statusColor = if ($success) { "#059669" } else { "#dc2626" }
+        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss UTC"
+
+        # Get feature summary and lines changed
+        $commitSummary = (git log -1 --format="%s" 2>$null) -replace '[^\x20-\x7E]', '-'
+        $diffStat = (git diff HEAD~1 --stat 2>$null | Select-Object -Last 1) -replace '[^\x20-\x7E]', ' '
+        if (-not $diffStat) { $diffStat = "N/A" }
+
+        # Sanitize all strings for JSON/HTML
+        $safeTitle = ($title -replace '[^\x20-\x7E]', '-') -replace '"', '&quot;'
+        $safeCommit = ($commit -replace '[^\x20-\x7E]', ' ') -replace '"', '&quot;'
+        $safeSummary = $commitSummary -replace '"', '&quot;'
+        $safeDiff = $diffStat -replace '"', '&quot;'
+
+        $htmlBody = @"
 <div style="font-family:system-ui;max-width:600px;margin:0 auto;padding:20px;">
-<h2 style="color:#0f2b46;">$emoji Site Deployment — v$version</h2>
+<h2 style="color:#0f2b46;">$statusIcon Site Deployment - v$version</h2>
 <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-<tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;color:#6b7280;">Status</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;font-weight:bold;color:$(if($success){'#059669'}else{'#dc2626'});">$status</td></tr>
+<tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;color:#6b7280;">Status</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;font-weight:bold;color:$statusColor;">$status</td></tr>
 <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;color:#6b7280;">Version</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;font-weight:bold;">v$version</td></tr>
-<tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;color:#6b7280;">Commit</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;font-family:monospace;">$commit</td></tr>
-<tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;color:#6b7280;">Title</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;">$title</td></tr>
+<tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;color:#6b7280;">Commit</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;font-family:monospace;">$safeCommit</td></tr>
+<tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;color:#6b7280;">Summary</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;">$safeSummary</td></tr>
+<tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;color:#6b7280;">Changes</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;font-family:monospace;font-size:12px;">$safeDiff</td></tr>
 <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;color:#6b7280;">Duration</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;">${duration}s</td></tr>
-<tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;color:#6b7280;">Time</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;">$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')</td></tr>
+<tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;color:#6b7280;">Time</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;">$timestamp</td></tr>
 <tr><td style="padding:8px;color:#6b7280;">Site</td><td style="padding:8px;"><a href="https://doge-consulting.com" style="color:#2ec4b6;">https://doge-consulting.com</a></td></tr>
 </table>
 <p style="color:#9ca3af;font-size:12px;margin-top:20px;">Automated deployment by Doge Consulting CI/CD</p>
 </div>
 "@
+
+        $body = @{
+            to = "dogetech77@gmail.com"
+            subject = "$statusIcon Doge Consulting v$version deployed - $status"
+            html = $htmlBody
             type = "deployment"
-        } | ConvertTo-Json
+        } | ConvertTo-Json -Depth 3
 
         # Wait a moment for the app to be fully ready, then send via API
         Start-Sleep -Seconds 5
@@ -144,8 +168,8 @@ function Deploy($run) {
     $commit = git log --oneline -1
     Write-Log "  Commit: $commit" "Gray"
 
-    # 2. Bump version
-    $version = Bump-Version
+    # 2. Read version from package.json (source of truth)
+    $version = Get-CurrentVersion
     Write-Log "  Version: v$version" "Cyan"
 
     # 3. Build new image IN THE BACKGROUND (old container keeps serving traffic)
