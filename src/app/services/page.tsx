@@ -288,6 +288,77 @@ export default function ServicesPage() {
         </div>
       </section>
 
+      {/* Agentware — API-Ready Tools */}
+      <section className="py-16 bg-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
+            <Badge className="mb-3 bg-navy/10 text-navy border-navy/20">New: Agentware</Badge>
+            <h2 className="text-3xl font-bold">Agent-Ready Trade Intelligence</h2>
+            <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
+              Our tools aren&apos;t just for humans. Every calculator and data feed is available as a JSON API — ready for
+              AI agents, automation workflows, and programmatic access. Build on top of our trade intelligence.
+            </p>
+          </motion.div>
+          <div className="grid gap-6 lg:grid-cols-3 mb-8">
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <Card className="h-full border-teal/20 hover:border-teal/40 transition-colors">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-teal/10 flex items-center justify-center">
+                      <Code className="h-4 w-4 text-teal" />
+                    </div>
+                    <CardTitle className="text-base">JSON API Endpoints</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">Every tool exposes a REST API. POST your parameters, get structured results back — no browser required.</p>
+                  <code className="text-xs bg-slate-100 px-2 py-1 rounded block">POST /api/tools/revenue-calculator</code>
+                </CardContent>
+              </Card>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}>
+              <Card className="h-full border-navy/20 hover:border-navy/40 transition-colors">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-navy/10 flex items-center justify-center">
+                      <Bot className="h-4 w-4 text-navy" />
+                    </div>
+                    <CardTitle className="text-base">SKILL.md for Agents</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">Each tool comes with a SKILL.md file your AI agent can read to learn how to use it. Copilot, Claude, GPT — all compatible.</p>
+                  <code className="text-xs bg-slate-100 px-2 py-1 rounded block">/skills/revenue-calculator.md</code>
+                </CardContent>
+              </Card>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }}>
+              <Card className="h-full border-gold/20 hover:border-gold/40 transition-colors">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-gold/10 flex items-center justify-center">
+                      <Globe className="h-4 w-4 text-gold" />
+                    </div>
+                    <CardTitle className="text-base">Discovery Endpoint</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">Agents discover all available tools via a single endpoint — like robots.txt, but for AI.</p>
+                  <code className="text-xs bg-slate-100 px-2 py-1 rounded block">/.well-known/agent-tools.json</code>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+          <div className="text-center">
+            <Link href="/.well-known/agent-tools.json">
+              <Button variant="outline" size="sm" className="gap-1 text-xs">
+                <Code className="h-3 w-3" /> View Agent Discovery Endpoint
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="gradient-hero py-20 text-center text-white">
         <div className="mx-auto max-w-3xl px-4">
