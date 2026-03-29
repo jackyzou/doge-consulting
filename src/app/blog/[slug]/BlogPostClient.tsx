@@ -33,7 +33,7 @@ function renderMarkdown(md: string, stripFirstImage = false): string {
   });
 
   let result = withTables
-    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<figure class="my-8"><img src="$2" alt="$1" class="rounded-xl w-full object-cover max-h-[420px] shadow-md" loading="lazy" /><figcaption class="text-xs text-center text-muted-foreground mt-2 italic">$1</figcaption></figure>')
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<figure class="my-8"><img src="$2" alt="$1" class="rounded-xl w-full object-cover max-h-[420px] shadow-md" loading="lazy" /></figure>')
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-teal underline hover:text-teal/80">$1</a>')
     .replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-teal pl-4 py-2 my-5 bg-teal/5 rounded-r-lg"><p class="text-sm text-muted-foreground italic leading-relaxed">$1</p></blockquote>')
     .replace(/^---$/gm, '<hr class="my-10 border-t-2 border-border/50" />')
@@ -42,14 +42,14 @@ function renderMarkdown(md: string, stripFirstImage = false): string {
     .replace(/^## (.+)$/gm, '<h2 id="$1" class="text-2xl font-bold mt-12 mb-5 text-foreground scroll-mt-24 pb-2 border-b border-border/50"><span class="text-teal mr-2">|</span>$1</h2>')
     .replace(/\*\*(.+?)\*\*/g, "<strong class='text-foreground font-semibold'>$1</strong>")
     .replace(/\*([^*]+)\*/g, "<em>$1</em>")
-    .replace(/^- (.+)$/gm, '<li class="ml-6 list-disc text-muted-foreground leading-relaxed py-0.5">$1</li>')
-    .replace(/^\d+\. (.+)$/gm, '<li class="ml-6 list-decimal text-muted-foreground leading-relaxed py-0.5">$1</li>')
+    .replace(/^- (.+)$/gm, '<li class="ml-8 pl-2 list-disc text-muted-foreground leading-relaxed py-0.5">$1</li>')
+    .replace(/^\d+\. (.+)$/gm, '<li class="ml-8 pl-2 list-decimal text-muted-foreground leading-relaxed py-0.5">$1</li>')
     .replace(/\n\n(?!<[hulfbdoi])/g, '</p><p class="mb-5 text-muted-foreground leading-relaxed text-[15px]">');
 
   // Wrap consecutive <li list-decimal> groups in <ol> tags so numbering resets per section
-  result = result.replace(/((?:<li class="ml-6 list-decimal[^"]*">[^<]*<\/li>\s*)+)/g, '<ol class="my-4 space-y-1" style="counter-reset:list-item">$1</ol>');
+  result = result.replace(/((?:<li class="ml-8 pl-2 list-decimal[^>]*>[\s\S]*?<\/li>\s*)+)/g, '<ol class="my-4 space-y-1 list-decimal" style="counter-reset:list-item">$1</ol>');
   // Same for unordered lists
-  result = result.replace(/((?:<li class="ml-6 list-disc[^"]*">[^<]*<\/li>\s*)+)/g, '<ul class="my-4 space-y-1">$1</ul>');
+  result = result.replace(/((?:<li class="ml-8 pl-2 list-disc[^>]*>[\s\S]*?<\/li>\s*)+)/g, '<ul class="my-4 space-y-1">$1</ul>');
 
   return result;
 }
