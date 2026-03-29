@@ -33,6 +33,7 @@ const PRODUCT_CATEGORIES = [
   { id: "sporting", name: "Sporting Goods", htsChapter: "95", dutyRate: 4.0, note: "Ranges 0-5.5%" },
   { id: "bags-luggage", name: "Bags & Luggage", htsChapter: "42", dutyRate: 8.0, note: "Ranges 3.3-20%" },
   { id: "footwear", name: "Footwear", htsChapter: "64", dutyRate: 10.0, note: "Ranges 6-48% depending on material" },
+  { id: "window-blinds", name: "Window Blinds & Coverings", htsChapter: "63/39", dutyRate: 6.5, note: "Textile blinds ~6.5% (HTS 6303.92), plastic/PVC ~5.3% (HTS 3925.30), aluminum venetian ~5.7%" },
 ];
 
 // Section 301 tariff info

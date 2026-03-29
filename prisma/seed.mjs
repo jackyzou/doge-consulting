@@ -54,6 +54,11 @@ const products = [
   { name: "Nightstand Pair", description: "Matching set of 2, solid wood with drawer.", category: "furniture", sku: "FUR-NSP-001", unitPrice: 180, unit: "set", lengthCm: 50, widthCm: 40, heightCm: 55, weightKg: 14 },
   { name: "Robot Vacuum", description: "Smart mapping, auto-empty dock, HEPA filter.", category: "electronics", sku: "ELE-RVA-001", unitPrice: 180, unit: "piece", lengthCm: 35, widthCm: 35, heightCm: 10, weightKg: 4 },
   { name: "Ceramic Dinnerware Set", description: "24-piece set, microwave-safe, minimalist design.", category: "home-goods", sku: "HOM-CDS-001", unitPrice: 85, unit: "set", lengthCm: 40, widthCm: 40, heightCm: 30, weightKg: 8 },
+  { name: "Roller Blind (Blackout)", description: "100% blackout fabric, spring-loaded mechanism. Standard 180cm width. Sourced from Shaoxing textile factories.", category: "window-coverings", sku: "BLD-RLR-001", unitPrice: 35, unit: "piece", lengthCm: 180, widthCm: 12, heightCm: 12, weightKg: 3 },
+  { name: "Venetian Blind (Aluminum)", description: "25mm aluminum slats, tilt & lift controls. Durable powder-coated finish. 190cm width.", category: "window-coverings", sku: "BLD-VEN-001", unitPrice: 55, unit: "piece", lengthCm: 190, widthCm: 15, heightCm: 15, weightKg: 5 },
+  { name: "Motorized Roller Blind", description: "WiFi-enabled motor, smartphone app control, solar-powered option. Integrates with Alexa/Google Home.", category: "window-coverings", sku: "BLD-MTR-001", unitPrice: 95, unit: "piece", lengthCm: 200, widthCm: 15, heightCm: 15, weightKg: 6 },
+  { name: "Cellular Honeycomb Shade", description: "Double-cell construction for superior insulation. Light-filtering and blackout options. Energy Star rated.", category: "window-coverings", sku: "BLD-CEL-001", unitPrice: 65, unit: "piece", lengthCm: 180, widthCm: 12, heightCm: 12, weightKg: 2.5 },
+  { name: "Vertical Blind (PVC)", description: "89mm PVC slats, ideal for sliding doors and large windows. Easy-clean, moisture resistant.", category: "window-coverings", sku: "BLD-VRT-001", unitPrice: 45, unit: "piece", lengthCm: 200, widthCm: 15, heightCm: 15, weightKg: 4 },
 ];
 
 const insertProduct = db.prepare(`INSERT OR IGNORE INTO Product

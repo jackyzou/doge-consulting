@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       prisma.order.count({ where: { status: { notIn: ["delivered", "closed", "cancelled"] } } }),
       prisma.quote.count(),
       prisma.quote.count({ where: { status: { in: ["draft", "sent"] } } }),
-      prisma.user.count({ where: { role: "user" } }),
+      prisma.user.count({ where: { role: "user", email: { not: "sarah@example.com" } } }),
       prisma.product.count({ where: { isActive: true } }),
       // Revenue = totalAmount from orders that are converted or paid (not cancelled/pending)
       prisma.order.findMany({

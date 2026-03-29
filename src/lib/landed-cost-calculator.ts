@@ -124,6 +124,7 @@ export const PRODUCT_CATEGORIES: ProductCategory[] = [
   { id: "pet", label: "Pet Products", emoji: "🐕", htsChapter: "42/63/95", htsNote: "Varies 0–12%", dutyRates: { us: 0.04, ca: 0.08, gb: 0.04, eu: 0.04, au: 0.05 }, section301Eligible: true, complianceProfileId: "standard", retailMarkupRange: "3–8×", avgRetailMultiplier: 5 },
   { id: "kitchen", label: "Kitchenware", emoji: "🍳", htsChapter: "73/76", htsNote: "Ranges 0–8%", dutyRates: { us: 0.05, ca: 0.08, gb: 0.04, eu: 0.04, au: 0.05 }, section301Eligible: true, complianceProfileId: "food-contact", retailMarkupRange: "3–6×", avgRetailMultiplier: 4.5 },
   { id: "medical", label: "Medical Devices", emoji: "🏥", htsChapter: "90", htsNote: "Most 0% duty, strict compliance", dutyRates: { us: 0, ca: 0, gb: 0, eu: 0, au: 0 }, section301Eligible: true, complianceProfileId: "fda-medical", retailMarkupRange: "5–20×", avgRetailMultiplier: 10 },
+  { id: "window-blinds", label: "Window Blinds & Coverings", emoji: "🪟", htsChapter: "63/39", htsNote: "Textile blinds ~6.5% (HTS 6303), plastic ~5.3% (HTS 3925), aluminum ~5.7%", dutyRates: { us: 0.065, ca: 0.08, gb: 0.065, eu: 0.065, au: 0.05 }, section301Eligible: true, complianceProfileId: "textiles-cpsc", retailMarkupRange: "3–6×", avgRetailMultiplier: 4.5 },
 ];
 
 export interface ComplianceProfile {

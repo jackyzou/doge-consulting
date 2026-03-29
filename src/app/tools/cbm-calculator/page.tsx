@@ -48,6 +48,9 @@ const PRESETS = [
   { name: "Electronics Pallet", l: 120, w: 80, h: 120, wt: 200, icon: "📱" },
   { name: "Textile Bale", l: 100, w: 80, h: 80, wt: 35, icon: "🧵" },
   { name: "Standard Carton", l: 60, w: 40, h: 40, wt: 15, icon: "📦" },
+  { name: "Roller Blind (boxed)", l: 180, w: 12, h: 12, wt: 3, icon: "🪟" },
+  { name: "Venetian Blind (boxed)", l: 190, w: 15, h: 15, wt: 5, icon: "🪟" },
+  { name: "Motorized Blind Kit", l: 200, w: 15, h: 15, wt: 6, icon: "🪟" },
 ];
 
 export default function CBMCalculatorPage() {
