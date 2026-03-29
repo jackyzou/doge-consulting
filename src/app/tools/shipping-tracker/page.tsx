@@ -135,15 +135,15 @@ export default function ShippingTrackerPage() {
       <section className="gradient-hero py-14 text-white">
         <div className="mx-auto max-w-7xl px-4 text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <Badge className="mb-4 bg-teal/20 text-teal-200 border-teal/30">{t("headerTools.vesselMap")}</Badge>
-            <h1 className="text-4xl font-bold mb-4">{t("headerTools.vesselMap")} & {t("headerTools.revenueCalc")}</h1>
+            <Badge className="mb-4 bg-teal/20 text-teal-200 border-teal/30">Updated Weekly</Badge>
+            <h1 className="text-4xl font-bold mb-4">Live Shipping Price Tracker</h1>
             <p className="text-lg text-slate-300 max-w-3xl mx-auto">
-              Track global vessel traffic in real time. Monitor container shipping costs from Shenzhen to major US ports.
-              See how COVID, the Suez blockage, Red Sea crisis, tariffs, and the 2026 Iran conflict have impacted freight rates.
+              Track container shipping prices from China to US ports in real time. Interactive freight rate chart with
+              historical data from 2020–2026, powered by Freightos FBX and Drewry WCI benchmarks.
             </p>
             <div className="flex flex-wrap justify-center gap-3 mt-6 text-sm">
-              <Badge variant="outline" className="border-white/30 text-white/90">Live Vessel Traffic</Badge>
-              <Badge variant="outline" className="border-white/30 text-white/90">4 Origin Ports</Badge>
+              <Badge variant="outline" className="border-white/30 text-white/90">Per FEU (40ft Container)</Badge>
+              <Badge variant="outline" className="border-white/30 text-white/90">4 Origin Ports · 7 Destinations</Badge>
               <Badge variant="outline" className="border-white/30 text-white/90">2020–Mar 2026 History</Badge>
               <Badge variant="outline" className="border-amber-400/50 text-amber-200">Iran Spike Easing ↘</Badge>
             </div>
@@ -152,41 +152,8 @@ export default function ShippingTrackerPage() {
       </section>
 
       <div className="mx-auto max-w-7xl px-4 py-10 space-y-8">
-        {/* ══════════ SECTION 1: LIVE VESSEL MAP (first!) ══════════ */}
+        {/* ══════════ SECTION 1: ROUTE SELECTOR + CURRENT RATE (top!) ══════════ */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Globe className="h-5 w-5 text-teal" /> Live Global Vessel Traffic</CardTitle>
-              <p className="text-xs text-muted-foreground">Real-time AIS vessel positions. Showing cargo ships worldwide — zoom and pan to explore.</p>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-xl overflow-hidden border" style={{ height: 500 }}>
-                <iframe
-                  src="https://www.marinetraffic.com/en/ais/embed/zoom:2/centery:20/centerx:110/maptype:4/shownames:0/mmsi:0/shipid:0/fleet:/fleet_id:/vtypes:7/showmenu:0/remember:no"
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  title="Live Vessel Traffic Map"
-                  loading="lazy"
-                  allowFullScreen
-                />
-              </div>
-              <div className="flex items-center justify-between mt-3">
-                <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                  <Info className="h-3 w-3" /> Powered by MarineTraffic AIS. Cargo vessels (type 7) in real time.
-                </p>
-                <Link href="/tools/vessel-tracker">
-                  <Button size="sm" variant="outline" className="text-xs gap-1">
-                    <Ship className="h-3 w-3" /> Container Tracking Tool
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* ══════════ SECTION 2: ROUTE SELECTOR + CURRENT RATE ══════════ */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <Card>
             <CardContent className="p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
@@ -218,7 +185,7 @@ export default function ShippingTrackerPage() {
                   <p className="text-xs text-muted-foreground">{routeLabel} · Current Rate</p>
                   <div className="flex items-end gap-2">
                     <span className="text-3xl font-bold">${currentRate.toLocaleString()}</span>
-                    <span className="text-xs text-muted-foreground mb-1">/ 40ft</span>
+                    <span className="text-xs text-muted-foreground mb-1">/ FEU</span>
                   </div>
                   {(() => {
                     const change = previousRate > 0 ? ((currentRate - previousRate) / previousRate * 100) : 0;
@@ -236,7 +203,7 @@ export default function ShippingTrackerPage() {
           </Card>
         </motion.div>
 
-        {/* ══════════ SECTION 3: FREIGHT RATE CHART (SVG line chart) ══════════ */}
+        {/* ══════════ SECTION 2: FREIGHT RATE CHART ══════════ */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
           <Card>
             <CardHeader className="flex-row items-center justify-between flex-wrap gap-3">
@@ -454,6 +421,128 @@ export default function ShippingTrackerPage() {
               </CardContent>
             </Card>
           </div>
+        </motion.div>
+
+        {/* ══════════ SECTION 5: FEU EXPLAINER ══════════ */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+          <Card className="bg-gradient-to-r from-navy/5 to-teal/5 border-navy/10">
+            <CardContent className="p-6">
+              <h2 className="text-lg font-bold text-navy flex items-center gap-2 mb-4">
+                <Info className="h-5 w-5 text-teal" /> What is FEU? Understanding Container Pricing
+              </h2>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
+                  <p>
+                    <strong className="text-foreground">FEU (Forty-foot Equivalent Unit)</strong> is the standard pricing unit for
+                    ocean container freight. One FEU equals one 40-foot (12.2m) shipping container — the most common size
+                    for international cargo.
+                  </p>
+                  <p>
+                    When you see &quot;$2,950/FEU&quot; on this page, it means the cost to ship one 40-foot container from the
+                    selected origin to destination port. This does <em>not</em> include customs duties, port handling fees,
+                    or last-mile delivery.
+                  </p>
+                  <p>
+                    <strong className="text-foreground">TEU vs FEU:</strong> A TEU (Twenty-foot Equivalent Unit) is a 20-foot container.
+                    1 FEU = 2 TEU. Most China-to-US shipments use 40ft containers because the per-CBM cost is 15-25% lower than 20ft.
+                  </p>
+                </div>
+                <div>
+                  <div className="bg-white rounded-lg border p-4 space-y-2">
+                    <p className="text-xs font-semibold text-navy uppercase tracking-wide">Container Quick Reference</p>
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-xs text-muted-foreground border-b">
+                          <th className="text-left py-1.5">Spec</th>
+                          <th className="text-right py-1.5">20ft (TEU)</th>
+                          <th className="text-right py-1.5">40ft (FEU)</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-foreground">
+                        <tr className="border-b border-dashed">
+                          <td className="py-1.5">Length</td>
+                          <td className="text-right">6.1m (20ft)</td>
+                          <td className="text-right font-semibold">12.2m (40ft)</td>
+                        </tr>
+                        <tr className="border-b border-dashed">
+                          <td className="py-1.5">Capacity</td>
+                          <td className="text-right">~33 CBM</td>
+                          <td className="text-right font-semibold">~67 CBM</td>
+                        </tr>
+                        <tr className="border-b border-dashed">
+                          <td className="py-1.5">Max Payload</td>
+                          <td className="text-right">~21,700 kg</td>
+                          <td className="text-right font-semibold">~26,500 kg</td>
+                        </tr>
+                        <tr>
+                          <td className="py-1.5">Typical Cost</td>
+                          <td className="text-right">~60% of FEU</td>
+                          <td className="text-right font-semibold">100% (base)</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">
+                    <Info className="h-3 w-3" /> See our <Link href="/glossary" className="text-teal hover:underline">Glossary</Link> for
+                    more shipping terms: TEU, CBM, FOB, CIF, and 170+ definitions.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* ══════════ SECTION 6: DATA SOURCES ══════════ */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold text-navy">Data Sources & Methodology</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                    Rates compiled from <strong>Freightos Baltic Index (FBX)</strong>, <strong>Drewry World Container Index (WCI)</strong>,
+                    and <strong>Xeneta XSI</strong>. Base route: Shenzhen → Los Angeles, with multipliers for other origin/destination
+                    pairs derived from carrier rate card differentials. Rates represent spot market averages and may differ
+                    from contract rates. Updated weekly — last update: <strong>March 2026, Week 4</strong>.
+                  </p>
+                </div>
+                <Badge variant="outline" className="shrink-0 text-[10px]">Week of Mar 24, 2026</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* ══════════ SECTION 7: LIVE VESSEL MAP (bottom) ══════════ */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Globe className="h-5 w-5 text-teal" /> Live Global Vessel Traffic</CardTitle>
+              <p className="text-xs text-muted-foreground">Real-time AIS vessel positions. Showing cargo ships worldwide — zoom and pan to explore shipping lanes.</p>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-xl overflow-hidden border" style={{ height: 500 }}>
+                <iframe
+                  src="https://www.marinetraffic.com/en/ais/embed/zoom:2/centery:20/centerx:110/maptype:4/shownames:0/mmsi:0/shipid:0/fleet:/fleet_id:/vtypes:7/showmenu:0/remember:no"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  title="Live Vessel Traffic Map"
+                  loading="lazy"
+                  allowFullScreen
+                />
+              </div>
+              <div className="flex items-center justify-between mt-3">
+                <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                  <Info className="h-3 w-3" /> Powered by MarineTraffic AIS. Cargo vessels (type 7) in real time.
+                </p>
+                <Link href="/tools/vessel-tracker">
+                  <Button size="sm" variant="outline" className="text-xs gap-1">
+                    <Ship className="h-3 w-3" /> Container Tracking Tool
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
       </div>
     </div>
