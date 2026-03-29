@@ -87,7 +87,7 @@ export default function ServicesPage() {
   ];
 
   const freeTools = [
-    { icon: Ship, name: "Live Vessel Map", href: "/tools/shipping-tracker", desc: "Real-time vessel tracking + freight rate charts" },
+    { icon: Ship, name: "Shipping Rate Tracker", href: "/tools/shipping-tracker", desc: "Live shipping rates + vessel traffic map" },
     { icon: Calculator, name: "Revenue Calculator", href: "/tools/revenue-calculator", desc: "Model your import profit margins and ROI" },
     { icon: Package, name: "CBM Calculator", href: "/tools/cbm-calculator", desc: "Calculate freight volume and container fit" },
     { icon: BarChart3, name: "Duty Calculator", href: "/tools/duty-calculator", desc: "Estimate 2026 import duties and tariffs" },

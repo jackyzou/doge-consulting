@@ -93,7 +93,7 @@ export function Footer() {
               <li><Link href="/tools/cbm-calculator" className="hover:text-white transition-colors">CBM Calculator</Link></li>
               <li><Link href="/tools/duty-calculator" className="hover:text-white transition-colors">Duty Calculator</Link></li>
               <li><Link href="/tools/revenue-calculator" className="hover:text-white transition-colors">Revenue Calculator</Link></li>
-              <li><Link href="/tools/vessel-tracker" className="hover:text-white transition-colors">Live Vessel Map</Link></li>
+              <li><Link href="/tools/vessel-tracker" className="hover:text-white transition-colors">Shipping Rate Tracker</Link></li>
               <li><Link href="/tools/shipping-tracker" className="hover:text-white transition-colors">Container Tracker</Link></li>
               <li><Link href="/tools/3d-visualizer" className="hover:text-white transition-colors">3D Room Visualizer</Link></li>
             </ul>
