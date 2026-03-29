@@ -125,17 +125,20 @@ const require = createRequire(import.meta.url);
 let db = null;
 try {
   const Database = require("better-sqlite3");
-  const dbPath = join(ROOT, "dev.db");
+  // Prefer data/production.db (has real data from sync), fall back to dev.db
+  const prodDbPath = join(ROOT, "data", "production.db");
+  const devDbPath = join(ROOT, "dev.db");
+  const dbPath = existsSync(prodDbPath) ? prodDbPath : devDbPath;
   if (existsSync(dbPath)) {
     const conn = new Database(dbPath, { readonly: true });
     db = {
-      blogPosts: conn.prepare("SELECT COUNT(*) as c FROM BlogPost WHERE published = 1 AND language = 'en'").get()?.c || 0,
-      totalQuotes: conn.prepare("SELECT COUNT(*) as c FROM Quote").get()?.c || 0,
-      pendingQuotes: conn.prepare("SELECT COUNT(*) as c FROM Quote WHERE status IN ('draft','sent')").get()?.c || 0,
-      totalOrders: conn.prepare("SELECT COUNT(*) as c FROM [Order]").get()?.c || 0,
-      subscribers: conn.prepare("SELECT COUNT(*) as c FROM Subscriber").get()?.c || 0,
-      contactInquiries: conn.prepare("SELECT COUNT(*) as c FROM ContactInquiry WHERE status = 'new'").get()?.c || 0,
-      recentChats: conn.prepare("SELECT COUNT(*) as c FROM AgentLog WHERE type = 'chat' AND createdAt > datetime('now', '-2 days')").get()?.c || 0,
+      blogPosts: conn.prepare("SELECT COUNT(*) as c FROM BlogPost WHERE published = 1 AND language = 'en'").get()?.c ?? 0,
+      totalQuotes: conn.prepare("SELECT COUNT(*) as c FROM Quote").get()?.c ?? 0,
+      pendingQuotes: conn.prepare("SELECT COUNT(*) as c FROM Quote WHERE status IN ('draft','sent')").get()?.c ?? 0,
+      totalOrders: conn.prepare("SELECT COUNT(*) as c FROM [Order]").get()?.c ?? 0,
+      subscribers: conn.prepare("SELECT COUNT(*) as c FROM Subscriber").get()?.c ?? 0,
+      contactInquiries: conn.prepare("SELECT COUNT(*) as c FROM ContactInquiry WHERE status = 'new'").get()?.c ?? 0,
+      recentChats: conn.prepare("SELECT COUNT(*) as c FROM AgentLog WHERE type = 'chat' AND createdAt > datetime('now', '-2 days')").get()?.c ?? 0,
     };
     conn.close();
   }
@@ -144,7 +147,7 @@ try {
 console.log(`\n${"═".repeat(60)}`);
 console.log(`🐕 Doge Consulting Agent Fleet — ${mode === "morning" ? "Morning Brief" : "Evening Summary"}`);
 console.log(`📅 ${today} | ⏰ ${timestamp} PST`);
-console.log(`🔖 v${version} | 📄 ${pageCount} pages | 📝 ${db?.blogPosts || "?"} blog posts | 👥 ${db?.subscribers || "?"} subscribers`);
+console.log(`🔖 v${version} | 📄 ${pageCount} pages | 📝 ${db?.blogPosts ?? "?"} blog posts | 👥 ${db?.subscribers ?? "?"} subscribers`);
 console.log(`${"═".repeat(60)}`);
 
 // ═══════════════════════════════════════════════════════════
@@ -397,11 +400,11 @@ if (pullData?.ceoActions) {
 const standupContext = `
 PROJECT STATE:
 - Version: v${version} | Pages: ${pageCount} | Branch: ${branch}
-- Blog posts: ${db?.blogPosts || "?"} published | Subscribers: ${db?.subscribers || "?"}
-- Quotes: ${db?.totalQuotes || 0} total, ${db?.pendingQuotes || 0} pending | Orders: ${db?.totalOrders || 0}
+- Blog posts: ${db?.blogPosts ?? "?"} published | Subscribers: ${db?.subscribers ?? "?"}
+- Quotes: ${db?.totalQuotes ?? 0} total, ${db?.pendingQuotes ?? 0} pending | Orders: ${db?.totalOrders ?? 0}
 - Revenue: $0 / $${CONFIG.revenue.target.toLocaleString()} target | Monthly: $${CONFIG.revenue.monthlyTarget.toLocaleString()}/mo
 - Days remaining: ${Math.ceil((new Date(CONFIG.revenue.deadline) - new Date()) / 86400000)}
-- New inquiries: ${db?.contactInquiries || 0} | Recent chats: ${db?.recentChats || 0}
+- New inquiries: ${db?.contactInquiries ?? 0} | Recent chats: ${db?.recentChats ?? 0}
 
 RECENT COMMITS:
 ${recentCommits}
@@ -581,17 +584,17 @@ function generateTemplateReport(agent) {
       report.requests = ["@alex: Need first warm lead from CEO network"];
       break;
     case "seth":
-      report.priorities = [`Site v${version} stable. ${db?.blogPosts || "?"} blog posts. Build clean.`];
+      report.priorities = [`Site v${version} stable. ${db?.blogPosts ?? "?"} blog posts. Build clean.`];
       report.decisions = [{ text: "SMTP setup with nodemailer for automated emails", status: "PROPOSED" }];
       report.requests = ["@seto: Send blog content for seeding"];
       break;
     case "rachel":
-      report.priorities = [`SEO sprints complete. ${db?.blogPosts || "?"} posts live. Monitoring organic growth.`];
+      report.priorities = [`SEO sprints complete. ${db?.blogPosts ?? "?"} posts live. Monitoring organic growth.`];
       report.decisions = [{ text: "Publish 3 high-intent blog posts this week targeting tool pages", status: "PROPOSED" }];
       report.requests = ["@seto: Coordinate on blog content and timing"];
       break;
     case "seto":
-      report.priorities = [`${db?.blogPosts || "?"} posts published. Content pipeline active.`];
+      report.priorities = [`${db?.blogPosts ?? "?"} posts published. Content pipeline active.`];
       report.decisions = [{ text: "Write next approved blog post today with full research and citations", status: "PROPOSED" }];
       report.requests = ["@rachel: Review draft for SEO optimization"];
       break;
@@ -961,11 +964,11 @@ console.log(`
 
 console.log(`📊 KPI SNAPSHOT`);
 console.log(`   Revenue:       $0 / $${CONFIG.revenue.monthlyTarget.toLocaleString()}/mo (target: $${CONFIG.revenue.target.toLocaleString()} by EOY)`);
-console.log(`   Blog Posts:    ${db?.blogPosts || "?"} published (+12 pending review)`);
-console.log(`   Subscribers:   ${db?.subscribers || "?"} / ${CONFIG.kpis.subscribers.target.toLocaleString()} target`);
-console.log(`   Quotes:        ${db?.totalQuotes || 0} total, ${db?.pendingQuotes || 0} pending`);
-console.log(`   Orders:        ${db?.totalOrders || 0}`);
-console.log(`   CRM Inquiries: ${db?.contactInquiries || 0} new`);
+console.log(`   Blog Posts:    ${db?.blogPosts ?? "?"} published (+12 pending review)`);
+console.log(`   Subscribers:   ${db?.subscribers ?? "?"} / ${CONFIG.kpis.subscribers.target.toLocaleString()} target`);
+console.log(`   Quotes:        ${db?.totalQuotes ?? 0} total, ${db?.pendingQuotes ?? 0} pending`);
+console.log(`   Orders:        ${db?.totalOrders ?? 0}`);
+console.log(`   CRM Inquiries: ${db?.contactInquiries ?? 0} new`);
 console.log(`   Site Version:  v${version} | ${pageCount} pages`);
 
 console.log(`\n📋 DECISIONS THIS STANDUP (${allDecisions.length}):`);
@@ -1011,12 +1014,12 @@ const logEntry = `
 |--------|-------|
 | **Version** | v${version} |
 | **Pages** | ${pageCount} |
-| **Blog Posts** | ${db?.blogPosts || "?"} published |
+| **Blog Posts** | ${db?.blogPosts ?? "?"} published |
 | **Revenue** | $0 / $${CONFIG.revenue.target.toLocaleString()} |
-| **Subscribers** | ${db?.subscribers || "?"} |
-| **Quotes** | ${db?.quotes || "?"} total, ${db?.pendingQuotes || "?"} pending |
-| **Orders** | ${db?.orders || "?"} |
-| **Inquiries** | ${db?.newInquiries || "?"} new |
+| **Subscribers** | ${db?.subscribers ?? "?"} |
+| **Quotes** | ${db?.totalQuotes ?? "?"} total, ${db?.pendingQuotes ?? "?"} pending |
+| **Orders** | ${db?.totalOrders ?? "?"} |
+| **Inquiries** | ${db?.contactInquiries ?? "?"} new |
 
 ---
 
