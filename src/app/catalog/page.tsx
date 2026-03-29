@@ -40,11 +40,13 @@ const CATEGORIES = [
   { id: "kitchen-bath", label: "Kitchen & Bath", icon: ShowerHead, emoji: "🚿", color: "bg-cyan-500/10 text-cyan-600", desc: "Vanities, faucets, tiles, countertops, cabinetry, fixtures" },
   { id: "industrial", label: "Industrial & Commercial", icon: Factory, emoji: "🏭", color: "bg-slate-500/10 text-slate-600", desc: "Office furniture, commercial equipment, industrial supplies, bulk orders" },
   { id: "textiles", label: "Textiles & Soft Furnishings", icon: Shirt, emoji: "🧵", color: "bg-pink-500/10 text-pink-600", desc: "Bedding, curtains, upholstery fabric, towels, cushions from Guangzhou" },
+  { id: "window-coverings", label: "Window Blinds & Coverings", icon: Package, emoji: "🪟", color: "bg-violet-500/10 text-violet-600", desc: "Roller blinds, venetian, motorized, cellular shades — factory-direct from Shaoxing" },
 ];
 
 const CATEGORY_ICONS: Record<string, string> = {
   furniture: "🪑", electronics: "📱", "home-goods": "🏠", lighting: "💡",
   "kitchen-bath": "🚿", industrial: "🏭", textiles: "🧵", consulting: "🎯",
+  "window-coverings": "🪟",
 };
 
 export default function CatalogPage() {
