@@ -26,7 +26,7 @@ const post = {
   emoji: "🪟",
   readTime: "15 min",
   authorName: "Seto Nakamura",
-  content: `![Roller blackout blind filtering warm sunlight in a modern room](https://images.unsplash.com/photo-1622372738946-62cc907d3942?w=1200&h=600&fit=crop)
+  content: `![Modern roller blinds filtering warm sunlight in a cozy room](https://images.pexels.com/photos/4452461/pexels-photo-4452461.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop)
 
 ## The $11.2 Billion Opportunity You're Overlooking
 
@@ -40,6 +40,29 @@ Here's why blinds deserve your attention:
 - **Low competition**: The US market is dominated by a handful of brands (Hunter Douglas, Levolor, Bali). There's room for price-competitive alternatives
 
 > 💡 PRO TIP: Shaoxing, in Zhejiang Province, is the world capital of textile blind manufacturing. Over 60% of the world's roller blinds originate from factories within a 50km radius of Shaoxing.
+
+### Why Window Blinds? The Opportunity at a Glance
+
+<div style="margin:24px 0;padding:24px;background:linear-gradient(135deg,#f0faf9,#f8fafc);border-radius:16px;border:1px solid #e2e8f0;">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px;text-align:center;">
+<div style="padding:16px;background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+<div style="font-size:28px;font-weight:800;color:#0F2B46;">$11.2B</div>
+<div style="font-size:12px;color:#64748b;margin-top:4px;">US Market Size</div>
+</div>
+<div style="padding:16px;background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+<div style="font-size:28px;font-weight:800;color:#2EC4B6;">70-85%</div>
+<div style="font-size:12px;color:#64748b;margin-top:4px;">Cost Advantage</div>
+</div>
+<div style="padding:16px;background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+<div style="font-size:28px;font-weight:800;color:#059669;">3-5x</div>
+<div style="font-size:12px;color:#64748b;margin-top:4px;">Retail Markup</div>
+</div>
+<div style="padding:16px;background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+<div style="font-size:28px;font-weight:800;color:#F0A500;">4.5%</div>
+<div style="font-size:12px;color:#64748b;margin-top:4px;">Annual Growth</div>
+</div>
+</div>
+</div>
 
 ### Market Size Breakdown
 
@@ -57,7 +80,7 @@ Here's why blinds deserve your attention:
 
 ### Roller Blinds
 
-![Roller blinds in a bright modern room](https://images.unsplash.com/photo-1622372738946-62cc907d3942?w=800&h=400&fit=crop)
+![Roller blinds on a window with soft light](https://images.pexels.com/photos/24182748/pexels-photo-24182748.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&fit=crop)
 
 The most popular and cost-effective option. Available in light-filtering, sunscreen, and blackout fabrics. Manual roller blinds start at just $8 FOB, while blackout versions with 3-pass coating run $12-25.
 
@@ -68,7 +91,7 @@ The most popular and cost-effective option. Available in light-filtering, sunscr
 
 ### Venetian Blinds (Aluminum)
 
-![Aluminum venetian blinds with adjustable slats](https://images.unsplash.com/photo-1523755231516-e43fd2e8dca5?w=800&h=400&fit=crop)
+![White venetian blinds with light streaming through the slats](https://images.pexels.com/photos/3915040/pexels-photo-3915040.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&fit=crop)
 
 Classic horizontal slat design in 16mm or 25mm aluminum. Tilt-and-lift controls. Powder-coated finish in 50+ colors. Best for offices and commercial spaces where precise light control matters.
 
@@ -79,7 +102,7 @@ Classic horizontal slat design in 16mm or 25mm aluminum. Tilt-and-lift controls.
 
 ### Vertical Blinds (PVC)
 
-![Vertical blinds on sliding glass door](https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&h=400&fit=crop)
+![Vertical blinds in a contemporary office with natural light](https://images.pexels.com/photos/33996299/pexels-photo-33996299.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&fit=crop)
 
 89mm PVC slats ideal for sliding doors and large windows. Easy-clean, moisture resistant. Popular for rental properties and commercial buildings.
 
@@ -90,7 +113,7 @@ Classic horizontal slat design in 16mm or 25mm aluminum. Tilt-and-lift controls.
 
 ### Cellular / Honeycomb Shades
 
-![Cellular honeycomb shade providing insulation](https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=800&h=400&fit=crop)
+![White window blinds providing clean minimalist interior look](https://images.pexels.com/photos/13005096/pexels-photo-13005096.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&fit=crop)
 
 Double-cell construction traps air for superior insulation. Energy Star rated in many configurations. Premium segment with the highest margins. Available in light-filtering and blackout.
 
@@ -101,7 +124,7 @@ Double-cell construction traps air for superior insulation. Energy Star rated in
 
 ### Motorized / Smart Blinds
 
-![Smart motorized blinds controlled by app](https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&h=400&fit=crop)
+![Person opening white window blinds to let sunlight in](https://images.pexels.com/photos/13005099/pexels-photo-13005099.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&fit=crop)
 
 WiFi-enabled motors with smartphone control. Integrates with Alexa, Google Home, and Apple HomeKit. Solar-powered options available. Fastest growing segment at 8.2% CAGR.
 
@@ -112,7 +135,7 @@ WiFi-enabled motors with smartphone control. Integrates with Alexa, Google Home,
 
 ### Roman Shades & Zebra Blinds
 
-![Elegant roman shade in a living room](https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800&h=400&fit=crop)
+![Warm sunlight casting shadows through window blinds](https://images.pexels.com/photos/30682989/pexels-photo-30682989.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&fit=crop)
 
 Premium fabric options for high-end residential. Roman shades fold in elegant pleats. Zebra (dual) blinds alternate sheer and opaque stripes for adjustable privacy.
 
@@ -272,6 +295,15 @@ Let's run a concrete example. You're importing **500 roller blackout blinds** (1
 
 The tariff classification of your blinds depends on the **primary material**:
 
+<div style="margin:24px 0;padding:20px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;">
+<p style="font-weight:700;color:#0f2b46;margin-bottom:16px;font-size:14px;">Effective Duty Rate by Material (Base + Section 301)</p>
+<div style="margin-bottom:10px;"><div style="display:flex;align-items:center;gap:8px;"><span style="width:90px;font-size:12px;color:#64748b;">Wood/Bamboo</span><div style="height:26px;border-radius:6px;background:#059669;width:28.3%;display:flex;align-items:center;padding-left:8px;"><span style="color:white;font-size:11px;font-weight:600;">28.3%</span></div><span style="font-size:11px;color:#64748b;">Lowest</span></div></div>
+<div style="margin-bottom:10px;"><div style="display:flex;align-items:center;gap:8px;"><span style="width:90px;font-size:12px;color:#64748b;">Plastic/PVC</span><div style="height:26px;border-radius:6px;background:#F0A500;width:30.3%;display:flex;align-items:center;padding-left:8px;"><span style="color:white;font-size:11px;font-weight:600;">30.3%</span></div></div></div>
+<div style="margin-bottom:10px;"><div style="display:flex;align-items:center;gap:8px;"><span style="width:90px;font-size:12px;color:#64748b;">Aluminum</span><div style="height:26px;border-radius:6px;background:#F0A500;width:30.7%;display:flex;align-items:center;padding-left:8px;"><span style="color:white;font-size:11px;font-weight:600;">30.7%</span></div></div></div>
+<div style="margin-bottom:4px;"><div style="display:flex;align-items:center;gap:8px;"><span style="width:90px;font-size:12px;color:#64748b;">Textile/Fabric</span><div style="height:26px;border-radius:6px;background:#dc2626;width:31.5%;display:flex;align-items:center;padding-left:8px;"><span style="color:white;font-size:11px;font-weight:600;">31.5%</span></div><span style="font-size:11px;color:#64748b;">Highest</span></div></div>
+<p style="font-size:10px;color:#94a3b8;margin-top:12px;">+ reciprocal tariff (Section 122). Rates exclude MPF and HMF fees.</p>
+</div>
+
 | Material | HTS Code | Base Duty | Section 301 | Effective Rate |
 |----------|----------|-----------|-------------|----------------|
 | **Textile/fabric** | 6303.92 | 6.5% | 25% | 31.5% + reciprocal |
@@ -315,6 +347,15 @@ While you cannot circumvent import duties, there are **legitimate strategies** t
 ### Why Blinds Ship Efficiently
 
 Blinds are one of the most CBM-efficient products you can import:
+
+<div style="margin:24px 0;padding:20px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;">
+<p style="font-weight:700;color:#0f2b46;margin-bottom:16px;font-size:14px;">Units per 40ft Container Comparison</p>
+<div style="margin-bottom:12px;"><div style="display:flex;align-items:center;gap:8px;"><span style="width:120px;font-size:13px;color:#64748b;">Roller Blind</span><div style="height:28px;border-radius:6px;background:linear-gradient(90deg,#2EC4B6,#0F2B46);width:100%;display:flex;align-items:center;padding-left:12px;"><span style="color:white;font-size:12px;font-weight:600;">2,500 units</span></div></div></div>
+<div style="margin-bottom:12px;"><div style="display:flex;align-items:center;gap:8px;"><span style="width:120px;font-size:13px;color:#64748b;">Venetian Blind</span><div style="height:28px;border-radius:6px;background:linear-gradient(90deg,#2EC4B6,#059669);width:60%;display:flex;align-items:center;padding-left:12px;"><span style="color:white;font-size:12px;font-weight:600;">1,500 units</span></div></div></div>
+<div style="margin-bottom:12px;"><div style="display:flex;align-items:center;gap:8px;"><span style="width:120px;font-size:13px;color:#64748b;">Motorized Kit</span><div style="height:28px;border-radius:6px;background:linear-gradient(90deg,#059669,#F0A500);width:57%;display:flex;align-items:center;padding-left:12px;"><span style="color:white;font-size:12px;font-weight:600;">1,430 units</span></div></div></div>
+<div style="margin-bottom:4px;"><div style="display:flex;align-items:center;gap:8px;"><span style="width:120px;font-size:13px;color:#64748b;">Sofa (compare)</span><div style="height:28px;border-radius:6px;background:#dc2626;width:1.5%;display:flex;align-items:center;padding-left:8px;"><span style="color:white;font-size:10px;font-weight:600;white-space:nowrap;margin-left:20px;">38</span></div></div></div>
+<p style="font-size:11px;color:#94a3b8;margin-top:12px;">Blinds are 40-65x more space-efficient than furniture per unit shipped.</p>
+</div>
 
 | Product | CBM per unit | Units per 20ft | Units per 40ft | Efficiency Rating |
 |---------|-------------|----------------|----------------|-------------------|
@@ -423,7 +464,7 @@ const postZhCN = {
   emoji: "🪟",
   readTime: "15 分钟",
   authorName: "中村世人",
-  content: `![现代家居室内窗帘百叶窗](https://images.unsplash.com/photo-1622372738946-62cc907d3942?w=1200&h=600&fit=crop)
+  content: `![现代家居室内窗帘百叶窗](https://images.pexels.com/photos/4452461/pexels-photo-4452461.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop)
 
 ## 你正在忽视的112亿美元机遇
 
