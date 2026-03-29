@@ -32,12 +32,12 @@ function renderMarkdown(md: string, stripFirstImage = false): string {
     return html;
   });
 
-  return withTables
+  let result = withTables
     .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<figure class="my-8"><img src="$2" alt="$1" class="rounded-xl w-full object-cover max-h-[420px] shadow-md" loading="lazy" /><figcaption class="text-xs text-center text-muted-foreground mt-2 italic">$1</figcaption></figure>')
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-teal underline hover:text-teal/80">$1</a>')
     .replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-teal pl-4 py-2 my-5 bg-teal/5 rounded-r-lg"><p class="text-sm text-muted-foreground italic leading-relaxed">$1</p></blockquote>')
     .replace(/^---$/gm, '<hr class="my-10 border-t-2 border-border/50" />')
-    .replace(/^(💡|⚠️|📝|🔑|✅|📊|🚢|🏭|💰|🎯) (TIP|WARNING|NOTE|KEY TAKEAWAY|PRO TIP|INSIGHT|DID YOU KNOW|EXAMPLE|ACTION STEP):? (.+)$/gm, '<div class="my-5 p-4 rounded-xl border-l-4 border-teal bg-muted/40"><div class="flex items-start gap-2"><span class="text-lg">$1</span><div><span class="font-bold text-xs uppercase tracking-wide text-teal">$2</span><p class="text-sm text-muted-foreground mt-1 leading-relaxed">$3</p></div></div></div>')
+    .replace(/^(💡|⚠️|📝|🔑|✅|📊|🚢|🏭|💰|🎯|🧮|📦) (TIP|WARNING|NOTE|KEY TAKEAWAY|PRO TIP|INSIGHT|DID YOU KNOW|EXAMPLE|ACTION STEP):? (.+)$/gm, '<div class="my-5 p-4 rounded-xl border-l-4 border-teal bg-muted/40"><div class="flex items-start gap-2"><span class="text-lg">$1</span><div><span class="font-bold text-xs uppercase tracking-wide text-teal">$2</span><p class="text-sm text-muted-foreground mt-1 leading-relaxed">$3</p></div></div></div>')
     .replace(/^### (.+)$/gm, '<h3 id="$1" class="text-lg font-semibold mt-8 mb-3 text-foreground scroll-mt-24">$1</h3>')
     .replace(/^## (.+)$/gm, '<h2 id="$1" class="text-2xl font-bold mt-12 mb-5 text-foreground scroll-mt-24 pb-2 border-b border-border/50"><span class="text-teal mr-2">|</span>$1</h2>')
     .replace(/\*\*(.+?)\*\*/g, "<strong class='text-foreground font-semibold'>$1</strong>")
@@ -45,6 +45,13 @@ function renderMarkdown(md: string, stripFirstImage = false): string {
     .replace(/^- (.+)$/gm, '<li class="ml-6 list-disc text-muted-foreground leading-relaxed py-0.5">$1</li>')
     .replace(/^\d+\. (.+)$/gm, '<li class="ml-6 list-decimal text-muted-foreground leading-relaxed py-0.5">$1</li>')
     .replace(/\n\n(?!<[hulfbdoi])/g, '</p><p class="mb-5 text-muted-foreground leading-relaxed text-[15px]">');
+
+  // Wrap consecutive <li list-decimal> groups in <ol> tags so numbering resets per section
+  result = result.replace(/((?:<li class="ml-6 list-decimal[^"]*">[^<]*<\/li>\s*)+)/g, '<ol class="my-4 space-y-1" style="counter-reset:list-item">$1</ol>');
+  // Same for unordered lists
+  result = result.replace(/((?:<li class="ml-6 list-disc[^"]*">[^<]*<\/li>\s*)+)/g, '<ul class="my-4 space-y-1">$1</ul>');
+
+  return result;
 }
 
 function extractHeadings(md: string): { id: string; text: string; level: number }[] {

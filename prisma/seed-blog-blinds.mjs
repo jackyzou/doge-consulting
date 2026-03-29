@@ -26,7 +26,7 @@ const post = {
   emoji: "🪟",
   readTime: "15 min",
   authorName: "Seto Nakamura",
-  content: `![Window blinds in a modern home interior](https://images.unsplash.com/photo-1585412727339-54e4bae3bbf9?w=1200&h=600&fit=crop)
+  content: `![Roller blackout blind filtering warm sunlight in a modern room](https://images.unsplash.com/photo-1622372738946-62cc907d3942?w=1200&h=600&fit=crop)
 
 ## The $11.2 Billion Opportunity You're Overlooking
 
@@ -55,16 +55,71 @@ Here's why blinds deserve your attention:
 
 ## Types of Blinds You Can Source from China
 
-| Type | FOB Price Range | US Retail Range | Typical Markup | Best For |
-|------|----------------|-----------------|----------------|----------|
-| **Roller Blinds (manual)** | $8-18 | $40-90 | 4-5x | Volume, residential |
-| **Roller Blinds (blackout)** | $12-25 | $60-120 | 4-5x | Bedrooms, media rooms |
-| **Venetian Blinds (aluminum)** | $15-35 | $55-130 | 3-4x | Offices, commercial |
-| **Vertical Blinds (PVC)** | $12-30 | $50-110 | 3-4x | Sliding doors, large windows |
-| **Cellular/Honeycomb Shades** | $20-45 | $80-250 | 4-5x | Energy-efficient homes |
-| **Motorized/Smart Blinds** | $35-95 | $150-450 | 3-5x | Smart homes, premium segment |
-| **Roman Shades (fabric)** | $15-40 | $70-200 | 4-5x | High-end residential |
-| **Zebra/Dual Blinds** | $18-40 | $80-180 | 4-5x | Trendy, modern interiors |
+### Roller Blinds
+
+![Roller blinds in a bright modern room](https://images.unsplash.com/photo-1622372738946-62cc907d3942?w=800&h=400&fit=crop)
+
+The most popular and cost-effective option. Available in light-filtering, sunscreen, and blackout fabrics. Manual roller blinds start at just $8 FOB, while blackout versions with 3-pass coating run $12-25.
+
+| Variant | FOB Price | US Retail | Markup |
+|---------|----------|-----------|--------|
+| **Manual (light-filtering)** | $8-18 | $40-90 | 4-5x |
+| **Blackout (3-pass coating)** | $12-25 | $60-120 | 4-5x |
+
+### Venetian Blinds (Aluminum)
+
+![Aluminum venetian blinds with adjustable slats](https://images.unsplash.com/photo-1523755231516-e43fd2e8dca5?w=800&h=400&fit=crop)
+
+Classic horizontal slat design in 16mm or 25mm aluminum. Tilt-and-lift controls. Powder-coated finish in 50+ colors. Best for offices and commercial spaces where precise light control matters.
+
+| Variant | FOB Price | US Retail | Markup |
+|---------|----------|-----------|--------|
+| **16mm slats** | $15-25 | $55-100 | 3-4x |
+| **25mm slats (premium)** | $20-35 | $80-130 | 3-4x |
+
+### Vertical Blinds (PVC)
+
+![Vertical blinds on sliding glass door](https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&h=400&fit=crop)
+
+89mm PVC slats ideal for sliding doors and large windows. Easy-clean, moisture resistant. Popular for rental properties and commercial buildings.
+
+| Variant | FOB Price | US Retail | Markup |
+|---------|----------|-----------|--------|
+| **Standard PVC** | $12-22 | $50-90 | 3-4x |
+| **Fabric vane** | $18-30 | $70-110 | 3-4x |
+
+### Cellular / Honeycomb Shades
+
+![Cellular honeycomb shade providing insulation](https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=800&h=400&fit=crop)
+
+Double-cell construction traps air for superior insulation. Energy Star rated in many configurations. Premium segment with the highest margins. Available in light-filtering and blackout.
+
+| Variant | FOB Price | US Retail | Markup |
+|---------|----------|-----------|--------|
+| **Single cell** | $20-35 | $80-180 | 4-5x |
+| **Double cell (blackout)** | $30-45 | $120-250 | 4-5x |
+
+### Motorized / Smart Blinds
+
+![Smart motorized blinds controlled by app](https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&h=400&fit=crop)
+
+WiFi-enabled motors with smartphone control. Integrates with Alexa, Google Home, and Apple HomeKit. Solar-powered options available. Fastest growing segment at 8.2% CAGR.
+
+| Variant | FOB Price | US Retail | Markup |
+|---------|----------|-----------|--------|
+| **Battery motor** | $35-60 | $150-280 | 3-5x |
+| **Hardwired + hub** | $55-95 | $250-450 | 3-5x |
+
+### Roman Shades & Zebra Blinds
+
+![Elegant roman shade in a living room](https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800&h=400&fit=crop)
+
+Premium fabric options for high-end residential. Roman shades fold in elegant pleats. Zebra (dual) blinds alternate sheer and opaque stripes for adjustable privacy.
+
+| Variant | FOB Price | US Retail | Markup |
+|---------|----------|-----------|--------|
+| **Roman shade** | $15-40 | $70-200 | 4-5x |
+| **Zebra/dual blind** | $18-40 | $80-180 | 4-5x |
 
 ### How to Calculate Your Blind Import Margins
 
@@ -84,7 +139,7 @@ The calculator will show you the **total landed cost**, **gross profit**, **ROI*
 
 > 📊 PRO TIP: Try different selling prices to find your sweet spot. At $55 wholesale you get 39.7% margin, at $79 DTC you get 58.0%, and at $120 installed you get 72.4%.
 
-[**Open Revenue Calculator with Blinds Pre-selected →**](/tools/revenue-calculator)
+[**Try the Revenue Calculator for Your Blind Import Scenario →**](/tools/revenue-calculator)
 
 ---
 
@@ -107,7 +162,7 @@ Shaoxing (绍兴), located in Zhejiang Province about 200km south of Shanghai, h
 
 ### Watch: Inside a Shaoxing Textile Factory
 
-<iframe width="100%" height="400" src="https://www.youtube.com/embed/QBZK0M1AP1I" title="Shaoxing Textile Manufacturing" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius:12px;margin:24px 0;"></iframe>
+<iframe width="100%" height="400" src="https://www.youtube.com/embed/a9SruAPohdE" title="Shaoxing Textile Manufacturing" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius:12px;margin:24px 0;"></iframe>
 
 > 🏭 INSIGHT: Shaoxing's Keqiao district produces more textile per square kilometer than any other place on Earth. The integration of weaving, dyeing, coating, and assembly within a 50km radius means lead times are 30-40% shorter than sourcing from multiple cities.
 
@@ -162,14 +217,48 @@ Let's run a concrete example. You're importing **500 roller blackout blinds** (1
 | **Online DTC** | $79 | $39,500 | $22,915 | 58.0% | 138.2% |
 | **Retail (installed)** | $120 | $60,000 | $43,415 | 72.4% | 261.8% |
 
+### Margin Comparison Chart
+
+<div style="margin:24px 0;padding:20px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;">
+<p style="font-weight:700;color:#0f2b46;margin-bottom:16px;font-size:14px;">Gross Margin by Sales Channel (500 Roller Blackout Blinds)</p>
+<div style="margin-bottom:12px;"><div style="display:flex;align-items:center;gap:8px;"><span style="width:100px;font-size:13px;color:#64748b;">Wholesale</span><div style="height:28px;border-radius:6px;background:linear-gradient(90deg,#2EC4B6,#2EC4B680);width:39.7%;display:flex;align-items:center;padding-left:8px;"><span style="color:white;font-size:12px;font-weight:600;">39.7%</span></div><span style="font-size:12px;color:#64748b;">$10,915</span></div></div>
+<div style="margin-bottom:12px;"><div style="display:flex;align-items:center;gap:8px;"><span style="width:100px;font-size:13px;color:#64748b;">Online DTC</span><div style="height:28px;border-radius:6px;background:linear-gradient(90deg,#2EC4B6,#0F2B46);width:58%;display:flex;align-items:center;padding-left:8px;"><span style="color:white;font-size:12px;font-weight:600;">58.0%</span></div><span style="font-size:12px;color:#64748b;">$22,915</span></div></div>
+<div style="margin-bottom:4px;"><div style="display:flex;align-items:center;gap:8px;"><span style="width:100px;font-size:13px;color:#64748b;">Retail + Install</span><div style="height:28px;border-radius:6px;background:linear-gradient(90deg,#0F2B46,#F0A500);width:72.4%;display:flex;align-items:center;padding-left:8px;"><span style="color:white;font-size:12px;font-weight:600;">72.4%</span></div><span style="font-size:12px;color:#64748b;">$43,415</span></div></div>
+</div>
+
+### ROI Comparison Chart
+
+<div style="margin:24px 0;padding:20px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;">
+<p style="font-weight:700;color:#0f2b46;margin-bottom:16px;font-size:14px;">Return on Investment (%) — $16,585 Total Investment</p>
+<div style="margin-bottom:12px;"><div style="display:flex;align-items:center;gap:8px;"><span style="width:100px;font-size:13px;color:#64748b;">Wholesale</span><div style="height:28px;border-radius:6px;background:#059669;width:25%;display:flex;align-items:center;padding-left:8px;"><span style="color:white;font-size:12px;font-weight:600;">65.8%</span></div></div></div>
+<div style="margin-bottom:12px;"><div style="display:flex;align-items:center;gap:8px;"><span style="width:100px;font-size:13px;color:#64748b;">Online DTC</span><div style="height:28px;border-radius:6px;background:#2EC4B6;width:53%;display:flex;align-items:center;padding-left:8px;"><span style="color:white;font-size:12px;font-weight:600;">138.2%</span></div></div></div>
+<div style="margin-bottom:4px;"><div style="display:flex;align-items:center;gap:8px;"><span style="width:100px;font-size:13px;color:#64748b;">Retail + Install</span><div style="height:28px;border-radius:6px;background:#F0A500;width:100%;display:flex;align-items:center;padding-left:8px;"><span style="color:white;font-size:12px;font-weight:600;">261.8%</span></div></div></div>
+</div>
+
 ### Where Your Money Goes (Cost Structure)
 
-| Component | Percentage |
-|-----------|-----------|
-| **Product (FOB)** | 54.3% |
-| **Tariffs & Duties** | 28.8% |
-| **Shipping & Logistics** | 11.1% |
-| **Fees & Insurance** | 5.8% |
+<div style="margin:24px 0;padding:20px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;">
+<p style="font-weight:700;color:#0f2b46;margin-bottom:16px;font-size:14px;">Landed Cost Breakdown — $33.17 per Roller Blackout Blind</p>
+<div style="display:flex;height:32px;border-radius:8px;overflow:hidden;margin-bottom:12px;">
+<div style="width:54.3%;background:#0F2B46;display:flex;align-items:center;justify-content:center;"><span style="color:white;font-size:10px;font-weight:600;">Product 54.3%</span></div>
+<div style="width:28.8%;background:#dc2626;display:flex;align-items:center;justify-content:center;"><span style="color:white;font-size:10px;font-weight:600;">Tariffs 28.8%</span></div>
+<div style="width:11.1%;background:#2EC4B6;display:flex;align-items:center;justify-content:center;"><span style="color:white;font-size:9px;font-weight:600;">Ship</span></div>
+<div style="width:5.8%;background:#F0A500;display:flex;align-items:center;justify-content:center;"><span style="color:white;font-size:8px;font-weight:600;">Fee</span></div>
+</div>
+<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:#64748b;">
+<span><span style="display:inline-block;width:10px;height:10px;background:#0F2B46;border-radius:2px;margin-right:4px;"></span>Product (FOB): $18.00</span>
+<span><span style="display:inline-block;width:10px;height:10px;background:#dc2626;border-radius:2px;margin-right:4px;"></span>Tariffs & Duties: $9.55</span>
+<span><span style="display:inline-block;width:10px;height:10px;background:#2EC4B6;border-radius:2px;margin-right:4px;"></span>Shipping: $3.59</span>
+<span><span style="display:inline-block;width:10px;height:10px;background:#F0A500;border-radius:2px;margin-right:4px;"></span>Fees: $2.03</span>
+</div>
+</div>
+
+| Component | Amount | Percentage |
+|-----------|--------|-----------|
+| **Product (FOB)** | $18.00 | 54.3% |
+| **Tariffs & Duties** | $9.55 | 28.8% |
+| **Shipping & Logistics** | $3.59 | 11.1% |
+| **Fees & Insurance** | $2.03 | 5.8% |
 
 > 📊 PRO TIP: Tariffs make up nearly 29% of your landed cost. This is why duty optimization strategies (covered below) can dramatically improve your margins. Even a 5% reduction in effective duty rate would save $1.40/unit or $700 on this shipment.
 
@@ -334,7 +423,7 @@ const postZhCN = {
   emoji: "🪟",
   readTime: "15 分钟",
   authorName: "中村世人",
-  content: `![现代家居室内窗帘百叶窗](https://images.unsplash.com/photo-1585412727339-54e4bae3bbf9?w=1200&h=600&fit=crop)
+  content: `![现代家居室内窗帘百叶窗](https://images.unsplash.com/photo-1622372738946-62cc907d3942?w=1200&h=600&fit=crop)
 
 ## 你正在忽视的112亿美元机遇
 
@@ -399,7 +488,7 @@ const postZhCN = {
 
 ### 观看：绍兴纺织工厂实拍
 
-<iframe width="100%" height="400" src="https://www.youtube.com/embed/QBZK0M1AP1I" title="绍兴纺织制造" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius:12px;margin:24px 0;"></iframe>
+<iframe width="100%" height="400" src="https://www.youtube.com/embed/a9SruAPohdE" title="绍兴纺织制造" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius:12px;margin:24px 0;"></iframe>
 
 ### 工厂类型
 
