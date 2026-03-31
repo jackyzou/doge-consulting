@@ -36,7 +36,13 @@ function isClaudeAvailable(): boolean {
 // telling the user to use the dev PC's localhost admin chat instead.
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin();
+    // Auth: admin session OR fleet-secret header (for proxy from production)
+    const fleetSecret = request.headers.get("x-fleet-secret") || "";
+    const expectedSecret = process.env.FLEET_SYNC_SECRET || process.env.JWT_SECRET || "";
+    const hasFleetAuth = expectedSecret && fleetSecret === expectedSecret;
+    if (!hasFleetAuth) {
+      await requireAdmin();
+    }
     const body = await request.json();
     const { threadId } = body;
 
@@ -74,8 +80,58 @@ export async function POST(request: NextRequest) {
 
     // Check if Claude CLI is available on this machine
     if (!isClaudeAvailable()) {
+      // Try to proxy to dev PC where Claude CLI is installed
+      const devPcUrl = process.env.DEV_PC_URL; // e.g. "http://10.0.0.89:3000"
+      if (devPcUrl) {
+        try {
+          const proxyRes = await fetch(`${devPcUrl}/api/admin/fleet/chat/trigger`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-fleet-secret": process.env.FLEET_SYNC_SECRET || process.env.JWT_SECRET || "",
+            },
+            body: JSON.stringify({ threadId }),
+            signal: AbortSignal.timeout(180_000), // 3 min timeout for LLM
+          });
+          const proxyData = await proxyRes.json();
+
+          if (proxyData.triggered && Array.isArray(proxyData.responses)) {
+            // Store the responses from dev PC into production DB
+            for (const r of proxyData.responses) {
+              await prisma.chatMessage.create({
+                data: {
+                  threadId,
+                  sender: r.agent,
+                  content: r.content,
+                  mentions: null,
+                  status: "delivered",
+                },
+              });
+
+              const currentParticipants = new Set(thread.participants.split(",").filter(Boolean));
+              currentParticipants.add(r.agent);
+              await prisma.chatThread.update({
+                where: { id: threadId },
+                data: {
+                  participants: Array.from(currentParticipants).join(","),
+                  updatedAt: new Date(),
+                },
+              });
+            }
+          }
+
+          return NextResponse.json(proxyData);
+        } catch (proxyErr) {
+          const msg = proxyErr instanceof Error ? proxyErr.message : "Proxy failed";
+          return NextResponse.json({
+            error: `Dev PC proxy failed (${devPcUrl}): ${msg}. Ensure the dev server is running.`,
+            triggered: false,
+          }, { status: 503 });
+        }
+      }
+
       return NextResponse.json({
-        error: "Claude CLI not available on this server. Agent chat requires the dev PC. Use http://localhost:3000/admin/chat on the dev machine where Claude CLI is installed.",
+        error: "Claude CLI not available and DEV_PC_URL not configured. Set DEV_PC_URL in .env to proxy to your dev machine (e.g. DEV_PC_URL=http://10.0.0.89:3000).",
         triggered: false,
       }, { status: 503 });
     }
