@@ -27,7 +27,7 @@ const posts = [
     emoji: "🔍",
     readTime: "8 min",
     authorName: "Rachel Morales",
-    content: `![Alibaba supplier verification](https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1200&h=600&fit=crop)
+    content: `![Alibaba supplier verification on laptop screen](https://images.pexels.com/photos/5632399/pexels-photo-5632399.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop)
 
 ## Why Supplier Verification Matters
 

@@ -177,7 +177,7 @@ Not every product is a good import candidate. Use this framework to evaluate:
 | Global Sources | Verified suppliers, electronics focus | Electronics, components |
 | Sourcing agents | Vet factories, negotiate, inspect | Time-starved entrepreneurs |
 
-![Cargo crane loading containers at port](https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=1200&h=600&fit=crop)
+![Cargo crane loading containers at port](https://images.pexels.com/photos/906494/pexels-photo-906494.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop)
 
 ### Red Flags to Avoid
 
@@ -521,7 +521,7 @@ China remains the world's largest manufacturing economy, producing everything fr
 | Air Freight | 3-7 days | $4-$8 | Urgent/high-value/lightweight |
 | Express (DHL/FedEx) | 3-5 days | $6-$12 | Samples, small parcels |
 
-![Port crane loading container onto ship](https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=1200&h=600&fit=crop)
+![Port crane loading container onto ship](https://images.pexels.com/photos/1427107/pexels-photo-1427107.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop)
 
 ---
 
@@ -567,7 +567,7 @@ China remains the world's largest manufacturing economy, producing everything fr
 
 ⚠️ WARNING: Always insure your shipments. Cargo insurance costs 0.5-2% of goods value but protects you from total loss due to accidents, weather, or theft.
 
-![Warehouse worker organizing packages](https://images.unsplash.com/photo-1553413077-190dd305871c?w=1200&h=600&fit=crop)
+![Warehouse worker organizing packages](https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop)
 
 ---
 
@@ -593,7 +593,7 @@ At Doge Consulting, we handle every step — from sourcing to delivery. Our typi
     category: "Shipping Tips",
     emoji: "📦",
     readTime: "10 min",
-    content: `![Shipping containers stacked at terminal](https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1200&h=600&fit=crop)
+    content: `![Shipping containers stacked at terminal](https://images.pexels.com/photos/1427541/pexels-photo-1427541.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop)
 
 ## The Two Main Ocean Shipping Methods
 
@@ -616,7 +616,7 @@ Your cargo is consolidated with other shippers' cargo in one shared container. Y
 
 **Typical cost:** $80-$200 per CBM depending on destination zone.
 
-![Inside a shipping container being loaded](https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=1200&h=600&fit=crop)
+![Inside a shipping container being loaded](https://images.pexels.com/photos/2226458/pexels-photo-2226458.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop)
 
 ---
 
@@ -689,7 +689,7 @@ Section 301 tariffs are additional duties imposed by the US on Chinese imports, 
 - **February 24, 2026:** Section 122 global tariff of 15% takes effect
 - **March 2026:** Court orders universal IEEPA duty refunds ($90B+)
 
-![Port logistics with containers and cranes](https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=1200&h=600&fit=crop)
+![Port logistics with containers and cranes](https://images.pexels.com/photos/3735218/pexels-photo-3735218.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop)
 
 ---
 
@@ -860,7 +860,7 @@ Electronics require extra diligence:
     category: "Sourcing",
     emoji: "🎁",
     readTime: "10 min",
-    content: `![Colorful market stalls with products on display](https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&h=600&fit=crop)
+    content: `![Colorful market stalls with products on display](https://images.pexels.com/photos/3760529/pexels-photo-3760529.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop)
 
 ## What Is Yiwu?
 
@@ -891,7 +891,7 @@ Yiwu in Zhejiang Province hosts the **Yiwu International Trade Market** — the 
 | Kitchen gadgets | $0.30-$2 | $5-$15 | 8-12x |
 | Hair accessories (set) | $0.20-$1 | $5-$12 | 10-20x |
 
-![Warehouse filled with colorful products](https://images.unsplash.com/photo-1553413077-190dd305871c?w=1200&h=600&fit=crop)
+![Warehouse filled with colorful products](https://images.pexels.com/photos/4386321/pexels-photo-4386321.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop)
 
 📊 INSIGHT: Yiwu products have some of the highest markups in all of China sourcing. The goods are incredibly inexpensive to produce, yet consumers pay premium retail prices.
 
@@ -972,7 +972,7 @@ Textiles have **higher import duties** than most other Chinese goods:
     category: "Customs",
     emoji: "🛂",
     readTime: "13 min",
-    content: `![Port logistics with containers and cranes](https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=1200&h=600&fit=crop)
+    content: `![Port logistics with containers and cranes](https://images.pexels.com/photos/1117210/pexels-photo-1117210.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop)
 
 ## Overview of US Customs
 
@@ -1004,7 +1004,7 @@ Every commercial shipment entering the US must clear customs through **US Custom
 5. **Release** — Goods cleared for domestic transport
 6. **Duty Payment** — Due within 10 working days of release
 
-![Customs inspection area at port facility](https://images.unsplash.com/photo-1559666126-84f389727b9a?w=1200&h=600&fit=crop)
+![Customs inspection area at port facility](https://images.pexels.com/photos/1267338/pexels-photo-1267338.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop)
 
 ---
 
@@ -1108,7 +1108,7 @@ const posts3 = [
     title: "Dongguan: Inside China's Premier OEM/ODM Manufacturing Hub",
     excerpt: "Dongguan makes products for Nike, Samsung, and Apple. Source from the same factories that supply the world's biggest brands.",
     category: "Sourcing", emoji: "🏭", readTime: "9 min",
-    content: `![Industrial manufacturing facility with modern machinery](https://images.unsplash.com/photo-1565043589221-1a6fd9ae45c7?w=1200&h=600&fit=crop)
+    content: `![Industrial manufacturing facility with modern machinery](https://images.pexels.com/photos/2760243/pexels-photo-2760243.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop)
 
 ## Dongguan: The World's Factory Floor
 
@@ -1126,7 +1126,7 @@ Dongguan sits between Shenzhen and Guangzhou in the Pearl River Delta. Known as 
 | Furniture | Modern, office, outdoor | IKEA, Steelcase |
 | Garments | Denim, sportswear | Victoria's Secret, Under Armour |
 
-![Modern manufacturing production line](https://images.unsplash.com/photo-1513828583688-c52646db42da?w=1200&h=600&fit=crop)
+![Modern manufacturing production line](https://images.pexels.com/photos/3184338/pexels-photo-3184338.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop)
 
 ---
 
@@ -1165,7 +1165,7 @@ Furniture has one of the largest price gaps between Chinese factory and US retai
 
 > That's $10,550 in savings — a 74% discount on premium furniture.
 
-![Elegant marble dining table setup](https://images.unsplash.com/photo-1617806118233-18e1de247200?w=1200&h=600&fit=crop)
+![Elegant marble dining table setup](https://images.pexels.com/photos/7563687/pexels-photo-7563687.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop)
 
 ---
 
@@ -1193,7 +1193,7 @@ Furniture has one of the largest price gaps between Chinese factory and US retai
     title: "Importing Pet Products from China: A $150 Billion Opportunity",
     excerpt: "The US pet industry hit $150B. Learn how to tap this massive market by sourcing pet products from Chinese manufacturers.",
     category: "Business", emoji: "🐕", readTime: "9 min",
-    content: `![Happy dog playing with colorful toys](https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=1200&h=600&fit=crop)
+    content: `![Happy dog playing with colorful toys](https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop)
 
 ## The Pet Industry Boom
 
@@ -1877,7 +1877,7 @@ const posts6 = [
     category: "Logistics",
     emoji: "⚡",
     readTime: "8 min",
-    content: `![Container ship navigating through open ocean](https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=1200&h=600&fit=crop)
+    content: `![Container ship navigating through open ocean](https://images.pexels.com/photos/2539462/pexels-photo-2539462.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop)
 
 ## Freight Rates Are Climbing Again — Here's What You Need to Know
 
