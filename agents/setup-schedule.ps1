@@ -5,12 +5,14 @@
 
 .DESCRIPTION
     Creates scheduled tasks:
-    1. "Doge Fleet - Morning Brief" at 8:00 AM PST daily (full standup)
-    2. "Doge Fleet - Evening Summary" at 5:00 PM PST daily (evening mode)
-    3. "Doge Fleet - Hourly Ops" every hour (contact triage + quote lifecycle)
-    4. "Doge Fleet - Health Check" every 6 hours (site health monitoring)
-    5. "Doge Fleet - DB Sync" every 30 minutes (sync fleet logs to local DB)
-    6. "Doge Fleet - Prod Sync" every 30 minutes (push data to production server)
+    1. "Doge Fleet - Morning Standup" at 8:00 AM PST daily (full standup with health check)
+    2. "Doge Fleet - DB Sync" every 1 hour (sync fleet logs to local DB)
+    3. "Doge Fleet - Prod Sync" every 1 hour (push data to production server)
+
+    Suspended (not installed):
+    - Hourly Ops (contact triage + quote lifecycle) — suspended per CEO
+    - Evening Summary — standup is now once daily + ad-hoc
+    - Standalone Health Check — now part of morning standup
 
 .EXAMPLE
     .\agents\setup-schedule.ps1
@@ -45,9 +47,9 @@ if (-not (Test-Path (Join-Path $ProjectPath "agents\run-fleet.mjs"))) {
     exit 1
 }
 
-# -- Task 1: Morning Brief (8:00 AM) --
+# -- Task 1: Morning Standup (8:00 AM) --
 Write-Host ""
-Write-Host "Creating Morning Brief task at 8 AM daily..." -ForegroundColor Yellow
+Write-Host "Creating Morning Standup task at 8 AM daily..." -ForegroundColor Yellow
 
 $morningAction = New-ScheduledTaskAction `
     -Execute $nodePath `
@@ -60,101 +62,19 @@ $morningSettings = New-ScheduledTaskSettingsSet `
     -AllowStartIfOnBatteries `
     -DontStopIfGoingOnBatteries `
     -StartWhenAvailable `
-    -ExecutionTimeLimit (New-TimeSpan -Minutes 10)
+    -ExecutionTimeLimit (New-TimeSpan -Minutes 15)
 
 Register-ScheduledTask `
-    -TaskName "Doge Fleet - Morning Brief" `
+    -TaskName "Doge Fleet - Morning Standup" `
     -Action $morningAction `
     -Trigger $morningTrigger `
     -Settings $morningSettings `
-    -Description "Doge Consulting Agent Fleet - Morning standup and daily brief email" `
+    -Description "Doge Consulting Agent Fleet - Daily standup with health check (all 7 phases)" `
     -Force | Out-Null
 
-Write-Host "  OK: Morning Brief: 8:00 AM daily" -ForegroundColor Green
+Write-Host "  OK: Morning Standup: 8:00 AM daily" -ForegroundColor Green
 
-# -- Task 2: Evening Summary (5:00 PM) --
-Write-Host "Creating Evening Summary task at 5 PM daily..." -ForegroundColor Yellow
-
-$eveningAction = New-ScheduledTaskAction `
-    -Execute $nodePath `
-    -Argument "agents\run-fleet.mjs --mode evening" `
-    -WorkingDirectory $ProjectPath
-
-$eveningTrigger = New-ScheduledTaskTrigger -Daily -At "05:00PM"
-
-$eveningSettings = New-ScheduledTaskSettingsSet `
-    -AllowStartIfOnBatteries `
-    -DontStopIfGoingOnBatteries `
-    -StartWhenAvailable `
-    -ExecutionTimeLimit (New-TimeSpan -Minutes 10)
-
-Register-ScheduledTask `
-    -TaskName "Doge Fleet - Evening Summary" `
-    -Action $eveningAction `
-    -Trigger $eveningTrigger `
-    -Settings $eveningSettings `
-    -Description "Doge Consulting Agent Fleet - End-of-day summary and decision log" `
-    -Force | Out-Null
-
-Write-Host "  OK: Evening Summary: 5:00 PM daily" -ForegroundColor Green
-
-# -- Task 3: Hourly Operations (contact triage + quote lifecycle) --
-Write-Host "Creating Hourly Ops task..." -ForegroundColor Yellow
-
-$hourlyAction = New-ScheduledTaskAction `
-    -Execute $nodePath `
-    -Argument "-e `"Promise.all([import('./agents/lib/contact-triage.mjs').then(m=>m.triageNewContacts({verbose:false})).catch(()=>{}),import('./agents/lib/quote-lifecycle.mjs').then(m=>m.processQuoteLifecycle({verbose:false})).catch(()=>{})]).then(()=>process.exit(0))`"" `
-    -WorkingDirectory $ProjectPath
-
-$hourlyTrigger = New-ScheduledTaskTrigger -Once -At "00:00AM" `
-    -RepetitionInterval (New-TimeSpan -Hours 1) `
-    -RepetitionDuration (New-TimeSpan -Days 365)
-
-$hourlySettings = New-ScheduledTaskSettingsSet `
-    -AllowStartIfOnBatteries `
-    -DontStopIfGoingOnBatteries `
-    -StartWhenAvailable `
-    -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
-
-Register-ScheduledTask `
-    -TaskName "Doge Fleet - Hourly Ops" `
-    -Action $hourlyAction `
-    -Trigger $hourlyTrigger `
-    -Settings $hourlySettings `
-    -Description "Doge Consulting - Hourly contact triage and quote lifecycle checks" `
-    -Force | Out-Null
-
-Write-Host "  OK: Hourly Ops: every 1 hour" -ForegroundColor Green
-
-# -- Task 4: Health Check (every 6 hours) --
-Write-Host "Creating Health Check task..." -ForegroundColor Yellow
-
-$healthAction = New-ScheduledTaskAction `
-    -Execute $nodePath `
-    -Argument "agents\lib\health-check.mjs" `
-    -WorkingDirectory $ProjectPath
-
-$healthTrigger = New-ScheduledTaskTrigger -Once -At "06:00AM" `
-    -RepetitionInterval (New-TimeSpan -Hours 6) `
-    -RepetitionDuration (New-TimeSpan -Days 365)
-
-$healthSettings = New-ScheduledTaskSettingsSet `
-    -AllowStartIfOnBatteries `
-    -DontStopIfGoingOnBatteries `
-    -StartWhenAvailable `
-    -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
-
-Register-ScheduledTask `
-    -TaskName "Doge Fleet - Health Check" `
-    -Action $healthAction `
-    -Trigger $healthTrigger `
-    -Settings $healthSettings `
-    -Description "Doge Consulting - Site health monitoring (build, uptime, pages)" `
-    -Force | Out-Null
-
-Write-Host "  OK: Health Check: every 6 hours" -ForegroundColor Green
-
-# -- Task 5: DB Sync (every 30 minutes) --
+# -- Task 2: DB Sync (every 1 hour) --
 Write-Host "Creating DB Sync task..." -ForegroundColor Yellow
 
 $syncAction = New-ScheduledTaskAction `
@@ -163,7 +83,7 @@ $syncAction = New-ScheduledTaskAction `
     -WorkingDirectory $ProjectPath
 
 $syncTrigger = New-ScheduledTaskTrigger -Once -At "00:00AM" `
-    -RepetitionInterval (New-TimeSpan -Minutes 30) `
+    -RepetitionInterval (New-TimeSpan -Hours 1) `
     -RepetitionDuration (New-TimeSpan -Days 365)
 
 $syncSettings = New-ScheduledTaskSettingsSet `
@@ -177,12 +97,12 @@ Register-ScheduledTask `
     -Action $syncAction `
     -Trigger $syncTrigger `
     -Settings $syncSettings `
-    -Description "Doge Consulting - Sync standup logs and decisions to production DB" `
+    -Description "Doge Consulting - Sync standup logs and decisions to local production DB" `
     -Force | Out-Null
 
-Write-Host "  OK: DB Sync: every 30 minutes" -ForegroundColor Green
+Write-Host "  OK: DB Sync: every 1 hour" -ForegroundColor Green
 
-# -- Task 6: Production Sync (every 30 minutes) --
+# -- Task 3: Production Sync (every 1 hour) --
 Write-Host "Creating Production Sync task..." -ForegroundColor Yellow
 
 $prodSyncAction = New-ScheduledTaskAction `
@@ -190,8 +110,8 @@ $prodSyncAction = New-ScheduledTaskAction `
     -Argument "agents\sync-fleet.mjs" `
     -WorkingDirectory $ProjectPath
 
-$prodSyncTrigger = New-ScheduledTaskTrigger -Once -At "00:15AM" `
-    -RepetitionInterval (New-TimeSpan -Minutes 30) `
+$prodSyncTrigger = New-ScheduledTaskTrigger -Once -At "00:30AM" `
+    -RepetitionInterval (New-TimeSpan -Hours 1) `
     -RepetitionDuration (New-TimeSpan -Days 365)
 
 $prodSyncSettings = New-ScheduledTaskSettingsSet `
@@ -208,7 +128,25 @@ Register-ScheduledTask `
     -Description "Doge Consulting - Push standups, chat threads, and decisions to production server" `
     -Force | Out-Null
 
-Write-Host "  OK: Prod Sync: every 30 minutes" -ForegroundColor Green
+Write-Host "  OK: Prod Sync: every 1 hour" -ForegroundColor Green
+
+# -- Remove old tasks if they exist --
+Write-Host ""
+Write-Host "Cleaning up old tasks..." -ForegroundColor Yellow
+@("Doge Fleet - Evening Summary", "Doge Fleet - Hourly Ops", "Doge Fleet - Health Check", "Doge Fleet - Morning Brief") | ForEach-Object {
+    try { Unregister-ScheduledTask -TaskName $_ -Confirm:$false -ErrorAction SilentlyContinue; Write-Host "  Removed: $_" -ForegroundColor Gray } catch {}
+}
+    -ExecutionTimeLimit (New-TimeSpan -Minutes 3)
+
+Register-ScheduledTask `
+    -TaskName "Doge Fleet - Prod Sync" `
+    -Action $prodSyncAction `
+    -Trigger $prodSyncTrigger `
+    -Settings $prodSyncSettings `
+    -Description "Doge Consulting - Push standups, chat threads, and decisions to production server" `
+    -Force | Out-Null
+
+Write-Host "  OK: Prod Sync: every 1 hour" -ForegroundColor Green
 
 # -- Verify --
 Write-Host ""
@@ -217,12 +155,11 @@ Get-ScheduledTask -TaskName "Doge Fleet*" | Format-Table TaskName, State, @{N='N
 
 Write-Host ""
 Write-Host "Setup complete! The agent fleet will run automatically." -ForegroundColor Green
-Write-Host "   Morning brief:   8:00 AM daily  (full standup, all 7 phases)" -ForegroundColor Gray
-Write-Host "   Evening summary: 5:00 PM daily  (evening mode)" -ForegroundColor Gray
-Write-Host "   Hourly ops:      every 1 hour   (contact triage + quote lifecycle)" -ForegroundColor Gray
-Write-Host "   Health check:    every 6 hours   (site monitoring)" -ForegroundColor Gray
-Write-Host "   DB sync:         every 30 min    (fleet logs to local DB)" -ForegroundColor Gray
-Write-Host "   Prod sync:       every 30 min    (push to production server)" -ForegroundColor Gray
+Write-Host "   Morning standup: 8:00 AM daily  (full standup + health check)" -ForegroundColor Gray
+Write-Host "   DB sync:         every 1 hour   (fleet logs to local DB)" -ForegroundColor Gray
+Write-Host "   Prod sync:       every 1 hour   (push to production server)" -ForegroundColor Gray
+Write-Host ""
+Write-Host "   Suspended: Hourly Ops, Evening Summary, Standalone Health Check" -ForegroundColor DarkGray
 Write-Host ""
 Write-Host "To remove all: Get-ScheduledTask 'Doge Fleet*' | Unregister-ScheduledTask -Confirm" -ForegroundColor Gray
 Write-Host "To test now: node agents\run-fleet.mjs" -ForegroundColor Gray
