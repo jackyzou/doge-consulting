@@ -142,7 +142,9 @@ try {
     };
     conn.close();
   }
-} catch {}
+} catch (e) {
+  console.log(`⚠️ DB stats unavailable: ${e.message}`);
+}
 
 console.log(`\n${"═".repeat(60)}`);
 console.log(`🐕 Doge Consulting Agent Fleet — ${mode === "morning" ? "Morning Brief" : "Evening Summary"}`);

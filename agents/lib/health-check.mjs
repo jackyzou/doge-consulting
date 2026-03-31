@@ -72,6 +72,7 @@ async function checkBuild(verbose) {
       encoding: "utf8",
       timeout: 180_000,
       stdio: "pipe",
+      env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL || "file:./dev.db" },
     });
     if (verbose) console.log("      ✅ Build passes");
     return [{ name: "next-build", ok: true, severity: "critical" }];
