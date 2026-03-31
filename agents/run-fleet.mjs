@@ -838,7 +838,9 @@ function generateTemplateSynthesis() {
 
 // ═══════════════════════════════════════════════════════════
 // PHASE 3b: AUTONOMOUS EXECUTION of approved decisions
-// Seth executes code changes, Seto publishes blog posts
+// CEO Mandate (March 31): Running standup = planning + executing.
+// Every approved decision MUST be executed with a git commit.
+// Also picks up previously approved but unexecuted decisions.
 // ═══════════════════════════════════════════════════════════
 
 const autoExecute = !process.argv.includes("--no-execute");
@@ -847,26 +849,41 @@ if (autoExecute && alexSynthesis) {
   try {
     const { executeApprovedDecisions } = await import("./lib/execute-decision.mjs");
 
-    // Parse Alex's synthesis for approved/modified decisions
-    // Alex produces a markdown table like: | # | Decision | Status | Owner | Rationale |
-    // We extract rows where Status contains APPROVED or MODIFIED
+    // 1. Parse Alex's current synthesis for newly approved decisions
     const approvedForExecution = parseAlexDecisions(alexSynthesis);
 
-    if (approvedForExecution.length > 0) {
+    // 2. Also check for previously approved but unexecuted decisions from DB
+    let pendingFromDb = [];
+    try {
+      const Database = require("better-sqlite3");
+      const prodDbPath = join(ROOT, "data", "production.db");
+      const devDbPath = join(ROOT, "dev.db");
+      const dbPath = existsSync(prodDbPath) ? prodDbPath : devDbPath;
+      if (existsSync(dbPath)) {
+        const conn = new Database(dbPath, { readonly: true });
+        const rows = conn.prepare("SELECT title, content FROM AgentLog WHERE type='decision' AND status='open' AND priority IN ('normal','high','critical') ORDER BY createdAt DESC LIMIT 20").all();
+        pendingFromDb = rows.map(r => ({ text: r.title, status: "APPROVED", agent: "previous" }));
+        conn.close();
+      }
+    } catch {}
+
+    const allToExecute = [...approvedForExecution, ...pendingFromDb];
+
+    if (allToExecute.length > 0) {
       console.log(`\n${"═".repeat(60)}`);
       console.log(`⚡ PHASE 3b: Autonomous Execution`);
-      console.log(`   ${approvedForExecution.length} Alex-approved decision(s) — checking for executable items`);
+      console.log(`   ${approvedForExecution.length} new + ${pendingFromDb.length} pending = ${allToExecute.length} decision(s) to execute`);
       console.log(`${"═".repeat(60)}`);
 
-      const results = await executeApprovedDecisions(approvedForExecution, { dryRun: false, verbose: true });
+      const results = await executeApprovedDecisions(allToExecute, { dryRun: false, verbose: true });
 
       const succeeded = results.filter(r => r.success).length;
       const failed = results.filter(r => !r.success).length;
       if (results.length > 0) {
-        console.log(`\n   📊 Execution summary: ${succeeded} succeeded, ${failed} failed, ${approvedForExecution.length - results.length} skipped (non-executable)`);
+        console.log(`\n   📊 Execution summary: ${succeeded} succeeded, ${failed} failed, ${allToExecute.length - results.length} skipped (non-executable)`);
       }
     } else {
-      console.log(`\n   📭 No executable approved decisions found in Alex's synthesis.`);
+      console.log(`\n   📭 No executable approved decisions found.`);
     }
   } catch (e) {
     console.log(`\n   ⚠️ Execution engine error: ${e.message}`);
