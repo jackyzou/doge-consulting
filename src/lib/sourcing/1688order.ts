@@ -1,10 +1,9 @@
 /**
  * 1688order.com Integration Layer
  *
- * Fetches product details from 1688order.com product pages.
- * Search is performed via keyword → server-side HTML scraping of product detail pages.
- * The site's search API requires authentication tokens, so search results are
- * constructed by AI-analyzing user input and matching known product patterns.
+ * Uses Playwright headless browser to render 1688order.com SPA pages
+ * and extract product data. The site is a Nuxt.js SPA that loads data
+ * via client-side XHR — plain fetch only returns an empty shell.
  */
 
 export interface Product1688 {
@@ -32,8 +31,27 @@ export interface ProductVariant {
 const cache = new Map<string, { data: Product1688; expiry: number }>();
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
+// Singleton browser instance (reuse across requests)
+let browserPromise: Promise<import("playwright").Browser> | null = null;
+
+async function getBrowser() {
+  if (!browserPromise) {
+    browserPromise = import("playwright").then(async (pw) => {
+      const browser = await pw.chromium.launch({
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+      });
+      return browser;
+    }).catch((err) => {
+      browserPromise = null;
+      throw err;
+    });
+  }
+  return browserPromise;
+}
+
 /**
- * Fetch and parse a product detail page from 1688order.com
+ * Fetch and parse a product detail page from 1688order.com using Playwright
  */
 export async function getProductDetails(productId: string): Promise<Product1688 | null> {
   // Validate product ID format (numeric only)
@@ -45,29 +63,42 @@ export async function getProductDetails(productId: string): Promise<Product1688 
   const url = `https://1688order.com/pc/goods_details/${productId}`;
 
   try {
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; DogeConsulting/1.0)",
-        Accept: "text/html,application/xhtml+xml",
-      },
-      signal: AbortSignal.timeout(15000),
+    const browser = await getBrowser();
+    const context = await browser.newContext({
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     });
+    const page = await context.newPage();
 
-    if (!res.ok) return null;
+    // Block unnecessary resources to speed up page load
+    await page.route("**/*.{png,jpg,jpeg,gif,svg,woff,woff2,ttf}", (route) => route.abort());
+    await page.route("**/gtm.js", (route) => route.abort());
+    await page.route("**/gtag/**", (route) => route.abort());
+    await page.route("**/fbevents.js", (route) => route.abort());
+    await page.route("**/bat.bing.com/**", (route) => route.abort());
 
-    const html = await res.text();
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
+
+    // Wait for SPA to render product data (look for price indicator)
+    await page.waitForSelector("text=USD", { timeout: 15000 }).catch(() => {});
+    // Small extra wait for full render
+    await page.waitForTimeout(2000);
+
+    const html = await page.content();
+    await context.close();
+
     return parseProductPage(productId, html);
-  } catch {
+  } catch (err) {
+    console.error(`Failed to fetch product ${productId}:`, err);
     return null;
   }
 }
 
 /**
- * Fetch multiple product details in parallel (with concurrency limit)
+ * Fetch multiple product details sequentially (Playwright pages are heavy)
  */
 export async function getMultipleProducts(
   productIds: string[],
-  concurrency = 4,
+  concurrency = 2,
 ): Promise<Product1688[]> {
   const results: Product1688[] = [];
   const batches: string[][] = [];
@@ -124,8 +155,10 @@ function parseProductPage(productId: string, html: string): Product1688 | null {
       if (allImages.length >= 8) break;
     }
 
-    // Extract supplier rating - pattern: "(4.8)"
-    const ratingMatch = html.match(/Supplier\s*Credit\s*Rating[\s\S]*?\(([\d.]+)\)/i);
+    // Extract supplier rating - try multiple patterns
+    const ratingMatch = html.match(/Supplier\s*Credit\s*Rating[\s\S]*?\(([\d.]+)\)/i)
+      || html.match(/\((\d\.\d)\)\s*<\/span>[\s\S]*?Total/i)
+      || html.match(/credit.*?rating.*?\(([\d.]+)\)/i);
     const supplierRating = ratingMatch ? parseFloat(ratingMatch[1]) : null;
 
     // Extract variants - pattern: "23cm long (20cm high) 120g $  1.61 11633available"

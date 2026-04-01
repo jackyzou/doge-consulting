@@ -70,17 +70,18 @@ export default function ProductMatcherV2() {
   const [imageData, setImageData] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchResponse, setSearchResponse] = useState<SearchResponse | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [exampleIdx, setExampleIdx] = useState(0);
 
-  // Quote form state
+  // Quote form state (shared pre-fill, individual cards manage their own submit)
   const [quoteProductIdx, setQuoteProductIdx] = useState<number | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [quoteResult, setQuoteResult] = useState<{ quoteNumber: string } | null>(null);
-  const [customerName, setCustomerName] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
+  const [prefillName, setPrefillName] = useState("");
+  const [prefillEmail, setPrefillEmail] = useState("");
+  const [prefillPhone, setPrefillPhone] = useState("");
 
   // Prefill from logged-in user
   useEffect(() => {
@@ -88,9 +89,9 @@ export default function ProductMatcherV2() {
       .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
       .then((data) => {
         if (data.user) {
-          if (data.user.name) setCustomerName(data.user.name);
-          if (data.user.email) setCustomerEmail(data.user.email);
-          if (data.user.phone) setCustomerPhone(data.user.phone);
+          if (data.user.name) setPrefillName(data.user.name);
+          if (data.user.email) setPrefillEmail(data.user.email);
+          if (data.user.phone) setPrefillPhone(data.user.phone);
         }
       })
       .catch(() => {});
@@ -130,6 +131,7 @@ export default function ProductMatcherV2() {
     if (!canSubmit || loading) return;
     setLoading(true);
     setSearchResponse(null);
+    setSearchError(null);
     setQuoteProductIdx(null);
     setQuoteResult(null);
     try {
@@ -144,14 +146,20 @@ export default function ProductMatcherV2() {
         }),
       });
       const data = await res.json();
-      if (res.ok) setSearchResponse(data);
-    } catch { /* empty */ }
+      if (res.ok) {
+        setSearchResponse(data);
+      } else {
+        setSearchError(data.error || "Search failed. Please try again.");
+      }
+    } catch {
+      setSearchError("Network error. Please check your connection and try again.");
+    }
     setLoading(false);
   };
 
-  const handleQuote = async (idx: number) => {
+  const handleQuote = async (idx: number, name: string, email: string, phone: string) => {
     const result = searchResponse?.results[idx];
-    if (!result || !customerName.trim() || !customerEmail.trim()) return;
+    if (!result || !name.trim() || !email.trim()) return;
 
     setQuoteLoading(true);
     try {
@@ -164,9 +172,9 @@ export default function ProductMatcherV2() {
           productUrl: result.product.detailUrl,
           productPrice: result.product.priceUSD,
           dogePrice: result.pricingAnalysis.dogePrice,
-          customerName,
-          customerEmail,
-          customerPhone: customerPhone || null,
+          customerName: name,
+          customerEmail: email,
+          customerPhone: phone || null,
         }),
       });
       const data = await res.json();
@@ -183,6 +191,7 @@ export default function ProductMatcherV2() {
 
   const resetAll = () => {
     setSearchResponse(null);
+    setSearchError(null);
     setQuoteResult(null);
     setQuoteProductIdx(null);
     setUrl("");
@@ -232,7 +241,7 @@ export default function ProductMatcherV2() {
 
           <div className="p-4 sm:p-6 space-y-4">
             {/* Mode tabs */}
-            <div className="grid grid-cols-3 gap-1 bg-slate-100 rounded-lg p-1">
+            <div role="tablist" aria-label="Search input method" className="grid grid-cols-3 gap-1 bg-slate-100 rounded-lg p-1">
               {([
                 { id: "describe" as const, icon: Search, label: "Describe" },
                 { id: "url" as const, icon: Link2, label: "Paste Link" },
@@ -240,6 +249,9 @@ export default function ProductMatcherV2() {
               ]).map((tab) => (
                 <button
                   key={tab.id}
+                  role="tab"
+                  aria-selected={mode === tab.id}
+                  aria-controls={`tabpanel-${tab.id}`}
                   onClick={() => setMode(tab.id)}
                   className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-md text-xs sm:text-sm font-medium transition-all ${
                     mode === tab.id
@@ -252,6 +264,13 @@ export default function ProductMatcherV2() {
                 </button>
               ))}
             </div>
+
+            {/* Error display */}
+            {searchError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                {searchError}
+              </div>
+            )}
 
             {/* Input modes */}
             <AnimatePresence mode="wait">
@@ -280,7 +299,7 @@ export default function ProductMatcherV2() {
                       onKeyDown={(e) => e.key === "Enter" && canSubmit && handleSubmit()}
                       className="mt-1 h-11"
                     />
-                    <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-1 flex-wrap">
+                    <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1 flex-wrap">
                       <Globe className="h-3 w-3 shrink-0" />
                       Amazon, Wayfair, IKEA, 1688order.com, 1688.com, or any store
                     </p>
@@ -440,14 +459,11 @@ export default function ProductMatcherV2() {
                     sourcePrice={sourcePrice}
                     isQuoting={quoteProductIdx === idx}
                     onQuote={() => setQuoteProductIdx(quoteProductIdx === idx ? null : idx)}
-                    onSubmitQuote={() => handleQuote(idx)}
+                    onSubmitQuote={(name, email, phone) => handleQuote(idx, name, email, phone)}
                     quoteLoading={quoteLoading}
-                    customerName={customerName}
-                    customerEmail={customerEmail}
-                    customerPhone={customerPhone}
-                    onNameChange={setCustomerName}
-                    onEmailChange={setCustomerEmail}
-                    onPhoneChange={setCustomerPhone}
+                    prefillName={prefillName}
+                    prefillEmail={prefillEmail}
+                    prefillPhone={prefillPhone}
                   />
                 ))}
               </div>
@@ -497,8 +513,7 @@ export default function ProductMatcherV2() {
                 <p className="font-semibold text-green-900">Quote Request Submitted!</p>
                 <p className="text-sm text-green-800 mt-1">
                   Quote <span className="font-mono font-bold">{quoteResult.quoteNumber}</span> created.
-                  We&apos;ll email you at <span className="font-medium">{customerEmail}</span> with
-                  the exact China-direct price within 24 hours.
+                  We&apos;ll email you with the exact China-direct price within 24 hours.
                 </p>
                 <Button variant="outline" size="sm" onClick={resetAll} className="mt-3 text-xs">
                   <RotateCcw className="h-3.5 w-3.5 mr-1" /> Search Another Product
@@ -521,27 +536,26 @@ function ProductCard({
   onQuote,
   onSubmitQuote,
   quoteLoading,
-  customerName,
-  customerEmail,
-  customerPhone,
-  onNameChange,
-  onEmailChange,
-  onPhoneChange,
+  prefillName,
+  prefillEmail,
+  prefillPhone,
 }: {
   result: ProductResult;
   sourcePrice: number | null;
   isQuoting: boolean;
   onQuote: () => void;
-  onSubmitQuote: () => void;
+  onSubmitQuote: (name: string, email: string, phone: string) => void;
   quoteLoading: boolean;
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  onNameChange: (v: string) => void;
-  onEmailChange: (v: string) => void;
-  onPhoneChange: (v: string) => void;
+  prefillName: string;
+  prefillEmail: string;
+  prefillPhone: string;
 }) {
   const { product, matchReason, pricingAnalysis } = result;
+
+  // Each card owns its own form state (pre-filled from user session)
+  const [customerName, setCustomerName] = useState(prefillName);
+  const [customerEmail, setCustomerEmail] = useState(prefillEmail);
+  const [customerPhone, setCustomerPhone] = useState(prefillPhone);
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -572,7 +586,7 @@ function ProductCard({
             {sourcePrice && pricingAnalysis.savingsPercent && pricingAnalysis.savingsPercent > 0 && (
               <>
                 <span className="text-sm text-slate-400 line-through">${sourcePrice.toFixed(2)}</span>
-                <Badge variant="secondary" className="bg-green-100 text-green-700 text-[10px]">
+                  <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
                   Save {pricingAnalysis.savingsPercent}%
                 </Badge>
               </>
@@ -580,7 +594,7 @@ function ProductCard({
           </div>
 
           {/* Meta badges */}
-          <div className="mt-2 flex items-center gap-2 flex-wrap text-[10px] text-muted-foreground">
+          <div className="mt-2 flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
             <span className="flex items-center gap-0.5">
               <Package className="h-3 w-3" />
               Factory: ${product.priceUSD.toFixed(2)}
@@ -600,7 +614,7 @@ function ProductCard({
           </div>
 
           {/* Match reason */}
-          <p className="mt-1.5 text-[10px] text-teal">{matchReason}</p>
+          <p className="mt-1.5 text-xs text-teal">{matchReason}</p>
 
           {/* Actions */}
           <div className="mt-3 flex items-center gap-2">
@@ -615,7 +629,7 @@ function ProductCard({
               href={product.detailUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[10px] text-muted-foreground hover:text-teal flex items-center gap-0.5"
+              className="text-xs text-muted-foreground hover:text-teal flex items-center gap-0.5"
             >
               View on 1688order <ExternalLink className="h-2.5 w-2.5" />
             </a>
@@ -635,29 +649,41 @@ function ProductCard({
             <div className="px-4 pb-4 pt-2 border-t bg-slate-50 space-y-3">
               <p className="text-xs font-medium text-navy">Get an exact quote for this product</p>
               <div className="grid gap-2 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor={`quote-name-${result.product.id}`} className="sr-only">Your name</Label>
+                  <Input
+                    id={`quote-name-${result.product.id}`}
+                    placeholder="Your name *"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor={`quote-email-${result.product.id}`} className="sr-only">Email</Label>
+                  <Input
+                    id={`quote-email-${result.product.id}`}
+                    placeholder="Email *"
+                    type="email"
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    className="h-9 text-sm"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor={`quote-phone-${result.product.id}`} className="sr-only">Phone</Label>
                 <Input
-                  placeholder="Your name *"
-                  value={customerName}
-                  onChange={(e) => onNameChange(e.target.value)}
-                  className="h-9 text-sm"
-                />
-                <Input
-                  placeholder="Email *"
-                  type="email"
-                  value={customerEmail}
-                  onChange={(e) => onEmailChange(e.target.value)}
+                  id={`quote-phone-${result.product.id}`}
+                  placeholder="Phone (optional)"
+                  type="tel"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
                   className="h-9 text-sm"
                 />
               </div>
-              <Input
-                placeholder="Phone (optional)"
-                type="tel"
-                value={customerPhone}
-                onChange={(e) => onPhoneChange(e.target.value)}
-                className="h-9 text-sm"
-              />
               <Button
-                onClick={onSubmitQuote}
+                onClick={() => onSubmitQuote(customerName, customerEmail, customerPhone)}
                 disabled={quoteLoading || !customerName.trim() || !customerEmail.trim()}
                 className="w-full h-9 text-sm bg-navy hover:bg-navy/90"
               >
