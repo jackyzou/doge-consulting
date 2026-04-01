@@ -18,6 +18,12 @@ console.log(`[seed-blog-expansion] Using database: ${dbPath}`);
 const db = new Database(dbPath);
 db.pragma("journal_mode = WAL");
 
+// Clean up removed posts (replaced with new content)
+try {
+  const removed = db.prepare("DELETE FROM BlogPost WHERE slug IN ('chinese-new-year-shipping-delays-planning-guide')").run();
+  if (removed.changes > 0) console.log(`[seed-blog-expansion] Removed ${removed.changes} deprecated post(s)`);
+} catch {}
+
 const posts = [
   {
     slug: "alibaba-supplier-verification-guide",
