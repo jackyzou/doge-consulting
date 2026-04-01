@@ -7,7 +7,7 @@ import {
   LayoutDashboard, FileText, Package, Settings, ArrowLeft,
   ShoppingCart, Users, FileDown, LogOut, Loader2, Menu, X,
   ChevronDown, LogIn, User, BookOpen, Calculator, PenLine,
-  GraduationCap, TrendingUp, MessageSquare, Ship,
+  GraduationCap, TrendingUp, MessageSquare, Ship, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -89,6 +89,7 @@ export function Header() {
   ];
 
   const resourceLinks = [
+    { href: "/tools/product-matcher", label: "AI Product Matcher", icon: Sparkles, desc: "Find products cheaper from China" },
     { href: "/blog", label: t("headerTools.blog"), icon: PenLine, desc: t("headerTools.blogDesc") },
     { href: "/whitepaper", label: t("headerTools.freeGuide"), icon: BookOpen, desc: t("headerTools.freeGuideDesc") },
     { href: "/tools/revenue-calculator", label: t("headerTools.revenueCalc"), icon: TrendingUp, desc: t("headerTools.revenueCalcDesc") },

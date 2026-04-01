@@ -12,7 +12,6 @@ import {
   Loader2, Brain,
 } from "lucide-react";
 import Link from "next/link";
-import ProductMatcher from "@/components/catalog/ProductMatcher";
 import FurniturePackages from "@/components/catalog/FurniturePackages";
 import { useTranslation } from "@/lib/i18n";
 
@@ -93,9 +92,27 @@ export default function CatalogPage() {
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 -mt-8 relative z-10 space-y-12 pb-20">
 
-        {/* ══════════ AI PRODUCT MATCHER (prominent) ══════════ */}
+        {/* ══════════ AI PRODUCT MATCHER CTA ══════════ */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <ProductMatcher />
+          <Link href="/tools/product-matcher" className="block">
+            <div className="rounded-2xl border border-teal/20 bg-gradient-to-r from-navy to-navy-light p-5 sm:p-6 text-white hover:shadow-xl transition-shadow cursor-pointer">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal/20 shrink-0">
+                    <Sparkles className="h-6 w-6 text-teal" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-bold">AI Product Matcher</h3>
+                      <Badge className="bg-teal/20 text-teal-light border-teal/30 text-[10px]">NEW</Badge>
+                    </div>
+                    <p className="text-sm text-slate-300 truncate">Search 1688order.com — paste a link, upload a photo, or describe any product</p>
+                  </div>
+                </div>
+                <ArrowRight className="h-5 w-5 text-teal shrink-0" />
+              </div>
+            </div>
+          </Link>
         </motion.div>
 
         {/* ══════════ CATEGORY GRID ══════════ */}
