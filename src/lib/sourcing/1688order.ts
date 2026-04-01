@@ -1,9 +1,12 @@
 /**
  * 1688order.com Integration Layer
  *
- * Uses Playwright headless browser to render 1688order.com SPA pages
- * and extract product data. The site is a Nuxt.js SPA that loads data
- * via client-side XHR — plain fetch only returns an empty shell.
+ * Uses Playwright headless browser to:
+ * 1. Search 1688order.com by keywords (real search, not hardcoded)
+ * 2. Fetch individual product detail pages
+ * 3. Extract structured product data from rendered SPA pages
+ *
+ * The site is a Nuxt.js SPA — plain fetch returns an empty JS shell.
  */
 
 export interface Product1688 {
@@ -19,6 +22,7 @@ export interface Product1688 {
   category?: string;
   variants?: ProductVariant[];
   images?: string[];
+  matchConfidence?: number;
 }
 
 export interface ProductVariant {
@@ -27,11 +31,13 @@ export interface ProductVariant {
   available: number;
 }
 
-// Simple in-memory cache with TTL
-const cache = new Map<string, { data: Product1688; expiry: number }>();
-const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+// Simple in-memory cache with TTL — keyed by search query or product ID
+const searchCache = new Map<string, { data: Product1688[]; expiry: number }>();
+const productCache = new Map<string, { data: Product1688; expiry: number }>();
+const SEARCH_CACHE_TTL = 10 * 60 * 1000; // 10 minutes for search results
+const PRODUCT_CACHE_TTL = 60 * 60 * 1000; // 1 hour for product detail
 
-// Singleton browser instance (reuse across requests)
+// Singleton browser instance
 let browserPromise: Promise<import("playwright").Browser> | null = null;
 
 async function getBrowser() {
@@ -51,13 +57,128 @@ async function getBrowser() {
 }
 
 /**
+ * Search 1688order.com by keyword — returns real search results
+ */
+export async function searchProducts(keyword: string): Promise<Product1688[]> {
+  if (!keyword.trim()) return [];
+
+  const cacheKey = `search:${keyword.trim().toLowerCase()}`;
+  const cached = searchCache.get(cacheKey);
+  if (cached && cached.expiry > Date.now()) return cached.data;
+
+  try {
+    const browser = await getBrowser();
+    const context = await browser.newContext({
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    });
+    const page = await context.newPage();
+
+    // Block heavy resources
+    await page.route("**/*.{woff,woff2,ttf}", (route) => route.abort());
+    await page.route("**/gtm.js", (route) => route.abort());
+    await page.route("**/gtag/**", (route) => route.abort());
+    await page.route("**/fbevents.js", (route) => route.abort());
+    await page.route("**/bat.bing.com/**", (route) => route.abort());
+
+    // Navigate directly to the search results URL
+    const searchUrl = `https://1688order.com/pc/goods_list?name=${encodeURIComponent(keyword)}&searchType=text&is_input=1`;
+    await page.goto(searchUrl, { waitUntil: "domcontentloaded", timeout: 20000 });
+
+    // Wait for product listings to render
+    await page.waitForSelector('a[href*="goods_details"]', { timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(2000);
+
+    const html = await page.content();
+    await context.close();
+
+    const products = parseSearchResults(html);
+
+    // Cache results
+    searchCache.set(cacheKey, { data: products, expiry: Date.now() + SEARCH_CACHE_TTL });
+
+    return products;
+  } catch (err) {
+    console.error(`1688 search failed for "${keyword}":`, err);
+    return [];
+  }
+}
+
+/**
+ * Parse search results from 1688order.com rendered HTML
+ *
+ * The SPA renders product cards with this text pattern:
+ *   "Product Name $PRICE NUMBERPurchased"
+ * with links to goods_details/PRODUCT_ID
+ */
+function parseSearchResults(html: string): Product1688[] {
+  const products: Product1688[] = [];
+
+  // Strip all HTML tags to get clean text with product info
+  const text = html.replace(/<[^>]+>/g, "\n");
+
+  // Extract product links and their positions in the original HTML
+  const linkRegex = /goods_details\/(\d{10,15})/g;
+  const foundIds: string[] = [];
+  let match;
+  while ((match = linkRegex.exec(html)) !== null) {
+    if (!foundIds.includes(match[1])) foundIds.push(match[1]);
+  }
+
+  // For each product ID, find product info near it in the clean text
+  // Pattern in text: "...Product Title $PRICE NUMPurchased..."
+  const productPattern = /([A-Z][^$\n]{10,200}?)\s*\$([\d.]+)\s+([\d,]+)\s*Purchased/g;
+  const productEntries: { name: string; price: number; sales: number }[] = [];
+  let pm;
+  while ((pm = productPattern.exec(text)) !== null) {
+    productEntries.push({
+      name: pm[1].trim(),
+      price: parseFloat(pm[2]),
+      sales: parseInt(pm[3].replace(/,/g, ""), 10),
+    });
+  }
+
+  // Also extract image URLs in order — they correspond to products
+  const imageRegex = /(https:\/\/cdns\.1688order\.com\/uploads\/images\/[^"'\s)]+|https:\/\/cbu01\.alicdn\.com[^"'\s)]+)/g;
+  const images: string[] = [];
+  let im;
+  while ((im = imageRegex.exec(html)) !== null) {
+    if (!images.includes(im[1]) && !im[1].includes("logo") && !im[1].includes("icon")) {
+      images.push(im[1]);
+    }
+  }
+
+  // Match product entries with IDs (they appear in order on the page)
+  const limit = Math.min(foundIds.length, productEntries.length, 12);
+  for (let i = 0; i < limit; i++) {
+    const id = foundIds[i];
+    const entry = productEntries[i];
+
+    if (entry && entry.name.length > 5) {
+      products.push({
+        id,
+        name: entry.name.substring(0, 200),
+        priceUSD: entry.price,
+        priceCNY: Math.round(entry.price * 7.2 * 100) / 100,
+        imageUrl: images[i] || "",
+        salesVolume: entry.sales,
+        detailUrl: `https://1688order.com/pc/goods_details/${id}`,
+        supplierRating: null,
+        minOrder: 1,
+      });
+    }
+  }
+
+  return products;
+}
+
+/**
  * Fetch and parse a product detail page from 1688order.com using Playwright
  */
 export async function getProductDetails(productId: string): Promise<Product1688 | null> {
   // Validate product ID format (numeric only)
   if (!/^\d+$/.test(productId)) return null;
 
-  const cached = cache.get(productId);
+  const cached = productCache.get(productId);
   if (cached && cached.expiry > Date.now()) return cached.data;
 
   const url = `https://1688order.com/pc/goods_details/${productId}`;
@@ -195,7 +316,7 @@ function parseProductPage(productId: string, html: string): Product1688 | null {
     };
 
     // Cache the result
-    cache.set(productId, { data: product, expiry: Date.now() + CACHE_TTL });
+    productCache.set(productId, { data: product, expiry: Date.now() + PRODUCT_CACHE_TTL });
 
     return product;
   } catch {
@@ -226,8 +347,9 @@ export function buildSearchUrl(keyword: string): string {
 }
 
 /**
- * Clean the in-memory cache (for testing)
+ * Clean caches (for testing)
  */
 export function clearCache(): void {
-  cache.clear();
+  searchCache.clear();
+  productCache.clear();
 }

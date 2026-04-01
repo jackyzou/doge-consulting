@@ -37,6 +37,7 @@ interface ProductResult {
     images?: string[];
   };
   relevanceScore: number;
+  matchConfidence?: string;
   matchReason: string;
   pricingAnalysis: PricingAnalysis;
 }
@@ -46,9 +47,14 @@ interface SearchResponse {
   results: ProductResult[];
   searchUrl: string;
   query: string;
-  keywords?: string[];
-  keywordsChinese?: string[];
-  category?: string;
+  profile?: {
+    title?: string;
+    searchQuery?: string;
+    searchQueryChinese?: string;
+    category?: string;
+    materials?: string[];
+    features?: string[];
+  };
   inputType?: string;
 }
 
@@ -435,11 +441,11 @@ export default function ProductMatcherV2() {
                     ? `${searchResponse.results.length} Product${searchResponse.results.length > 1 ? "s" : ""} Found`
                     : "No Exact Matches"}
                 </h3>
-                {searchResponse.keywords && searchResponse.keywords.length > 0 && (
+                {searchResponse.profile && (
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Searched: {searchResponse.keywords.join(", ")}
-                    {searchResponse.keywordsChinese && searchResponse.keywordsChinese.length > 0 && (
-                      <span className="ml-1 text-teal">({searchResponse.keywordsChinese.join(", ")})</span>
+                    Searched: {searchResponse.query}
+                    {searchResponse.profile.searchQueryChinese && (
+                      <span className="ml-1 text-teal">({searchResponse.profile.searchQueryChinese})</span>
                     )}
                   </p>
                 )}
@@ -550,7 +556,7 @@ function ProductCard({
   prefillEmail: string;
   prefillPhone: string;
 }) {
-  const { product, matchReason, pricingAnalysis } = result;
+  const { product, matchReason, matchConfidence, pricingAnalysis } = result;
 
   // Each card owns its own form state (pre-filled from user session)
   const [customerName, setCustomerName] = useState(prefillName);
@@ -613,8 +619,17 @@ function ProductCard({
             )}
           </div>
 
-          {/* Match reason */}
-          <p className="mt-1.5 text-xs text-teal">{matchReason}</p>
+          {/* Match reason + confidence */}
+          <div className="mt-1.5 flex items-center gap-1.5">
+            {matchConfidence && (
+              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                matchConfidence === "High" ? "bg-green-100 text-green-700" :
+                matchConfidence === "Medium" ? "bg-amber-100 text-amber-700" :
+                "bg-slate-100 text-slate-500"
+              }`}>{matchConfidence}</span>
+            )}
+            <p className="text-xs text-teal">{matchReason}</p>
+          </div>
 
           {/* Actions */}
           <div className="mt-3 flex items-center gap-2">

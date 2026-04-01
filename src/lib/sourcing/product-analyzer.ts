@@ -1,25 +1,35 @@
 /**
- * AI Product Analyzer
+ * AI Product Analyzer — Canonical Product Profile Pipeline
  *
- * Uses Claude AI to analyze user input (URL/image/description),
- * extract structured search parameters, generate Chinese keywords,
- * and rank search results by relevance.
+ * All inputs (URL, image, text) are normalized into a single
+ * Canonical Product Profile before querying 1688order.com.
+ *
+ * Input → Extract → Canonical Profile → Search Keywords → 1688 → Rank
  */
 
 import type { Product1688 } from "./1688order";
 
-export interface SearchParams {
-  keywords: string[];
-  keywordsChinese: string[];
+/**
+ * Canonical Product Profile — the normalized identity of a product
+ * regardless of input method (link, image, or text description)
+ */
+export interface CanonicalProfile {
+  title: string;
+  searchQuery: string;           // Best search term for 1688
+  searchQueryChinese: string;    // Chinese search term
   category: string;
-  estimatedPriceRange: { min: number; max: number } | null;
-  productFeatures: string[];
-  suggestedProductIds: string[];
+  materials: string[];
+  features: string[];
+  estimatedRetailPrice: number | null;
+  estimatedFactoryPrice: { min: number; max: number } | null;
+  sourceUrl: string | null;
+  sourceImageUrl: string | null;
 }
 
 export interface RankedResult {
   product: Product1688;
-  relevanceScore: number; // 0-100
+  relevanceScore: number;
+  matchConfidence: string;       // "High" | "Medium" | "Low"
   matchReason: string;
   pricingAnalysis: {
     chinaDirectPrice: number;
@@ -29,270 +39,264 @@ export interface RankedResult {
   };
 }
 
-export interface AnalysisResult {
-  searchParams: SearchParams;
-  results: RankedResult[];
-  searchUrl: string;
-  query: string;
-}
-
-// Known popular product IDs organized by category.
-// These are real 1688order.com product IDs used for seeding initial results.
-const CATEGORY_PRODUCT_IDS: Record<string, string[]> = {
-  furniture: [
-    "657069344826", "681379099966", "907494691942",
-  ],
-  toys: [
-    "997680691809", "734983575632", "629450450743",
-    "732793689063", "907494691942",
-  ],
-  accessories: [
-    "679063761027", "1000130480950", "978119950893",
-  ],
-  clothing: [
-    "874983995405", "886531125439", "675156757012",
-    "803040169601", "969331223430",
-  ],
-  bags: [
-    "910448683292", "628878297460", "855781221765",
-  ],
-  tools: [
-    "819596893730", "574772368965",
-  ],
-  shoes: [
-    "719029536385", "977993884486",
-  ],
-  general: [
-    "997680691809", "657069344826", "874983995405",
-    "910448683292", "679063761027",
-  ],
-};
-
 /**
- * Analyze user input and generate structured search parameters using Claude AI
+ * Extract a Canonical Product Profile from any user input.
+ * This is the core normalization step — all 3 input types
+ * converge to the same structured output.
  */
-export async function analyzeUserInput(input: {
+export async function extractCanonicalProfile(input: {
   url?: string | null;
   imageBase64?: string | null;
   description?: string | null;
   sourcePrice?: number | null;
-}): Promise<SearchParams> {
+}): Promise<CanonicalProfile> {
   const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
-  // Build a description of what we're searching for
-  let inputDescription = "";
-  if (input.description) {
-    inputDescription = input.description;
-  } else if (input.url) {
-    inputDescription = `Product from URL: ${input.url}`;
+  // Step 1: If URL provided, scrape the source product page first
+  let scrapedData: { title?: string; description?: string; price?: number; imageUrl?: string } = {};
+  if (input.url && !input.url.includes("1688")) {
+    scrapedData = await scrapeSourceProduct(input.url);
   }
 
-  if (input.sourcePrice) {
-    inputDescription += ` (US retail price: $${input.sourcePrice})`;
+  // Build context from all available information
+  const combinedContext = buildContext(input, scrapedData);
+
+  // Step 2: Use AI to extract canonical profile
+  if (ANTHROPIC_API_KEY) {
+    try {
+      return await extractWithAI(combinedContext, input.imageBase64, ANTHROPIC_API_KEY);
+    } catch (err) {
+      console.error("AI extraction failed, using fallback:", err);
+    }
   }
 
-  // If no AI key available, use rule-based keyword extraction
-  if (!ANTHROPIC_API_KEY) {
-    return extractKeywordsRuleBased(inputDescription, input);
-  }
+  // Step 3: Fallback — rule-based extraction
+  return extractRuleBased(combinedContext);
+}
 
+/**
+ * Scrape a source product page (Amazon, Shopify, etc.) to extract product info
+ */
+async function scrapeSourceProduct(url: string): Promise<{
+  title?: string;
+  description?: string;
+  price?: number;
+  imageUrl?: string;
+}> {
   try {
-    const messages: Array<{ role: string; content: unknown }> = [
-      {
-        role: "user",
-        content: buildAnalysisPrompt(inputDescription, input.imageBase64),
-      },
-    ];
-
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
+    const res = await fetch(url, {
       headers: {
-        "Content-Type": "application/json",
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        Accept: "text/html",
       },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1024,
-        messages,
-      }),
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(10000),
+      redirect: "follow",
     });
 
-    if (!res.ok) {
-      console.error("Claude API error:", res.status);
-      return extractKeywordsRuleBased(inputDescription, input);
-    }
+    if (!res.ok) return {};
+    const html = await res.text();
 
-    const data = await res.json();
-    const text = data.content?.[0]?.text || "";
+    // Extract Open Graph / meta data (works on most e-commerce sites)
+    const ogTitle = html.match(/property="og:title"\s+content="([^"]+)"/)?.[1]
+      || html.match(/name="og:title"\s+content="([^"]+)"/)?.[1];
+    const metaTitle = html.match(/<title[^>]*>([^<]+)/)?.[1];
 
-    return parseAIResponse(text, input);
-  } catch (error) {
-    console.error("AI analysis error:", error);
-    return extractKeywordsRuleBased(inputDescription, input);
+    const ogDesc = html.match(/property="og:description"\s+content="([^"]+)"/)?.[1];
+
+    const ogImage = html.match(/property="og:image"\s+content="([^"]+)"/)?.[1];
+
+    // Extract price — look for structured data or common patterns
+    const priceLD = html.match(/"price"\s*:\s*"?([\d.]+)"?/)?.[1];
+    const priceMeta = html.match(/property="product:price:amount"\s+content="([^"]+)"/)?.[1];
+
+    const title = ogTitle || metaTitle?.replace(/\s*[-|].*$/, "").trim();
+    const price = parseFloat(priceLD || priceMeta || "0") || undefined;
+
+    return {
+      title: title?.substring(0, 200),
+      description: ogDesc?.substring(0, 500),
+      price,
+      imageUrl: ogImage,
+    };
+  } catch {
+    return {};
   }
 }
 
-function buildAnalysisPrompt(
-  inputDescription: string,
-  imageBase64?: string | null,
-): unknown {
-  const textPrompt = `You are a China product sourcing expert. Analyze this product request and extract structured search parameters.
+/**
+ * Build combined context string from all inputs
+ */
+function buildContext(
+  input: { url?: string | null; description?: string | null; sourcePrice?: number | null },
+  scraped: { title?: string; description?: string; price?: number; imageUrl?: string },
+): string {
+  const parts: string[] = [];
 
-Product request: "${inputDescription}"
+  if (scraped.title) parts.push(`Product: ${scraped.title}`);
+  if (input.description) parts.push(`Description: ${input.description}`);
+  if (scraped.description) parts.push(`Details: ${scraped.description}`);
+
+  const price = input.sourcePrice || scraped.price;
+  if (price) parts.push(`US Retail Price: $${price}`);
+
+  if (input.url) parts.push(`Source URL: ${input.url}`);
+
+  return parts.join("\n") || "Unknown product";
+}
+
+/**
+ * Use Claude AI to extract canonical profile from combined context
+ */
+async function extractWithAI(
+  context: string,
+  imageBase64: string | null | undefined,
+  apiKey: string,
+): Promise<CanonicalProfile> {
+  const systemPrompt = `You are a China product sourcing expert. Your job is to analyze a product and create a structured profile for searching on the Chinese wholesale platform 1688.com.
+
+Strip all marketing language. Focus on: the core product type, materials, dimensions, and what a Chinese factory would call this item.
 
 Respond in EXACTLY this JSON format (no other text):
 {
-  "keywords": ["english keyword 1", "english keyword 2", "english keyword 3"],
-  "keywordsChinese": ["中文关键词1", "中文关键词2"],
+  "title": "concise product title in English",
+  "searchQuery": "best 2-4 word English search term for 1688order.com (what a buyer would search)",
+  "searchQueryChinese": "Chinese search terms for 1688 (2-4 words)",
   "category": "one of: furniture, toys, accessories, clothing, bags, tools, shoes, electronics, home-goods, lighting, general",
-  "estimatedPriceRange": {"min": 1.0, "max": 10.0},
-  "productFeatures": ["feature1", "feature2"],
-  "suggestedProductIds": []
+  "materials": ["material1", "material2"],
+  "features": ["key feature 1", "key feature 2"],
+  "estimatedFactoryPrice": {"min": 5.0, "max": 25.0}
 }
 
 Guidelines:
-- Keywords: 3-5 precise English search terms a buyer would use on a Chinese wholesale platform
-- Chinese keywords: 2-3 Chinese search terms for the same product on 1688.com
-- Category: best match from the list above
-- Price range: estimated China factory unit price in USD (typically 30-70% of US retail)
-- Features: key product attributes (material, size, color, style)`;
+- searchQuery: use simple, concrete terms. "oak coffee table" not "mid-century modern artisan oak coffee table"
+- searchQueryChinese: translate the product name to Chinese wholesale terms (e.g., "实木咖啡桌")
+- estimatedFactoryPrice: China factory unit price in USD (typically 15-40% of US retail)
+- Focus on physical product attributes, not brand or marketing`;
 
-  if (imageBase64) {
-    return [
-      {
-        type: "image",
-        source: { type: "base64", media_type: "image/jpeg", data: imageBase64.replace(/^data:image\/[^;]+;base64,/, "") },
-      },
-      { type: "text", text: textPrompt },
-    ];
-  }
+  const userContent: unknown = imageBase64
+    ? [
+        {
+          type: "image",
+          source: { type: "base64", media_type: "image/jpeg", data: imageBase64.replace(/^data:image\/[^;]+;base64,/, "") },
+        },
+        { type: "text", text: `Analyze this product and create a sourcing profile:\n\n${context}` },
+      ]
+    : `Analyze this product and create a sourcing profile:\n\n${context}`;
 
-  return textPrompt;
-}
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1024,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userContent }],
+    }),
+    signal: AbortSignal.timeout(30000),
+  });
 
-function parseAIResponse(
-  text: string,
-  input: { url?: string | null; description?: string | null; sourcePrice?: number | null },
-): SearchParams {
-  try {
-    // Extract JSON from response (may have markdown code fences)
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("No JSON found");
+  if (!res.ok) throw new Error(`Claude API ${res.status}`);
 
-    const parsed = JSON.parse(jsonMatch[0]);
+  const data = await res.json();
+  const text = data.content?.[0]?.text || "";
 
-    return {
-      keywords: Array.isArray(parsed.keywords) ? parsed.keywords.slice(0, 5) : [],
-      keywordsChinese: Array.isArray(parsed.keywordsChinese) ? parsed.keywordsChinese.slice(0, 3) : [],
-      category: typeof parsed.category === "string" ? parsed.category : "general",
-      estimatedPriceRange: parsed.estimatedPriceRange?.min != null
-        ? { min: Number(parsed.estimatedPriceRange.min), max: Number(parsed.estimatedPriceRange.max) }
-        : null,
-      productFeatures: Array.isArray(parsed.productFeatures) ? parsed.productFeatures.slice(0, 5) : [],
-      suggestedProductIds: Array.isArray(parsed.suggestedProductIds) ? parsed.suggestedProductIds : [],
-    };
-  } catch {
-    return extractKeywordsRuleBased(input.description || input.url || "", input);
-  }
-}
+  // Parse JSON from response
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("No JSON in response");
 
-/**
- * Rule-based keyword extraction (fallback when AI is unavailable)
- */
-function extractKeywordsRuleBased(
-  text: string,
-  input: { url?: string | null; sourcePrice?: number | null },
-): SearchParams {
-  const cleanText = text.toLowerCase().replace(/[^a-z0-9\s]/g, " ").trim();
-  const words = cleanText.split(/\s+/).filter((w) => w.length > 2);
-
-  // Remove common stop words
-  const stopWords = new Set([
-    "the", "and", "for", "with", "from", "that", "this", "have", "are", "was",
-    "product", "url", "retail", "price", "about", "seats", "back",
-  ]);
-  const keywords = words.filter((w) => !stopWords.has(w)).slice(0, 5);
-
-  // Guess category from keywords
-  const categoryMap: Record<string, string[]> = {
-    furniture: ["table", "chair", "sofa", "desk", "cabinet", "shelf", "bed", "drawer", "bookcase"],
-    lighting: ["light", "lamp", "pendant", "chandelier", "led", "sconce", "lantern"],
-    toys: ["toy", "doll", "plush", "figure", "game", "puzzle"],
-    clothing: ["shirt", "dress", "jacket", "coat", "pants", "sweater", "blouse"],
-    shoes: ["shoe", "sneaker", "boot", "sandal", "slipper"],
-    bags: ["bag", "backpack", "purse", "wallet", "tote", "luggage"],
-    accessories: ["jewelry", "necklace", "earring", "bracelet", "ring", "watch"],
-    electronics: ["phone", "cable", "charger", "speaker", "headphone", "camera"],
-    "home-goods": ["kitchen", "bathroom", "towel", "curtain", "rug", "pillow"],
-    tools: ["tool", "drill", "wrench", "hammer", "screwdriver"],
-  };
-
-  let category = "general";
-  for (const [cat, catWords] of Object.entries(categoryMap)) {
-    if (keywords.some((k) => catWords.includes(k))) {
-      category = cat;
-      break;
-    }
-  }
-
-  // Estimate price range from source price
-  let estimatedPriceRange: { min: number; max: number } | null = null;
-  if (input.sourcePrice) {
-    estimatedPriceRange = {
-      min: Math.round(input.sourcePrice * 0.15 * 100) / 100,
-      max: Math.round(input.sourcePrice * 0.45 * 100) / 100,
-    };
-  }
+  const parsed = JSON.parse(jsonMatch[0]);
 
   return {
-    keywords,
-    keywordsChinese: [],
-    category,
-    estimatedPriceRange,
-    productFeatures: [],
-    suggestedProductIds: [],
+    title: parsed.title || "Unknown product",
+    searchQuery: parsed.searchQuery || parsed.title || "",
+    searchQueryChinese: parsed.searchQueryChinese || "",
+    category: parsed.category || "general",
+    materials: Array.isArray(parsed.materials) ? parsed.materials : [],
+    features: Array.isArray(parsed.features) ? parsed.features : [],
+    estimatedRetailPrice: null,
+    estimatedFactoryPrice: parsed.estimatedFactoryPrice?.min != null
+      ? { min: Number(parsed.estimatedFactoryPrice.min), max: Number(parsed.estimatedFactoryPrice.max) }
+      : null,
+    sourceUrl: null,
+    sourceImageUrl: null,
   };
 }
 
 /**
- * Rank fetched products against the search parameters
+ * Rule-based canonical profile extraction (fallback)
+ */
+function extractRuleBased(context: string): CanonicalProfile {
+  const lower = context.toLowerCase();
+
+  // Extract meaningful words
+  const stopWords = new Set([
+    "the", "and", "for", "with", "from", "that", "this", "have", "are", "was",
+    "product", "url", "retail", "price", "about", "its", "our", "your", "new",
+    "best", "great", "high", "quality", "premium", "luxury", "modern", "details",
+    "source", "description", "http", "https", "www", "com",
+  ]);
+
+  const words = lower.replace(/[^a-z0-9\s]/g, " ").split(/\s+/)
+    .filter((w) => w.length > 2 && !stopWords.has(w));
+
+  // Take 3-5 most relevant words as search query
+  const searchQuery = words.slice(0, 4).join(" ");
+
+  // Extract price
+  const priceMatch = context.match(/\$\s*([\d.]+)/);
+  const retailPrice = priceMatch ? parseFloat(priceMatch[1]) : null;
+
+  return {
+    title: words.slice(0, 6).join(" "),
+    searchQuery,
+    searchQueryChinese: "",
+    category: "general",
+    materials: [],
+    features: [],
+    estimatedRetailPrice: retailPrice,
+    estimatedFactoryPrice: retailPrice
+      ? { min: retailPrice * 0.15, max: retailPrice * 0.40 }
+      : null,
+    sourceUrl: null,
+    sourceImageUrl: null,
+  };
+}
+
+/**
+ * Rank 1688 search results against the canonical profile
  */
 export function rankResults(
-  params: SearchParams,
+  profile: CanonicalProfile,
   products: Product1688[],
   sourcePrice: number | null,
 ): RankedResult[] {
-  const keywordsLower = params.keywords.map((k) => k.toLowerCase());
+  const queryWords = profile.searchQuery.toLowerCase().split(/\s+/).filter(w => w.length > 2);
 
   return products
     .map((product) => {
       const nameLower = product.name.toLowerCase();
-
-      // Calculate relevance score (0-100)
       let score = 0;
-      let matchReasons: string[] = [];
+      const matchReasons: string[] = [];
 
-      // Keyword matching (up to 40 points)
-      const keywordHits = keywordsLower.filter((k) => nameLower.includes(k));
-      score += Math.min(40, keywordHits.length * 15);
-      if (keywordHits.length > 0) {
-        matchReasons.push(`Matches: ${keywordHits.join(", ")}`);
-      }
-
-      // Category matching (10 points)
-      if (params.category !== "general" && product.category?.toLowerCase() === params.category) {
-        score += 10;
+      // Keyword matching (up to 50 points)
+      const hits = queryWords.filter((w) => nameLower.includes(w));
+      const keywordScore = Math.min(50, hits.length * (50 / Math.max(queryWords.length, 1)));
+      score += keywordScore;
+      if (hits.length > 0) {
+        matchReasons.push(`Keywords: ${hits.join(", ")}`);
       }
 
       // Sales volume signal (up to 20 points)
       if (product.salesVolume > 10000) {
         score += 20;
-        matchReasons.push("High sales volume (10K+)");
+        matchReasons.push(`${product.salesVolume.toLocaleString()} sold`);
       } else if (product.salesVolume > 1000) {
-        score += 10;
-        matchReasons.push("Good sales volume (1K+)");
+        score += 12;
+        matchReasons.push(`${product.salesVolume.toLocaleString()} sold`);
       } else if (product.salesVolume > 100) {
         score += 5;
       }
@@ -302,33 +306,42 @@ export function rankResults(
         score += 15;
         matchReasons.push(`Rated ${product.supplierRating}/5`);
       } else if (product.supplierRating && product.supplierRating >= 4.0) {
-        score += 10;
+        score += 8;
       }
 
-      // Price in range (up to 15 points)
-      if (params.estimatedPriceRange) {
-        if (product.priceUSD >= params.estimatedPriceRange.min && product.priceUSD <= params.estimatedPriceRange.max) {
+      // Price sanity check (up to 15 points)
+      if (profile.estimatedFactoryPrice && product.priceUSD > 0) {
+        const { min, max } = profile.estimatedFactoryPrice;
+        if (product.priceUSD >= min && product.priceUSD <= max) {
           score += 15;
           matchReasons.push("Price in expected range");
+        } else if (product.priceUSD < min * 0.5) {
+          // Suspiciously cheap — deduct
+          score -= 10;
+          matchReasons.push("Price unusually low");
         }
       }
 
-      // Calculate pricing
+      // Pricing calculation
       const chinaDirectPrice = product.priceUSD;
-      const estimatedShipping = calculateEstimatedShipping(product);
-      const margin = 0.20; // 20% Doge margin
+      const estimatedShipping = chinaDirectPrice < 5 ? 2 : chinaDirectPrice < 50 ? 5 : 15;
+      const margin = 0.20;
       const dogePrice = Math.round((chinaDirectPrice + estimatedShipping) * (1 + margin) * 100) / 100;
       const savingsPercent = sourcePrice && sourcePrice > 0
         ? Math.round((1 - dogePrice / sourcePrice) * 100)
         : null;
 
       if (savingsPercent && savingsPercent > 0) {
-        matchReasons.push(`${savingsPercent}% cheaper than US retail`);
+        matchReasons.push(`${savingsPercent}% cheaper`);
       }
+
+      // Determine confidence level
+      const confidence = score >= 60 ? "High" : score >= 30 ? "Medium" : "Low";
 
       return {
         product,
-        relevanceScore: Math.min(100, score),
+        relevanceScore: Math.max(0, Math.min(100, score)),
+        matchConfidence: confidence,
         matchReason: matchReasons.join(" · ") || "Potential match",
         pricingAnalysis: {
           chinaDirectPrice,
@@ -340,24 +353,4 @@ export function rankResults(
     })
     .filter((r) => r.relevanceScore > 0)
     .sort((a, b) => b.relevanceScore - a.relevanceScore);
-}
-
-/**
- * Estimate shipping cost per unit based on product price/category
- */
-function calculateEstimatedShipping(product: Product1688): number {
-  // Rough estimate: shipping ~$2-15 per item depending on size
-  // Small items (<$5): ~$2 shipping
-  // Medium items ($5-50): ~$5 shipping
-  // Large items ($50+): ~$15 shipping
-  if (product.priceUSD < 5) return 2.0;
-  if (product.priceUSD < 50) return 5.0;
-  return 15.0;
-}
-
-/**
- * Get product IDs for a category to seed initial results
- */
-export function getProductIdsForCategory(category: string): string[] {
-  return CATEGORY_PRODUCT_IDS[category] || CATEGORY_PRODUCT_IDS.general;
 }

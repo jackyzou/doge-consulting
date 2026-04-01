@@ -2,22 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import {
   getProductDetails,
-  getMultipleProducts,
+  searchProducts,
   extractProductId,
   buildSearchUrl,
-  type Product1688,
 } from "@/lib/sourcing/1688order";
 import {
-  analyzeUserInput,
+  extractCanonicalProfile,
   rankResults,
-  getProductIdsForCategory,
 } from "@/lib/sourcing/product-analyzer";
 
 // POST /api/tools/product-matcher/search — AI product matching with 1688order.com
+//
+// Pipeline:
+//   1. Input (URL / Image / Text) → Canonical Product Profile
+//   2. Canonical Profile → Search 1688order.com
+//   3. Results → Rank & Score → Return to user
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { sourceUrl, imageData, description, sourcePrice, category } = body;
+    const { sourceUrl, imageData, description, sourcePrice } = body;
 
     if (!sourceUrl && !imageData && !description) {
       return NextResponse.json(
@@ -26,7 +29,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Enforce image size limit (~2MB base64 ≈ 2.7M chars)
     if (imageData && imageData.length > 3_000_000) {
       return NextResponse.json(
         { error: "Image too large. Please use an image under 2MB." },
@@ -34,98 +36,80 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Step 1: Check if user provided a direct 1688order.com or 1688.com product URL
+    // ─── Step 1: Direct 1688 product URL? Skip the pipeline ───
     if (sourceUrl) {
       const productId = extractProductId(sourceUrl);
       if (productId) {
-        // Direct product lookup
         const product = await getProductDetails(productId);
         if (product) {
-          const ranked = rankResults(
-            {
-              keywords: product.name.split(/\s+/).slice(0, 5),
-              keywordsChinese: [],
-              category: category || "general",
-              estimatedPriceRange: null,
-              productFeatures: [],
-              suggestedProductIds: [],
-            },
-            [product],
-            sourcePrice ? parseFloat(sourcePrice) : null,
-          );
-
-          // Store the query
-          const query = await storeQuery({
-            sourceUrl,
-            description,
-            sourcePrice,
-            category,
-            inputType: "url",
-          });
-
+          const query = await storeQuery({ sourceUrl, description, sourcePrice, inputType: "direct-1688" });
           return NextResponse.json({
             id: query.id,
-            results: ranked,
+            results: [{
+              product,
+              relevanceScore: 100,
+              matchConfidence: "High",
+              matchReason: "Direct product lookup",
+              pricingAnalysis: {
+                chinaDirectPrice: product.priceUSD,
+                estimatedShipping: product.priceUSD < 5 ? 2 : product.priceUSD < 50 ? 5 : 15,
+                dogePrice: Math.round((product.priceUSD + (product.priceUSD < 5 ? 2 : product.priceUSD < 50 ? 5 : 15)) * 1.2 * 100) / 100,
+                savingsPercent: null,
+              },
+            }],
             searchUrl: product.detailUrl,
             query: product.name,
+            profile: { title: product.name, searchQuery: product.name, category: "direct" },
             inputType: "direct-lookup",
           });
         }
       }
     }
 
-    // Step 2: AI-analyze the user input to extract search parameters
-    const searchParams = await analyzeUserInput({
+    // ─── Step 2: Extract Canonical Product Profile ───
+    const profile = await extractCanonicalProfile({
       url: sourceUrl,
       imageBase64: imageData,
       description,
       sourcePrice: sourcePrice ? parseFloat(sourcePrice) : null,
     });
 
-    // Step 3: Fetch product details from 1688order.com
-    // Use category-based product IDs + any AI-suggested product IDs
-    const targetCategory = searchParams.category || category || "general";
-    const productIds = [
-      ...searchParams.suggestedProductIds,
-      ...getProductIdsForCategory(targetCategory),
-    ];
+    // ─── Step 3: Search 1688order.com with the profile ───
+    const searchQuery = profile.searchQuery || description || "wholesale";
+    const products = await searchProducts(searchQuery);
 
-    // De-duplicate
-    const uniqueIds = [...new Set(productIds)].slice(0, 12);
-
-    // Fetch products in parallel
-    const products: Product1688[] = await getMultipleProducts(uniqueIds);
-
-    // Step 4: Rank results by relevance
+    // ─── Step 4: Rank results against the profile ───
     const ranked = rankResults(
-      searchParams,
+      profile,
       products,
       sourcePrice ? parseFloat(sourcePrice) : null,
     );
 
-    // Construct search URL for user to browse more
-    const searchKeyword = searchParams.keywords[0] || description || "wholesale";
-    const searchUrl = buildSearchUrl(searchKeyword);
+    const searchUrl = buildSearchUrl(searchQuery);
 
-    // Store the query in the database
+    // Store the query for tracking
     const query = await storeQuery({
       sourceUrl,
       imageData,
       description,
       sourcePrice,
-      category: targetCategory,
       inputType: imageData ? "image" : sourceUrl ? "url" : "description",
-      searchKeywords: searchParams.keywords.join(", "),
+      searchKeywords: searchQuery,
     });
 
     return NextResponse.json({
       id: query.id,
-      results: ranked.slice(0, 8),
+      results: ranked.slice(0, 10),
       searchUrl,
-      query: searchParams.keywords.join(" "),
-      keywords: searchParams.keywords,
-      keywordsChinese: searchParams.keywordsChinese,
-      category: targetCategory,
+      query: searchQuery,
+      profile: {
+        title: profile.title,
+        searchQuery: profile.searchQuery,
+        searchQueryChinese: profile.searchQueryChinese,
+        category: profile.category,
+        materials: profile.materials,
+        features: profile.features,
+      },
       inputType: imageData ? "image" : sourceUrl ? "url" : "description",
     });
   } catch (error) {
