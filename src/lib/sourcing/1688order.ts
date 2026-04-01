@@ -104,6 +104,77 @@ export async function searchProducts(keyword: string): Promise<Product1688[]> {
 }
 
 /**
+ * Search 1688order.com by image — uses their native image search
+ * Uploads the image through the site's file input to trigger visual matching.
+ */
+export async function searchByImage(imageBase64: string): Promise<Product1688[]> {
+  // Use a hash of the first 200 chars of base64 as cache key (avoid storing full image)
+  const cacheKey = `imgsearch:${imageBase64.substring(0, 200)}`;
+  const cached = searchCache.get(cacheKey);
+  if (cached && cached.expiry > Date.now()) return cached.data;
+
+  let tempFilePath: string | null = null;
+
+  try {
+    const browser = await getBrowser();
+    const context = await browser.newContext({
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    });
+    const page = await context.newPage();
+
+    await page.route("**/*.{woff,woff2,ttf}", (route) => route.abort());
+    await page.route("**/gtm.js", (route) => route.abort());
+    await page.route("**/gtag/**", (route) => route.abort());
+    await page.route("**/fbevents.js", (route) => route.abort());
+    await page.route("**/bat.bing.com/**", (route) => route.abort());
+
+    // Write base64 image to a temp file for Playwright's file upload
+    const fs = await import("fs");
+    const path = await import("path");
+    const os = await import("os");
+
+    const raw = imageBase64.replace(/^data:image\/[^;]+;base64,/, "");
+    const buffer = Buffer.from(raw, "base64");
+    tempFilePath = path.join(os.tmpdir(), `doge-search-${Date.now()}.jpg`);
+    fs.writeFileSync(tempFilePath, buffer);
+
+    // Navigate to homepage where the image search input is
+    await page.goto("https://1688order.com/pc/", { waitUntil: "domcontentloaded", timeout: 15000 });
+    await page.waitForTimeout(2000);
+
+    // Find the file input for image search and upload
+    const fileInput = page.locator('input[type="file"]');
+    await fileInput.setInputFiles(tempFilePath);
+
+    // Wait for navigation to image search results page
+    await page.waitForURL("**/goods_list**", { timeout: 15000 }).catch(() => {});
+    await page.waitForSelector('a[href*="goods_details"]', { timeout: 10000 }).catch(() => {});
+    await page.waitForTimeout(2000);
+
+    const html = await page.content();
+    await context.close();
+
+    const products = parseSearchResults(html);
+
+    // Cache results
+    searchCache.set(cacheKey, { data: products, expiry: Date.now() + SEARCH_CACHE_TTL });
+
+    return products;
+  } catch (err) {
+    console.error("1688 image search failed:", err);
+    return [];
+  } finally {
+    // Cleanup temp file
+    if (tempFilePath) {
+      try {
+        const fs = await import("fs");
+        fs.unlinkSync(tempFilePath);
+      } catch { /* ignore cleanup errors */ }
+    }
+  }
+}
+
+/**
  * Parse search results from 1688order.com rendered HTML
  *
  * The SPA renders product cards with this text pattern:

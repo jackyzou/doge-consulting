@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import {
   getProductDetails,
   searchProducts,
+  searchByImage,
   extractProductId,
   buildSearchUrl,
 } from "@/lib/sourcing/1688order";
@@ -74,9 +75,25 @@ export async function POST(request: NextRequest) {
       sourcePrice: sourcePrice ? parseFloat(sourcePrice) : null,
     });
 
-    // ─── Step 3: Search 1688order.com with the profile ───
-    const searchQuery = profile.searchQuery || description || "wholesale";
-    const products = await searchProducts(searchQuery);
+    // ─── Step 3: Search 1688order.com ───
+    // Image input → use 1688's native image search (visual matching)
+    // Text/URL input → use keyword search with canonical profile
+    let products;
+    let searchQuery: string;
+
+    if (imageData) {
+      // Image search: upload to 1688order.com's native image search
+      products = await searchByImage(imageData);
+      searchQuery = profile.searchQuery || "image search";
+
+      // If image search returns no results, fall back to keyword search
+      if (products.length === 0 && profile.searchQuery) {
+        products = await searchProducts(profile.searchQuery);
+      }
+    } else {
+      searchQuery = profile.searchQuery || description || "wholesale";
+      products = await searchProducts(searchQuery);
+    }
 
     // ─── Step 4: Rank results against the profile ───
     const ranked = rankResults(
