@@ -29,7 +29,7 @@ const priorityConfig: Record<string, { label: string; color: string; border: str
   low: { label: "Low", color: "bg-slate-50 text-slate-600 border-slate-200", border: "border-l-slate-300" },
 };
 
-const agentColors: Record<string, string> = { alex: "#0F2B46", amy: "#059669", seth: "#2563EB", rachel: "#D97706", seto: "#7C3AED", tiffany: "#EC4899", jacky: "#2EC4B6" };
+const agentColors: Record<string, string> = { alex: "#0F2B46", amy: "#059669", seth: "#2563EB", rachel: "#D97706", seto: "#7C3AED", tiffany: "#EC4899", kim: "#8B5CF6", jacky: "#2EC4B6" };
 const typeIcons: Record<string, string> = { decision: "📋", standup: "🌅", action: "⚡", alert: "🚨", note: "📝" };
 
 // Markdown prose classes — designed to match VS Code preview readability

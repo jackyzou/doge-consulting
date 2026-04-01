@@ -68,6 +68,15 @@ const team = [
     bio: "8 years in customer success, e-commerce operations, and order management. Fluent in English and Mandarin Chinese. First point of contact for all customer inquiries, manages quotes, orders, and ongoing customer relationships.",
     expertise: ["Customer Support", "Order Management", "CRM", "Bilingual EN/ZH", "E-Commerce Operations"],
   },
+  {
+    name: "Kim Park",
+    role: "UI/UX Designer",
+    slug: "kim-park",
+    image: "/team/kim-park.svg",
+    color: "#8B5CF6",
+    bio: "10 years in UI/UX design, brand systems, and conversion optimization. Owns Doge Consulting's visual identity, component library, and accessibility compliance. Specializes in data-dense interfaces for logistics and trade tools.",
+    expertise: ["UI Design", "UX Research", "Brand Systems", "Accessibility", "Conversion Optimization", "Design Systems"],
+  },
 ];
 
 export default function TeamPage() {
