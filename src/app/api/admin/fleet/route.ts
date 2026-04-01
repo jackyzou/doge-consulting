@@ -7,8 +7,8 @@ import { join } from "path";
 // Full agent profiles with descriptions (synced from local Code of Conduct)
 const AGENTS = [
   { id: "alex", name: "Alex Chen", role: "CEO & Co-Founder", avatar: "AC", avatarUrl: "/team/alex-chen.svg", color: "#0F2B46",
-    skills: ["Strategy", "Operations", "Team Management", "Business Development", "Revenue Ops", "Quality Assurance"],
-    bio: "20+ years scaling businesses from $0 to $10M+. Leads strategy, operations, and team coordination." },
+    skills: ["Strategy", "Operations", "Executive Briefs", "Project Orchestration", "Supply Chain Strategy", "Pipeline Management", "Stakeholder Alignment"],
+    bio: "20+ years scaling businesses. McKinsey-grade executive communication (SCQA/Pyramid Principle). Orchestrates cross-functional pipelines, manages supply chain strategy, and leads 7-agent fleet." },
   { id: "amy", name: "Amy Lin", role: "CFO", avatar: "AL", avatarUrl: "/team/amy-lin.svg", color: "#059669",
     skills: ["Accounting", "Pricing Strategy", "Tax Planning", "Cash Flow", "Financial Reporting", "Sales Ops"],
     bio: "15 years in finance, SMB accounting, international trade. Manages pricing, outreach pipeline, and financial reporting." },
