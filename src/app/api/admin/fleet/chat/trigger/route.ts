@@ -12,6 +12,7 @@ const agentNames: Record<string, string> = {
   rachel: "Rachel Morales (CMO)",
   seto: "Seto Nakamura (PRO/Editor)",
   tiffany: "Tiffany Wang (CSO)",
+  kim: "Kim Park (UI/UX Designer)",
 };
 
 /**

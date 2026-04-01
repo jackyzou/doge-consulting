@@ -21,7 +21,7 @@ export function buildContext({ agentId, threadMessages = [], recentDecisions = [
   const profilePaths = [
     profilePath,
     resolve(AGENTS_DIR, "profiles", `${agentId}.md`),
-    ...["alex-chen", "amy-lin", "seth-parker", "rachel-morales", "seto-nakamura", "tiffany-wang"]
+    ...["alex-chen", "amy-lin", "seth-parker", "rachel-morales", "seto-nakamura", "tiffany-wang", "kim-park"]
       .filter(name => name.startsWith(agentId.split("-")[0] || agentId))
       .map(name => resolve(AGENTS_DIR, "profiles", `${name}.md`)),
   ];
@@ -103,6 +103,7 @@ function extractSection(text, agentId) {
     rachel: "Rachel Morales",
     seto: "Seto Nakamura",
     tiffany: "Tiffany Wang",
+    kim: "Kim Park",
   };
   const name = nameMap[agentId] || agentId;
   const regex = new RegExp(`### ${name}[\\s\\S]*?(?=###\\s|## Part|$)`, "i");
@@ -136,6 +137,7 @@ export function updateMemory(agentId, entry) {
     const AGENT_NAMES = {
       alex: "Alex Chen", amy: "Amy Lin", seth: "Seth Parker",
       rachel: "Rachel Morales", seto: "Seto Nakamura", tiffany: "Tiffany Wang",
+      kim: "Kim Park",
     };
     existing = `# ${AGENT_NAMES[agentId] || agentId} — Persistent Memory\n\nKey decisions, learnings, and context preserved across conversations.\n`;
   }

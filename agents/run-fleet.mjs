@@ -605,6 +605,11 @@ function generateTemplateReport(agent) {
       report.decisions = [{ text: "E2E test of customer onboarding flow once SMTP is live", status: "PROPOSED" }];
       report.requests = ["@seth: ETA on SMTP setup?"];
       break;
+    case "kim":
+      report.priorities = [`Auditing site pages for visual consistency and accessibility compliance.`];
+      report.decisions = [{ text: "Conduct design QA of top 5 pages and report findings", status: "PROPOSED" }];
+      report.requests = ["@seth: Coordinate on component improvements", "@rachel: Review landing page conversion"];
+      break;
     default:
       report.priorities = ["Reviewing all agent reports and coordinating priorities."];
       report.decisions = [{ text: "Assign owners and deadlines to approved decisions", status: "PROPOSED" }];

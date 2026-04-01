@@ -9,6 +9,7 @@ const AGENT_NAMES = {
   rachel: "Rachel Morales (CMO)",
   seto: "Seto Nakamura (PRO/Editor)",
   tiffany: "Tiffany Wang (CSO)",
+  kim: "Kim Park (UI/UX Designer)",
 };
 
 const TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes (Opus needs room for deep thinking)
@@ -181,7 +182,7 @@ function parseAgentResponse(agentId, rawResponse) {
   const response = rawResponse.trim();
   
   // Extract @mentions
-  const mentionRegex = /@(alex|amy|seth|rachel|seto|tiffany)\b/gi;
+  const mentionRegex = /@(alex|amy|seth|rachel|seto|tiffany|kim)\b/gi;
   const mentionMatches = response.matchAll(mentionRegex);
   const mentions = [...new Set([...mentionMatches].map(m => m[1].toLowerCase()))];
   

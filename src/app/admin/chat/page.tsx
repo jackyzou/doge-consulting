@@ -22,6 +22,7 @@ const AGENTS: Agent[] = [
   { id: "rachel", name: "Rachel Morales", role: "CMO", avatar: "RM", color: "#D97706" },
   { id: "seto", name: "Seto Nakamura", role: "PRO / Editor", avatar: "SN", color: "#7C3AED" },
   { id: "tiffany", name: "Tiffany Wang", role: "CSO", avatar: "TW", color: "#EC4899" },
+  { id: "kim", name: "Kim Park", role: "UI/UX Designer", avatar: "KP", color: "#8B5CF6" },
 ];
 
 export default function AdminChatPage() {

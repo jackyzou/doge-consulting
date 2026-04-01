@@ -24,6 +24,9 @@ const AGENTS = [
   { id: "tiffany", name: "Tiffany Wang", role: "CSO", avatar: "TW", avatarUrl: "/team/tiffany-wang.svg", color: "#EC4899",
     skills: ["Customer Support", "Quote Management", "Order Tracking", "Pricing", "CRM", "Bilingual EN/ZH"],
     bio: "8 years customer success, e-commerce ops. Warm, proactive. First point of contact, tracks quotes/orders, coordinates with Rachel on customer relationships." },
+  { id: "kim", name: "Kim Park", role: "UI/UX Designer", avatar: "KP", avatarUrl: "/team/kim-park.svg", color: "#8B5CF6",
+    skills: ["UI Design", "UX Research", "Brand Systems", "Accessibility", "Conversion Optimization", "Design QA"],
+    bio: "10 years UI/UX design, brand systems, and conversion optimization. Owns visual identity, component library, and accessibility compliance." },
 ];
 
 interface LogEntry {
