@@ -35,6 +35,7 @@ const PRODUCT_CATEGORIES = [
   { id: "bags-luggage", name: "Bags & Luggage", htsChapter: "42", dutyRate: 8.0, note: "Ranges 3.3-20%" },
   { id: "footwear", name: "Footwear", htsChapter: "64", dutyRate: 10.0, note: "Ranges 6-48% depending on material" },
   { id: "window-blinds", name: "Window Blinds & Coverings", htsChapter: "63/39", dutyRate: 6.5, note: "Textile blinds ~6.5% (HTS 6303.92), plastic/PVC ~5.3% (HTS 3925.30), aluminum venetian ~5.7%" },
+  { id: "robotics", name: "Robotic Arms & Automation", htsChapter: "8479", dutyRate: 0.0, note: "Industrial robots 0% base duty (HTS 8479.50). Cobots, SCARA, 6-axis — all 0% base" },
 ];
 
 // Section 301 tariff info

@@ -47,6 +47,7 @@ const CATEGORY_ICONS: Record<string, string> = {
   furniture: "🪑", electronics: "📱", "home-goods": "🏠", lighting: "💡",
   "kitchen-bath": "🚿", industrial: "🏭", textiles: "🧵", consulting: "🎯",
   "window-coverings": "🪟",
+  "robotics": "�\uddbf",
 };
 
 export default function CatalogPage() {

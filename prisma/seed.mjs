@@ -59,6 +59,10 @@ const products = [
   { name: "Motorized Roller Blind", description: "WiFi-enabled motor, smartphone app control, solar-powered option. Integrates with Alexa/Google Home.", category: "window-coverings", sku: "BLD-MTR-001", unitPrice: 95, unit: "piece", lengthCm: 200, widthCm: 15, heightCm: 15, weightKg: 6 },
   { name: "Cellular Honeycomb Shade", description: "Double-cell construction for superior insulation. Light-filtering and blackout options. Energy Star rated.", category: "window-coverings", sku: "BLD-CEL-001", unitPrice: 65, unit: "piece", lengthCm: 180, widthCm: 12, heightCm: 12, weightKg: 2.5 },
   { name: "Vertical Blind (PVC)", description: "89mm PVC slats, ideal for sliding doors and large windows. Easy-clean, moisture resistant.", category: "window-coverings", sku: "BLD-VRT-001", unitPrice: 45, unit: "piece", lengthCm: 200, widthCm: 15, heightCm: 15, weightKg: 4 },
+  { name: "Desktop Robot Arm (6-DOF)", description: "Educational 6-axis robot arm for STEM learning and prototyping. Compatible with ROS2. Payload 250g. USB/WiFi control.", category: "robotics", sku: "ROB-EDU-001", unitPrice: 650, unit: "piece", lengthCm: 40, widthCm: 30, heightCm: 50, weightKg: 5 },
+  { name: "Collaborative Robot Arm (Cobot)", description: "6-axis cobot, 5kg payload, 900mm reach. ISO 10218/TS 15066 certified. Works alongside humans without safety cage.", category: "robotics", sku: "ROB-COB-001", unitPrice: 9500, unit: "piece", lengthCm: 80, widthCm: 60, heightCm: 100, weightKg: 35 },
+  { name: "SCARA Robot Arm", description: "4-axis SCARA for pick-and-place, assembly, and packaging. 3kg payload, 0.02mm repeatability. Inovance controller.", category: "robotics", sku: "ROB-SCA-001", unitPrice: 4200, unit: "piece", lengthCm: 60, widthCm: 50, heightCm: 80, weightKg: 20 },
+  { name: "Industrial Welding Robot", description: "6-axis arc welding robot. 6kg payload, 1400mm reach. Includes welding torch, wire feeder, and controller. Estun brand.", category: "robotics", sku: "ROB-WLD-001", unitPrice: 22000, unit: "piece", lengthCm: 120, widthCm: 100, heightCm: 150, weightKg: 185 },
 ];
 
 const insertProduct = db.prepare(`INSERT OR IGNORE INTO Product

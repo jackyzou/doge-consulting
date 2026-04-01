@@ -52,6 +52,8 @@ const PRESETS = [
   { name: "Roller Blind (boxed)", l: 180, w: 12, h: 12, wt: 3, icon: "🪟" },
   { name: "Venetian Blind (boxed)", l: 190, w: 15, h: 15, wt: 5, icon: "🪟" },
   { name: "Motorized Blind Kit", l: 200, w: 15, h: 15, wt: 6, icon: "🪟" },
+  { name: "Desktop Robot Arm", l: 40, w: 30, h: 50, wt: 5, icon: "�\uddbf" },
+  { name: "Cobot (crated)", l: 80, w: 60, h: 100, wt: 35, icon: "�\uddbf" },
 ];
 
 export default function CBMCalculatorPage() {
