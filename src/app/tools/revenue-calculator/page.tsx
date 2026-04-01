@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "@/lib/i18n";
 import {
@@ -30,6 +30,7 @@ import {
   type IncotermCode,
 } from "@/lib/landed-cost-calculator";
 import { fmtCurrency, fmtPct, round } from "@/lib/unit-conversions";
+import { ToolConversionGate, triggerToolGateCheck } from "@/components/conversion/ConversionGate";
 
 const toNum = (s: string) => parseFloat(s) || 0;
 
@@ -92,9 +93,17 @@ export default function RevenueCalculatorPage() {  const { t } = useTranslation(
 
   const result = useMemo(() => calculateRevenue(input), [input]);
 
+  // Trigger conversion gate check whenever user changes a meaningful input
+  useEffect(() => {
+    if (input.productCostPerUnit > 0 && input.quantity > 0) {
+      triggerToolGateCheck();
+    }
+  }, [input.productCostPerUnit, input.quantity, input.sellingPricePerUnit]);
+
   const isProfitable = result.grossProfit > 0;
 
   return (
+    <ToolConversionGate toolName="revenue-calculator">
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Hero */}
       <section className="gradient-hero py-16 text-white">
@@ -525,5 +534,6 @@ export default function RevenueCalculatorPage() {  const { t } = useTranslation(
         </div>
       </div>
     </div>
+    </ToolConversionGate>
   );
 }

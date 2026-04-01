@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "@/lib/i18n";
+import { ToolConversionGate, triggerToolGateCheck } from "@/components/conversion/ConversionGate";
 import { Calculator, Plus, Trash2, Box, ArrowRight, Ruler, Scale, Ship, Info, BarChart3, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,6 +62,7 @@ export default function CBMCalculatorPage() {
 
   const addItem = () => {
     setItems([...items, { id: nextId++, name: `Item ${items.length + 1}`, length: "", width: "", height: "", weight: "", qty: "1" }]);
+    triggerToolGateCheck();
   };
 
   const removeItem = (id: number) => {
@@ -155,6 +157,7 @@ export default function CBMCalculatorPage() {
   };
 
   return (
+    <ToolConversionGate toolName="cbm-calculator">
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Hero */}
       <section className="gradient-hero py-16 text-white">
@@ -550,5 +553,6 @@ export default function CBMCalculatorPage() {
         </div>
       </div>
     </div>
+    </ToolConversionGate>
   );
 }

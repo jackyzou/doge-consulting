@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BlogConversionGate } from "@/components/conversion/ConversionGate";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Calendar, Clock, User, List, Share2, Eye } from "lucide-react";
@@ -117,6 +118,8 @@ export function BlogPostClient({ post, related, slug }: { post: Post; related: R
 
           <div className="lg:col-span-3 order-1 lg:order-2 min-w-0">
             <Card className="overflow-hidden"><CardContent className="p-3 sm:p-6 lg:p-10"><div className="prose prose-slate max-w-none break-words [&_table]:w-full [&_table]:border-collapse [&_table]:my-6 [&_table]:text-sm [&_table]:rounded-lg [&_table]:overflow-hidden [&_table]:border [&_img]:rounded-xl [&_img]:shadow-md [&_img]:max-w-full [&_figure]:my-6 [&_blockquote]:my-6 [&_h2]:text-xl [&_h2]:sm:text-2xl [&_h3]:text-base [&_h3]:sm:text-lg [&_p]:text-sm [&_p]:sm:text-[15px] [&_li]:text-sm [&_li]:sm:text-[15px] overflow-x-auto" dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content, !!coverImage) }} /></CardContent></Card>
+
+            <BlogConversionGate postSlug={slug} />
 
             <Card className="mt-6"><CardContent className="p-6 flex items-start gap-4"><img src="/team/seto-nakamura.svg" alt={post.authorName} className="h-16 w-16 rounded-full object-cover shrink-0 shadow-md border-2 border-teal" /><div><p className="font-bold text-base">{post.authorName}</p><p className="text-xs text-teal font-medium mb-2">Sourcing &amp; Logistics Experts · <a href="/team" className="text-teal hover:underline">Meet the Team</a></p><p className="text-sm text-muted-foreground leading-relaxed">Our team has helped hundreds of businesses import goods from China. We specialize in door-to-door shipping, customs clearance, and product sourcing from China&apos;s manufacturing regions.</p></div></CardContent></Card>
 

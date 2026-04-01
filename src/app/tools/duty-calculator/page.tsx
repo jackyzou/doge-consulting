@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Calculator, Search, DollarSign, ArrowRight, Info } from "lucide-react";
+import { ToolConversionGate, triggerToolGateCheck } from "@/components/conversion/ConversionGate";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -62,7 +63,13 @@ export default function DutyCalculatorPage() {
   const hmtFee = customsValue > 0 ? customsValue * 0.00125 : 0; // Harbor Maintenance Tax
   const totalLandedCost = customsValue + totalDuty + mphFee + hmtFee;
 
+  // Trigger conversion gate when user enters meaningful values
+  if (typeof window !== "undefined" && Number(productValue) > 0) {
+    triggerToolGateCheck();
+  }
+
   return (
+    <ToolConversionGate toolName="duty-calculator">
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <section className="gradient-hero py-16 text-white">
         <div className="mx-auto max-w-7xl px-4 text-center">
@@ -225,5 +232,6 @@ export default function DutyCalculatorPage() {
         </div>
       </div>
     </div>
+    </ToolConversionGate>
   );
 }
