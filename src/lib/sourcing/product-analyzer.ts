@@ -52,10 +52,15 @@ export async function extractCanonicalProfile(input: {
 }): Promise<CanonicalProfile> {
   const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
-  // Step 1: If URL provided, scrape the source product page with Playwright
+  // Step 1: If URL provided, try to scrape the source product page
   let scrapedData: ScrapedProduct = {};
   if (input.url && !input.url.includes("1688")) {
     scrapedData = await scrapeSourceProduct(input.url);
+
+    // If scraping failed (bot detection), extract product info from the URL itself
+    if (!scrapedData.title && input.url) {
+      scrapedData.title = extractTitleFromUrl(input.url);
+    }
   }
 
   // Use scraped price as retail price baseline if user didn't provide one
@@ -101,14 +106,62 @@ interface ScrapedProduct {
 }
 
 /**
- * Scrape a source product page using Playwright headless browser.
+ * Extract a human-readable product title from a URL path.
+ * Works well for most e-commerce URLs which encode product names in the path.
+ * e.g., "/products/mid-century-coffee-table-h3327/" → "mid century coffee table"
+ * e.g., "/patagonia-nano-puff-jacket-mens" → "patagonia nano puff jacket mens"
+ */
+function extractTitleFromUrl(url: string): string | undefined {
+  try {
+    const parsed = new URL(url);
+    const hostname = parsed.hostname.replace("www.", "");
+    const pathSegments = parsed.pathname.split("/").filter(Boolean);
+
+    // Find the longest path segment (usually the product name)
+    let bestSegment = "";
+    for (const seg of pathSegments) {
+      // Skip common non-product segments
+      if (/^(p|dp|ip|product|products|shop|category|pdp|s\d+)$/i.test(seg)) continue;
+      // Skip very short segments or pure IDs
+      if (seg.length < 5 || /^\d+$/.test(seg) || /^[A-Z0-9]{8,}$/.test(seg)) continue;
+
+      if (seg.length > bestSegment.length) bestSegment = seg;
+    }
+
+    if (!bestSegment) return undefined;
+
+    // Convert URL slugs to readable text
+    const title = bestSegment
+      .replace(/[-_]/g, " ")           // hyphens/underscores → spaces
+      .replace(/\.[^.]*$/g, "")        // strip file extensions (.html, .product.xxx)
+      .replace(/\b[a-z]?\d+\b/g, "")  // remove product codes (h3327, s153800)
+      .replace(/\s+/g, " ")           // collapse whitespace
+      .trim();
+
+    // Capitalize first letter of each word
+    const readable = title.replace(/\b\w/g, (c) => c.toUpperCase());
+
+    // Prepend store name for context when sending to AI
+    const store = hostname.split(".")[0];
+    return `${readable} (from ${store})`;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Scrape a source product page. Tries fast fetch first, then Playwright.
  * Extracts title, description, price, and main product image.
- * Works with Amazon, Shopify, Wayfair, IKEA, and most e-commerce sites.
  */
 async function scrapeSourceProduct(url: string): Promise<ScrapedProduct> {
+  // Strategy 1: Plain fetch (fast, works for sites with OG meta in SSR HTML)
+  const fetchResult = await scrapeWithFetch(url);
+  if (fetchResult.title && (fetchResult.price || fetchResult.imageUrl)) {
+    return fetchResult;
+  }
+
+  // Strategy 2: Playwright headless browser (slower, but renders JS)
   try {
-    // Reuse the singleton browser from 1688order module to avoid launching
-    // a new Chromium instance per request (which causes timeouts)
     const { getBrowserInstance } = await import("./1688order");
     const browser = await getBrowserInstance();
     const context = await browser.newContext({
@@ -118,12 +171,9 @@ async function scrapeSourceProduct(url: string): Promise<ScrapedProduct> {
     });
     const page = await context.newPage();
 
-    // Hide webdriver flag to avoid bot detection
     await page.addInitScript(() => {
       Object.defineProperty(navigator, "webdriver", { get: () => false });
     });
-
-    // Block heavy resources
     await page.route("**/*.{woff,woff2,ttf,mp4,webm}", (route) => route.abort());
 
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 15000 });
@@ -134,13 +184,15 @@ async function scrapeSourceProduct(url: string): Promise<ScrapedProduct> {
     // Don't close `browser` — it's the singleton from 1688order.ts
 
     // ─── Title extraction (try multiple strategies) ───
-    const title =
+    const botSignals = /Access Denied|Robot or human|Error Page|403 error|captcha|Sorry/i;
+    const rawTitle =
       html.match(/id="productTitle"[^>]*>\s*([^<]+)/)?.[1]?.trim() || // Amazon
       html.match(/property="og:title"\s+content="([^"]+)"/)?.[1] ||
       html.match(/content="([^"]+)"[^>]*property="og:title"/)?.[1] ||
-      html.match(/<h1[^>]*class="[^"]*product[^"]*"[^>]*>([^<]+)/i)?.[1]?.trim() || // Generic
+      html.match(/<h1[^>]*class="[^"]*product[^"]*"[^>]*>([^<]+)/i)?.[1]?.trim() ||
       html.match(/<h1[^>]*>([^<]+)/)?.[1]?.trim() ||
       html.match(/<title[^>]*>([^<]+)/)?.[1]?.replace(/\s*[-|–].*/g, "").trim();
+    const title = rawTitle && !botSignals.test(rawTitle) ? rawTitle : undefined;
 
     // ─── Price extraction (try multiple strategies) ───
     // Strategy 1: Amazon price patterns
@@ -188,15 +240,15 @@ async function scrapeSourceProduct(url: string): Promise<ScrapedProduct> {
       html.match(/name="description"\s+content="([^"]+)"/)?.[1];
 
     return {
-      title: title?.substring(0, 200),
-      description: description?.substring(0, 500),
-      price: price && price > 0 ? price : undefined,
-      imageUrl,
+      title: title?.substring(0, 200) || fetchResult.title,
+      description: description?.substring(0, 500) || fetchResult.description,
+      price: (price && price > 0 ? price : undefined) || fetchResult.price,
+      imageUrl: imageUrl || fetchResult.imageUrl,
     };
   } catch (err) {
-    console.error("Playwright scrape failed, trying plain fetch:", err);
-    // Fallback to plain fetch for simpler sites
-    return scrapeWithFetch(url);
+    console.error("Playwright scrape failed:", err);
+    // Return whatever fetch found (may be partial)
+    return fetchResult;
   }
 }
 
@@ -216,19 +268,32 @@ function extractDynamicImage(html: string): string | undefined {
 async function scrapeWithFetch(url: string): Promise<ScrapedProduct> {
   try {
     const res = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
       signal: AbortSignal.timeout(10000),
       redirect: "follow",
     });
     if (!res.ok) return {};
     const html = await res.text();
 
+    // Filter out bot-detection pages
+    const botSignals = /Access Denied|Robot or human|Error Page|403 error|captcha/i;
+    const rawTitle = html.match(/property="og:title"\s+content="([^"]+)"/)?.[1]
+      || html.match(/content="([^"]+)"[^>]*property="og:title"/)?.[1]
+      || html.match(/<title[^>]*>([^<]+)/)?.[1]?.replace(/\s*[-|].*/g, "").trim();
+
+    const title = rawTitle && !botSignals.test(rawTitle) ? rawTitle.substring(0, 200) : undefined;
+
     return {
-      title: (html.match(/property="og:title"\s+content="([^"]+)"/)?.[1]
-        || html.match(/<title[^>]*>([^<]+)/)?.[1]?.replace(/\s*[-|].*/g, "").trim())?.substring(0, 200),
-      description: html.match(/property="og:description"\s+content="([^"]+)"/)?.[1]?.substring(0, 500),
+      title,
+      description: (html.match(/property="og:description"\s+content="([^"]+)"/)?.[1]
+        || html.match(/content="([^"]+)"[^>]*property="og:description"/)?.[1])?.substring(0, 500),
       price: parseFloat(html.match(/"price"\s*:\s*"?([\d.]+)/)?.[1] || "0") || undefined,
-      imageUrl: html.match(/property="og:image"\s+content="([^"]+)"/)?.[1],
+      imageUrl: html.match(/property="og:image"\s+content="([^"]+)"/)?.[1]
+        || html.match(/content="([^"]+)"[^>]*property="og:image"/)?.[1],
     };
   } catch {
     return {};
