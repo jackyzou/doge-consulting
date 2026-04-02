@@ -608,11 +608,27 @@ export default function ProductMatcherV2() {
                 ))}
               </div>
             ) : (
-              <Card className="p-6 text-center">
-                <Package className="h-10 w-10 mx-auto text-slate-300 mb-3" />
-                <p className="text-sm text-muted-foreground">
-                  No matching products found for this search. Try different keywords or upload a clearer photo.
-                </p>
+              <Card className="p-6 sm:p-8 text-center space-y-4">
+                <Package className="h-12 w-12 mx-auto text-slate-300" />
+                <div>
+                  <p className="text-base font-semibold text-navy">We couldn&apos;t find an automatic match</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Our sourcing team can manually find this product for you from our factory network — leave your info and we&apos;ll get back within 24 hours with options and pricing.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setQuoteProduct({
+                    product: { id: "manual", name: searchResponse.query || "Custom sourcing request", priceUSD: 0, priceCNY: 0, imageUrl: "", salesVolume: 0, detailUrl: "", supplierRating: null, minOrder: 1 },
+                    relevanceScore: 0,
+                    matchConfidence: "Manual",
+                    matchReason: "Manual sourcing by our team",
+                    pricingAnalysis: { chinaDirectPrice: 0, estimatedShipping: 0, dogePrice: 0, savingsPercent: null },
+                  })}
+                  className="bg-teal hover:bg-teal/90 text-white px-6 h-10"
+                >
+                  <ArrowRight className="h-4 w-4 mr-2" /> Request Manual Sourcing
+                </Button>
+                <p className="text-xs text-muted-foreground">Free — no commitment required</p>
               </Card>
             )}
           </motion.div>
