@@ -46,6 +46,11 @@ interface SearchResponse {
   id: string;
   results: ProductResult[];
   query: string;
+  sourceProduct?: {
+    title?: string;
+    imageUrl?: string;
+    retailPrice?: number;
+  };
   profile?: {
     title?: string;
     searchQuery?: string;
@@ -205,7 +210,8 @@ export default function ProductMatcherV2() {
     clearImage();
   };
 
-  const sourcePrice = price ? parseFloat(price) : null;
+  const sourcePrice = searchResponse?.sourceProduct?.retailPrice
+    || (price ? parseFloat(price) : null);
 
   return (
     <div className="space-y-6">
@@ -453,6 +459,32 @@ export default function ProductMatcherV2() {
                 <RotateCcw className="h-3.5 w-3.5 mr-1" /> New Search
               </Button>
             </div>
+
+            {/* Source product reference (scraped from user's link) */}
+            {searchResponse.sourceProduct && (
+              <Card className="border-blue-200 bg-blue-50/50 p-4">
+                <div className="flex items-start gap-3">
+                  {searchResponse.sourceProduct.imageUrl && (
+                    <img
+                      src={searchResponse.sourceProduct.imageUrl}
+                      alt="Source product"
+                      className="w-16 h-16 object-contain rounded border bg-white shrink-0"
+                    />
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">Your product</p>
+                    <p className="text-sm font-semibold text-navy line-clamp-2">
+                      {searchResponse.sourceProduct.title}
+                    </p>
+                    {searchResponse.sourceProduct.retailPrice && (
+                      <p className="text-sm font-bold text-slate-600 mt-1">
+                        US Retail: ${searchResponse.sourceProduct.retailPrice.toFixed(2)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            )}
 
             {/* Product cards grid */}
             {searchResponse.results.length > 0 ? (

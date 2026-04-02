@@ -95,10 +95,13 @@ export async function POST(request: NextRequest) {
     }
 
     // ─── Step 4: Rank results against the profile ───
+    // Use the scraped retail price (or user-provided price) as the comparison baseline
+    const retailPrice = profile.estimatedRetailPrice || (sourcePrice ? parseFloat(sourcePrice) : null);
+
     const ranked = rankResults(
       profile,
       products,
-      sourcePrice ? parseFloat(sourcePrice) : null,
+      retailPrice,
     );
 
     // Store the query for tracking (admin can see 1688 URLs in the DB)
@@ -106,7 +109,7 @@ export async function POST(request: NextRequest) {
       sourceUrl,
       imageData,
       description,
-      sourcePrice,
+      sourcePrice: retailPrice || sourcePrice,
       inputType: imageData ? "image" : sourceUrl ? "url" : "description",
       searchKeywords: searchQuery,
     });
@@ -124,6 +127,12 @@ export async function POST(request: NextRequest) {
       id: query.id,
       results: sanitizedResults,
       query: searchQuery,
+      // Source product info — displayed on frontend for comparison
+      sourceProduct: retailPrice || profile.title !== "Unknown product" ? {
+        title: profile.title,
+        imageUrl: profile.sourceImageUrl,
+        retailPrice: retailPrice,
+      } : undefined,
       profile: {
         title: profile.title,
         searchQuery: profile.searchQuery,

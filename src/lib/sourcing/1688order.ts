@@ -45,7 +45,7 @@ async function getBrowser() {
     browserPromise = import("playwright").then(async (pw) => {
       const browser = await pw.chromium.launch({
         headless: true,
-        args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+        args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-blink-features=AutomationControlled"],
       });
       return browser;
     }).catch((err) => {
@@ -54,6 +54,15 @@ async function getBrowser() {
     });
   }
   return browserPromise;
+}
+
+/** Create a browser context with stealth settings */
+async function createStealthContext(browser: import("playwright").Browser) {
+  const context = await browser.newContext({
+    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    locale: "en-US",
+  });
+  return context;
 }
 
 /**
@@ -68,9 +77,7 @@ export async function searchProducts(keyword: string): Promise<Product1688[]> {
 
   try {
     const browser = await getBrowser();
-    const context = await browser.newContext({
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    });
+    const context = await createStealthContext(browser);
     const page = await context.newPage();
 
     // Block heavy resources
@@ -117,9 +124,7 @@ export async function searchByImage(imageBase64: string): Promise<Product1688[]>
 
   try {
     const browser = await getBrowser();
-    const context = await browser.newContext({
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    });
+    const context = await createStealthContext(browser);
     const page = await context.newPage();
 
     await page.route("**/*.{woff,woff2,ttf}", (route) => route.abort());
@@ -140,16 +145,29 @@ export async function searchByImage(imageBase64: string): Promise<Product1688[]>
 
     // Navigate to homepage where the image search input is
     await page.goto("https://1688order.com/pc/", { waitUntil: "domcontentloaded", timeout: 15000 });
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
 
-    // Find the file input for image search and upload
+    // Find and upload to the file input (used by "AI Image Search" button)
     const fileInput = page.locator('input[type="file"]');
+    const fileInputCount = await fileInput.count();
+    if (fileInputCount === 0) {
+      console.error("1688 image search: No file input found on page");
+      await context.close();
+      return [];
+    }
+
     await fileInput.setInputFiles(tempFilePath);
+    console.log("1688 image search: File uploaded, waiting for results...");
 
     // Wait for navigation to image search results page
-    await page.waitForURL("**/goods_list**", { timeout: 15000 }).catch(() => {});
+    await page.waitForURL("**/goods_list**", { timeout: 20000 }).catch(() => {
+      console.error("1688 image search: No navigation after upload. URL:", page.url());
+    });
     await page.waitForSelector('a[href*="goods_details"]', { timeout: 10000 }).catch(() => {});
     await page.waitForTimeout(2000);
+
+    const finalUrl = page.url();
+    console.log("1688 image search: Final URL:", finalUrl);
 
     const html = await page.content();
     await context.close();
@@ -256,9 +274,7 @@ export async function getProductDetails(productId: string): Promise<Product1688 
 
   try {
     const browser = await getBrowser();
-    const context = await browser.newContext({
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    });
+    const context = await createStealthContext(browser);
     const page = await context.newPage();
 
     // Block unnecessary resources to speed up page load

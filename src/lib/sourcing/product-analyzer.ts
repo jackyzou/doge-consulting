@@ -52,71 +52,184 @@ export async function extractCanonicalProfile(input: {
 }): Promise<CanonicalProfile> {
   const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
-  // Step 1: If URL provided, scrape the source product page first
-  let scrapedData: { title?: string; description?: string; price?: number; imageUrl?: string } = {};
+  // Step 1: If URL provided, scrape the source product page with Playwright
+  let scrapedData: ScrapedProduct = {};
   if (input.url && !input.url.includes("1688")) {
     scrapedData = await scrapeSourceProduct(input.url);
   }
+
+  // Use scraped price as retail price baseline if user didn't provide one
+  const retailPrice = input.sourcePrice || scrapedData.price || null;
 
   // Build context from all available information
   const combinedContext = buildContext(input, scrapedData);
 
   // Step 2: Use AI to extract canonical profile
+  let profile: CanonicalProfile;
   if (ANTHROPIC_API_KEY) {
     try {
-      return await extractWithAI(combinedContext, input.imageBase64, ANTHROPIC_API_KEY);
+      profile = await extractWithAI(combinedContext, input.imageBase64, ANTHROPIC_API_KEY);
     } catch (err) {
       console.error("AI extraction failed, using fallback:", err);
+      profile = extractRuleBased(combinedContext);
     }
+  } else {
+    profile = extractRuleBased(combinedContext);
   }
 
-  // Step 3: Fallback — rule-based extraction
-  return extractRuleBased(combinedContext);
+  // Attach the scraped source data to the profile
+  profile.estimatedRetailPrice = retailPrice;
+  profile.sourceUrl = input.url || null;
+  profile.sourceImageUrl = scrapedData.imageUrl || null;
+
+  // If we have retail price, recalculate factory price estimate
+  if (retailPrice && !profile.estimatedFactoryPrice) {
+    profile.estimatedFactoryPrice = {
+      min: Math.round(retailPrice * 0.10 * 100) / 100,
+      max: Math.round(retailPrice * 0.35 * 100) / 100,
+    };
+  }
+
+  return profile;
 }
 
-/**
- * Scrape a source product page (Amazon, Shopify, etc.) to extract product info
- */
-async function scrapeSourceProduct(url: string): Promise<{
+interface ScrapedProduct {
   title?: string;
   description?: string;
   price?: number;
   imageUrl?: string;
-}> {
+}
+
+/**
+ * Scrape a source product page using Playwright headless browser.
+ * Extracts title, description, price, and main product image.
+ * Works with Amazon, Shopify, Wayfair, IKEA, and most e-commerce sites.
+ */
+async function scrapeSourceProduct(url: string): Promise<ScrapedProduct> {
   try {
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        Accept: "text/html",
-      },
-      signal: AbortSignal.timeout(10000),
-      redirect: "follow",
+    const pw = await import("playwright");
+    const browser = await pw.chromium.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-blink-features=AutomationControlled"],
+    });
+    const context = await browser.newContext({
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      locale: "en-US",
+      viewport: { width: 1920, height: 1080 },
+    });
+    const page = await context.newPage();
+
+    // Hide webdriver flag to avoid bot detection
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "webdriver", { get: () => false });
     });
 
-    if (!res.ok) return {};
-    const html = await res.text();
+    // Block heavy resources
+    await page.route("**/*.{woff,woff2,ttf,mp4,webm}", (route) => route.abort());
 
-    // Extract Open Graph / meta data (works on most e-commerce sites)
-    const ogTitle = html.match(/property="og:title"\s+content="([^"]+)"/)?.[1]
-      || html.match(/name="og:title"\s+content="([^"]+)"/)?.[1];
-    const metaTitle = html.match(/<title[^>]*>([^<]+)/)?.[1];
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 15000 });
+    await page.waitForTimeout(4000);
 
-    const ogDesc = html.match(/property="og:description"\s+content="([^"]+)"/)?.[1];
+    const html = await page.content();
+    await context.close();
+    await browser.close();
 
-    const ogImage = html.match(/property="og:image"\s+content="([^"]+)"/)?.[1];
+    // ─── Title extraction (try multiple strategies) ───
+    const title =
+      html.match(/id="productTitle"[^>]*>\s*([^<]+)/)?.[1]?.trim() || // Amazon
+      html.match(/property="og:title"\s+content="([^"]+)"/)?.[1] ||
+      html.match(/content="([^"]+)"[^>]*property="og:title"/)?.[1] ||
+      html.match(/<h1[^>]*class="[^"]*product[^"]*"[^>]*>([^<]+)/i)?.[1]?.trim() || // Generic
+      html.match(/<h1[^>]*>([^<]+)/)?.[1]?.trim() ||
+      html.match(/<title[^>]*>([^<]+)/)?.[1]?.replace(/\s*[-|–].*/g, "").trim();
 
-    // Extract price — look for structured data or common patterns
-    const priceLD = html.match(/"price"\s*:\s*"?([\d.]+)"?/)?.[1];
-    const priceMeta = html.match(/property="product:price:amount"\s+content="([^"]+)"/)?.[1];
+    // ─── Price extraction (try multiple strategies) ───
+    // Strategy 1: Amazon price patterns
+    const priceWhole = html.match(/class="a-price-whole"[^>]*>([^<]+)/)?.[1]?.replace(/[^0-9]/g, "");
+    const priceFrac = html.match(/class="a-price-fraction"[^>]*>([^<]+)/)?.[1];
+    const amazonPrice = priceWhole ? parseFloat(`${priceWhole}.${priceFrac || "00"}`) : null;
 
-    const title = ogTitle || metaTitle?.replace(/\s*[-|].*$/, "").trim();
-    const price = parseFloat(priceLD || priceMeta || "0") || undefined;
+    // Strategy 2: Price in hidden accessible text
+    const offscreenPrice = html.match(/class="a-offscreen"[^>]*>\$([\d,.]+)/)?.[1];
+
+    // Strategy 3: JSON-LD structured data
+    const ldPrice = html.match(/"price"\s*:\s*"?([\d.]+)/)?.[1];
+
+    // Strategy 4: Meta tag
+    const metaPrice = html.match(/product:price:amount.*?content="([\d.]+)"/)?.[1]
+      || html.match(/content="([\d.]+)".*?product:price:amount/)?.[1];
+
+    // Strategy 5: Shopify price pattern
+    const shopifyPrice = html.match(/"price"\s*:\s*(\d+)/)?.[1]; // Shopify stores price in cents
+
+    // Strategy 6: Generic price on page
+    const genericPrice = html.match(/class="[^"]*price[^"]*"[^>]*>\s*\$\s*([\d,.]+)/i)?.[1];
+
+    const price = amazonPrice
+      || (offscreenPrice ? parseFloat(offscreenPrice.replace(/,/g, "")) : null)
+      || (ldPrice ? parseFloat(ldPrice) : null)
+      || (metaPrice ? parseFloat(metaPrice) : null)
+      || (shopifyPrice ? parseFloat(shopifyPrice) / 100 : null)
+      || (genericPrice ? parseFloat(genericPrice.replace(/,/g, "")) : null);
+
+    // ─── Image extraction (try multiple strategies) ───
+    const imageUrl =
+      html.match(/data-old-hires="([^"]+)"/)?.[1] || // Amazon high-res
+      html.match(/property="og:image"\s+content="([^"]+)"/)?.[1] ||
+      html.match(/content="([^"]+)"[^>]*property="og:image"/)?.[1] ||
+      html.match(/id="landingImage"[^>]*src="([^"]+)"/)?.[1] || // Amazon
+      extractDynamicImage(html) || // Amazon dynamic image
+      html.match(/<img[^>]*class="[^"]*product[^"]*"[^>]*src="([^"]+)"/i)?.[1] || // Generic
+      undefined;
+
+    // ─── Description extraction ───
+    const description =
+      html.match(/property="og:description"\s+content="([^"]+)"/)?.[1] ||
+      html.match(/content="([^"]+)"[^>]*property="og:description"/)?.[1] ||
+      html.match(/name="description"\s+content="([^"]+)"/)?.[1];
 
     return {
       title: title?.substring(0, 200),
-      description: ogDesc?.substring(0, 500),
-      price,
-      imageUrl: ogImage,
+      description: description?.substring(0, 500),
+      price: price && price > 0 ? price : undefined,
+      imageUrl,
+    };
+  } catch (err) {
+    console.error("Playwright scrape failed, trying plain fetch:", err);
+    // Fallback to plain fetch for simpler sites
+    return scrapeWithFetch(url);
+  }
+}
+
+/** Extract Amazon dynamic image URL from data-a-dynamic-image attribute */
+function extractDynamicImage(html: string): string | undefined {
+  const match = html.match(/data-a-dynamic-image="([^"]+)"/);
+  if (!match) return undefined;
+  try {
+    const decoded = match[1].replace(/&quot;/g, '"');
+    return Object.keys(JSON.parse(decoded))[0];
+  } catch {
+    return undefined;
+  }
+}
+
+/** Plain fetch fallback for simple sites */
+async function scrapeWithFetch(url: string): Promise<ScrapedProduct> {
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+      signal: AbortSignal.timeout(10000),
+      redirect: "follow",
+    });
+    if (!res.ok) return {};
+    const html = await res.text();
+
+    return {
+      title: (html.match(/property="og:title"\s+content="([^"]+)"/)?.[1]
+        || html.match(/<title[^>]*>([^<]+)/)?.[1]?.replace(/\s*[-|].*/g, "").trim())?.substring(0, 200),
+      description: html.match(/property="og:description"\s+content="([^"]+)"/)?.[1]?.substring(0, 500),
+      price: parseFloat(html.match(/"price"\s*:\s*"?([\d.]+)/)?.[1] || "0") || undefined,
+      imageUrl: html.match(/property="og:image"\s+content="([^"]+)"/)?.[1],
     };
   } catch {
     return {};
