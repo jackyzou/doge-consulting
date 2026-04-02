@@ -31,10 +31,9 @@ export interface ProductVariant {
   available: number;
 }
 
-// Simple in-memory cache with TTL — keyed by search query or product ID
-const searchCache = new Map<string, { data: Product1688[]; expiry: number }>();
+// No caching for searches — every search is fresh with live results
+// Product detail cache is kept since individual pages don't change often
 const productCache = new Map<string, { data: Product1688; expiry: number }>();
-const SEARCH_CACHE_TTL = 10 * 60 * 1000; // 10 minutes for search results
 const PRODUCT_CACHE_TTL = 60 * 60 * 1000; // 1 hour for product detail
 
 // Singleton browser instance
@@ -74,10 +73,6 @@ async function createStealthContext(browser: import("playwright").Browser) {
 export async function searchProducts(keyword: string): Promise<Product1688[]> {
   if (!keyword.trim()) return [];
 
-  const cacheKey = `search:${keyword.trim().toLowerCase()}`;
-  const cached = searchCache.get(cacheKey);
-  if (cached && cached.expiry > Date.now()) return cached.data;
-
   try {
     const browser = await getBrowser();
     const context = await createStealthContext(browser);
@@ -103,9 +98,6 @@ export async function searchProducts(keyword: string): Promise<Product1688[]> {
 
     const products = parseSearchResults(html);
 
-    // Cache results
-    searchCache.set(cacheKey, { data: products, expiry: Date.now() + SEARCH_CACHE_TTL });
-
     return products;
   } catch (err) {
     console.error(`1688 search failed for "${keyword}":`, err);
@@ -118,11 +110,6 @@ export async function searchProducts(keyword: string): Promise<Product1688[]> {
  * Uploads the image through the site's file input to trigger visual matching.
  */
 export async function searchByImage(imageBase64: string): Promise<Product1688[]> {
-  // Use a hash of the first 200 chars of base64 as cache key (avoid storing full image)
-  const cacheKey = `imgsearch:${imageBase64.substring(0, 200)}`;
-  const cached = searchCache.get(cacheKey);
-  if (cached && cached.expiry > Date.now()) return cached.data;
-
   let tempFilePath: string | null = null;
 
   try {
@@ -176,9 +163,6 @@ export async function searchByImage(imageBase64: string): Promise<Product1688[]>
     await context.close();
 
     const products = parseSearchResults(html);
-
-    // Cache results
-    searchCache.set(cacheKey, { data: products, expiry: Date.now() + SEARCH_CACHE_TTL });
 
     return products;
   } catch (err) {
@@ -440,6 +424,5 @@ export function buildSearchUrl(keyword: string): string {
  * Clean caches (for testing)
  */
 export function clearCache(): void {
-  searchCache.clear();
   productCache.clear();
 }
