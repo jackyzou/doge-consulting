@@ -94,22 +94,35 @@ export default function CatalogPage() {
 
         {/* ══════════ AI PRODUCT MATCHER CTA ══════════ */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Link href="/tools/product-matcher" className="block">
-            <div className="rounded-2xl border border-teal/20 bg-gradient-to-r from-navy to-navy-light p-5 sm:p-6 text-white hover:shadow-xl transition-shadow cursor-pointer">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal/20 shrink-0">
-                    <Sparkles className="h-6 w-6 text-teal" />
+          <Link href="/tools/product-matcher" className="block group">
+            <div className="relative overflow-hidden rounded-2xl border border-teal/20 bg-gradient-to-r from-navy via-navy-light to-navy p-6 sm:p-8 text-white hover:shadow-2xl transition-all hover:-translate-y-0.5">
+              {/* Animated background glow */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-teal/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 group-hover:bg-teal/20 transition-colors" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-gold/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
+
+              <div className="relative flex items-center justify-between gap-6">
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal/30 to-teal/10 shrink-0 ring-1 ring-teal/20">
+                    <Sparkles className="h-7 w-7 text-teal" />
                   </div>
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-bold">AI Product Matcher</h3>
-                      <Badge className="bg-teal/20 text-teal-light border-teal/30 text-[10px]">NEW</Badge>
+                    <div className="flex items-center gap-2.5 mb-1">
+                      <h3 className="text-xl font-bold tracking-tight">AI Product Matcher</h3>
+                      <Badge className="bg-teal/20 text-teal-light border-teal/30 text-[10px] animate-pulse">NEW</Badge>
                     </div>
-                    <p className="text-sm text-slate-300 truncate">Search 1688order.com — paste a link, upload a photo, or describe any product</p>
+                    <p className="text-sm text-slate-300">Find any product at <span className="text-teal font-semibold">factory-direct prices</span> — paste a link, upload a photo, or describe what you need</p>
+                    <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
+                      <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /> AI-powered</span>
+                      <span>·</span>
+                      <span>50,000+ factories</span>
+                      <span>·</span>
+                      <span>Save 30-70%</span>
+                    </div>
                   </div>
                 </div>
-                <ArrowRight className="h-5 w-5 text-teal shrink-0" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-teal/20 shrink-0 group-hover:bg-teal/30 transition-colors">
+                  <ArrowRight className="h-5 w-5 text-teal group-hover:translate-x-0.5 transition-transform" />
+                </div>
               </div>
             </div>
           </Link>
