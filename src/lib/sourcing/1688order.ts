@@ -153,16 +153,27 @@ export async function searchByImage(imageBase64: string): Promise<Product1688[]>
     await page.waitForURL("**/goods_list**", { timeout: 20000 }).catch(() => {
       console.error("1688 image search: No navigation after upload. URL:", page.url());
     });
-    await page.waitForSelector('a[href*="goods_details"]', { timeout: 10000 }).catch(() => {});
-    await page.waitForTimeout(2000);
+
+    // Wait for product listings — image search may take longer to render
+    await page.waitForSelector('a[href*="goods_details"]', { timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(3000);
 
     const finalUrl = page.url();
     console.log("1688 image search: Final URL:", finalUrl);
 
-    const html = await page.content();
-    await context.close();
+    let html = await page.content();
+    let products = parseSearchResults(html);
 
-    const products = parseSearchResults(html);
+    // If no products found, wait a bit more and retry (image search can be slow)
+    if (products.length === 0 && finalUrl.includes("goods_list")) {
+      console.log("1688 image search: 0 results on first parse, waiting and retrying...");
+      await page.waitForTimeout(3000);
+      html = await page.content();
+      products = parseSearchResults(html);
+    }
+
+    console.log("1688 image search: Parsed", products.length, "products");
+    await context.close();
 
     return products;
   } catch (err) {

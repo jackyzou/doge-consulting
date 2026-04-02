@@ -81,13 +81,22 @@ export async function POST(request: NextRequest) {
     let searchQuery: string;
 
     if (imageData) {
-      // Image search: upload to 1688order.com's native image search
+      // Image search: upload to 1688order.com's native AI Image Search
+      console.log(`[ProductMatcher] Image search: ${imageData.length} chars`);
       products = await searchByImage(imageData);
+      console.log(`[ProductMatcher] Image search returned: ${products.length} results`);
       searchQuery = profile.searchQuery || "image search";
 
       // If image search returns no results, fall back to keyword search
       if (products.length === 0 && profile.searchQuery) {
+        console.log(`[ProductMatcher] Image search fallback to keyword: "${profile.searchQuery}"`);
         products = await searchProducts(profile.searchQuery);
+      }
+      // Second fallback to alt query
+      if (products.length === 0 && profile.searchQueryAlt) {
+        console.log(`[ProductMatcher] Fallback to alt: "${profile.searchQueryAlt}"`);
+        searchQuery = profile.searchQueryAlt;
+        products = await searchProducts(searchQuery);
       }
     } else {
       searchQuery = profile.searchQuery || description || "wholesale";
