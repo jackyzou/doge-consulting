@@ -5,10 +5,10 @@ import ProductMatcherPage from "./ProductMatcherPage";
 export const metadata: Metadata = {
   title: "AI Product Matcher — Find China Factory-Direct Prices | Doge Consulting",
   description:
-    "Search 1688order.com with AI to find the exact product you want at China factory-direct prices. Paste a link, upload a photo, or describe what you need. Get instant pricing with 30-70% savings.",
+    "AI-powered product matching that finds any product at China factory-direct prices. Paste a link, upload a photo, or describe what you need. Get instant pricing with 30-70% savings.",
   openGraph: {
     title: "AI Product Matcher | Doge Consulting",
-    description: "Find any product cheaper from China. AI-powered search across 1688order.com with instant pricing.",
+    description: "Find any product cheaper from China. AI-powered product matching with instant factory-direct pricing.",
     url: "https://doge-consulting.com/tools/product-matcher",
   },
   alternates: { canonical: "https://doge-consulting.com/tools/product-matcher" },
@@ -29,7 +29,7 @@ export default function Page() {
           "@context": "https://schema.org",
           "@type": "WebApplication",
           name: "AI Product Matcher",
-          description: "Search 1688order.com to find China factory-direct products at 30-70% less than US retail.",
+          description: "AI-powered product matching to find China factory-direct products at 30-70% less than US retail.",
           url: "https://doge-consulting.com/tools/product-matcher",
           applicationCategory: "BusinessApplication",
           operatingSystem: "Any",

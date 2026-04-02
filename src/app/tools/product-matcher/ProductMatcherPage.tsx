@@ -17,7 +17,8 @@ export default function ProductMatcherPage() {
           <h1 className="text-3xl sm:text-4xl font-bold mb-3">AI Product Matcher</h1>
           <p className="text-base sm:text-lg text-slate-300 max-w-xl mx-auto">
             Find any product at China factory-direct prices.
-            Search 1688order.com with a link, photo, or description.
+            Paste a link, upload a photo, or describe any product.
+            Our AI finds the same item at China factory-direct prices.
           </p>
         </div>
       </section>
@@ -27,7 +28,7 @@ export default function ProductMatcherPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
           {[
             { icon: Package, label: "Describe or paste", sub: "Any product, any store" },
-            { icon: Sparkles, label: "AI searches China", sub: "1688order.com catalog" },
+            { icon: Sparkles, label: "AI searches China", sub: "50,000+ factories" },
             { icon: DollarSign, label: "See real prices", sub: "Factory-direct USD" },
             { icon: Truck, label: "Get a quote", sub: "Delivered to your door" },
           ].map((s) => (
@@ -54,7 +55,7 @@ export default function ProductMatcherPage() {
               {
                 icon: DollarSign,
                 title: "30-70% Savings",
-                desc: "Skip the middlemen. We source directly from Chinese factories on 1688order.com at wholesale prices.",
+                desc: "Skip the middlemen. Our AI sources directly from Chinese factories at wholesale prices.",
               },
               {
                 icon: ShieldCheck,

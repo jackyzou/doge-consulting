@@ -237,7 +237,7 @@ export default function ProductMatcherV2() {
               <div className="min-w-0">
                 <h3 className="text-lg sm:text-xl font-bold">AI Product Matcher</h3>
                 <p className="text-xs sm:text-sm text-slate-300 truncate">
-                  Search 1688order.com — find factory-direct prices from China
+                  AI-powered sourcing — find factory-direct prices from China
                 </p>
               </div>
             </div>
@@ -314,7 +314,7 @@ export default function ProductMatcherV2() {
                   <div>
                     <Label className="text-xs text-muted-foreground">Product URL</Label>
                     <Input
-                      placeholder="https://www.amazon.com/dp/B0... or 1688order.com link"
+                      placeholder="https://www.amazon.com/dp/B0... or any product link"
                       value={url}
                       onChange={(e) => setUrl(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && canSubmit && handleSubmit()}
@@ -322,7 +322,7 @@ export default function ProductMatcherV2() {
                     />
                     <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1 flex-wrap">
                       <Globe className="h-3 w-3 shrink-0" />
-                      Amazon, Wayfair, IKEA, 1688order.com, 1688.com, or any store
+                      Amazon, Wayfair, Target, Walmart, IKEA, Shopify, or any store
                     </p>
                   </div>
                 </motion.div>
@@ -401,7 +401,7 @@ export default function ProductMatcherV2() {
               className="w-full bg-teal hover:bg-teal/90 text-white h-12 text-base font-semibold active:scale-[0.98] transition-transform"
             >
               {loading ? (
-                <><Loader2 className="h-5 w-5 animate-spin mr-2" /> Searching 1688order.com...</>
+                <><Loader2 className="h-5 w-5 animate-spin mr-2" /> AI is searching...</>
               ) : (
                 <><Search className="h-5 w-5 mr-2" /> Find Products from China</>
               )}
@@ -426,7 +426,7 @@ export default function ProductMatcherV2() {
                       <Sparkles className="h-3.5 w-3.5 text-teal animate-pulse" /> Analyzing your request with AI...
                     </motion.span>
                     <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }} className="flex items-center gap-2">
-                      <Package className="h-3.5 w-3.5 text-teal animate-pulse" /> Searching 1688order.com products...
+                      <Package className="h-3.5 w-3.5 text-teal animate-pulse" /> Scanning thousands of China factories...
                     </motion.span>
                     <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3 }} className="flex items-center gap-2">
                       <TrendingDown className="h-3.5 w-3.5 text-teal animate-pulse" /> Calculating China-direct pricing...

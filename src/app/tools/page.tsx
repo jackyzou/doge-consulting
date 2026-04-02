@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 const tools = [
   {
     name: "AI Product Matcher",
-    description: "Search 1688order.com with AI to find any product at China factory-direct prices. Paste a link, upload a photo, or describe what you need.",
+    description: "Find any product at China factory-direct prices with AI. Paste a link, upload a photo, or describe what you need.",
     href: "/tools/product-matcher",
     icon: Sparkles,
     color: "bg-teal/10 text-teal",
