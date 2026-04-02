@@ -16,6 +16,7 @@ import type { Product1688 } from "./1688order";
 export interface CanonicalProfile {
   title: string;
   searchQuery: string;           // Best search term for 1688
+  searchQueryAlt: string;        // Broader fallback search term
   searchQueryChinese: string;    // Chinese search term
   category: string;
   materials: string[];
@@ -331,12 +332,13 @@ async function extractWithAI(
 ): Promise<CanonicalProfile> {
   const systemPrompt = `You are a China product sourcing expert. Your job is to analyze a product and create a structured profile for searching on the Chinese wholesale platform 1688.com.
 
-Strip all marketing language. Focus on: the core product type, materials, dimensions, and what a Chinese factory would call this item.
+Strip all marketing language AND brand names. Focus on: the core product type, materials, dimensions, and what a Chinese factory would call this item.
 
 Respond in EXACTLY this JSON format (no other text):
 {
-  "title": "concise product title in English",
-  "searchQuery": "best 2-4 word English search term for 1688order.com (what a buyer would search)",
+  "title": "concise product title in English (no brand names)",
+  "searchQuery": "best 2-4 word GENERIC search term for 1688order.com",
+  "searchQueryAlt": "alternative 2-3 word broader search term",
   "searchQueryChinese": "Chinese search terms for 1688 (2-4 words)",
   "category": "one of: furniture, toys, accessories, clothing, bags, tools, shoes, electronics, home-goods, lighting, general",
   "materials": ["material1", "material2"],
@@ -344,9 +346,12 @@ Respond in EXACTLY this JSON format (no other text):
   "estimatedFactoryPrice": {"min": 5.0, "max": 25.0}
 }
 
-Guidelines:
-- searchQuery: use simple, concrete terms. "oak coffee table" not "mid-century modern artisan oak coffee table"
-- searchQueryChinese: translate the product name to Chinese wholesale terms (e.g., "实木咖啡桌")
+CRITICAL RULES for searchQuery:
+- NEVER include brand names (Tbfit, IKEA, Hampton Bay, etc.) — 1688 won't have them
+- Use generic product type words: "accent chair", "coffee table", "pendant light"
+- Think: what would a Chinese factory call this item?
+- searchQueryAlt should be an even simpler/broader 2-word term (e.g., "sofa chair", "dining table")
+- searchQueryChinese: translate the GENERIC product name to Chinese (e.g., "单人沙发椅")
 - estimatedFactoryPrice: China factory unit price in USD (typically 15-40% of US retail)
 - Focus on physical product attributes, not brand or marketing`;
 
@@ -390,6 +395,7 @@ Guidelines:
   return {
     title: parsed.title || "Unknown product",
     searchQuery: parsed.searchQuery || parsed.title || "",
+    searchQueryAlt: parsed.searchQueryAlt || "",
     searchQueryChinese: parsed.searchQueryChinese || "",
     category: parsed.category || "general",
     materials: Array.isArray(parsed.materials) ? parsed.materials : [],
@@ -431,7 +437,8 @@ function extractRuleBased(context: string): CanonicalProfile {
 
   return {
     title: words.slice(0, 6).join(" "),
-    searchQuery,
+    searchQuery: searchQuery,
+    searchQueryAlt: words.slice(0, 2).join(" "),
     searchQueryChinese: "",
     category: "general",
     materials: [],

@@ -92,6 +92,18 @@ export async function POST(request: NextRequest) {
     } else {
       searchQuery = profile.searchQuery || description || "wholesale";
       products = await searchProducts(searchQuery);
+
+      // If no results, retry with alternative broader query
+      if (products.length === 0 && profile.searchQueryAlt) {
+        searchQuery = profile.searchQueryAlt;
+        products = await searchProducts(searchQuery);
+      }
+
+      // If still no results and we have Chinese query, try that
+      if (products.length === 0 && profile.searchQueryChinese) {
+        searchQuery = profile.searchQueryChinese;
+        products = await searchProducts(searchQuery);
+      }
     }
 
     // ─── Step 4: Rank results against the profile ───
