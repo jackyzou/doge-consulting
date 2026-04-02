@@ -142,9 +142,8 @@ function extractTitleFromUrl(url: string): string | undefined {
     // Capitalize first letter of each word
     const readable = title.replace(/\b\w/g, (c) => c.toUpperCase());
 
-    // Prepend store name for context when sending to AI
-    const store = hostname.split(".")[0];
-    return `${readable} (from ${store})`;
+    // Don't include store name — it pollutes search queries
+    return readable || undefined;
   } catch {
     return undefined;
   }
@@ -330,6 +329,9 @@ function extractRuleBased(context: string): CanonicalProfile {
     "product", "url", "retail", "price", "about", "its", "our", "your", "new",
     "best", "great", "high", "quality", "premium", "luxury", "modern", "details",
     "source", "description", "http", "https", "www", "com", "unknown",
+    // Store names that leak from URL extraction
+    "amazon", "walmart", "target", "wayfair", "ikea", "costco", "homedepot",
+    "westelm", "crateandbarrel", "chewy", "petco", "rei", "shopify",
   ]);
 
   const words = cleanContext.replace(/[^a-z0-9\s]/g, " ").split(/\s+/)

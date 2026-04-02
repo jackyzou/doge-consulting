@@ -147,16 +147,22 @@ export default function ProductMatcherV2() {
     setSearchError(null);
     setQuoteProduct(null);
     setQuoteResult(null);
+
+    // Only send input for the CURRENT mode — don't leak leftover data
+    const payload: Record<string, unknown> = { sourcePrice: price ? parseFloat(price) : null };
+    if (mode === "url") {
+      payload.sourceUrl = url.trim() || null;
+    } else if (mode === "image") {
+      payload.imageData = imageData || null;
+    } else {
+      payload.description = description.trim() || null;
+    }
+
     try {
       const res = await fetch("/api/tools/product-matcher/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sourceUrl: url || null,
-          imageData: imageData || null,
-          description: description || null,
-          sourcePrice: price ? parseFloat(price) : null,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (res.ok) {
