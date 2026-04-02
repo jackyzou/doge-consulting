@@ -56,6 +56,9 @@ async function getBrowser() {
   return browserPromise;
 }
 
+/** Expose singleton browser for reuse by product-analyzer.ts */
+export { getBrowser as getBrowserInstance };
+
 /** Create a browser context with stealth settings */
 async function createStealthContext(browser: import("playwright").Browser) {
   const context = await browser.newContext({

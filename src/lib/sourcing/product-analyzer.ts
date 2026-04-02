@@ -107,11 +107,10 @@ interface ScrapedProduct {
  */
 async function scrapeSourceProduct(url: string): Promise<ScrapedProduct> {
   try {
-    const pw = await import("playwright");
-    const browser = await pw.chromium.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-blink-features=AutomationControlled"],
-    });
+    // Reuse the singleton browser from 1688order module to avoid launching
+    // a new Chromium instance per request (which causes timeouts)
+    const { getBrowserInstance } = await import("./1688order");
+    const browser = await getBrowserInstance();
     const context = await browser.newContext({
       userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       locale: "en-US",
@@ -132,7 +131,7 @@ async function scrapeSourceProduct(url: string): Promise<ScrapedProduct> {
 
     const html = await page.content();
     await context.close();
-    await browser.close();
+    // Don't close `browser` — it's the singleton from 1688order.ts
 
     // ─── Title extraction (try multiple strategies) ───
     const title =
@@ -343,17 +342,19 @@ Guidelines:
  * Rule-based canonical profile extraction (fallback)
  */
 function extractRuleBased(context: string): CanonicalProfile {
-  const lower = context.toLowerCase();
+  // Strip URLs from context — they contain path segments that look like keywords
+  // but are useless (e.g., "/Oversized-Fireside-Reading-Assembly-Required/")
+  const cleanContext = context.replace(/https?:\/\/[^\s]+/g, "").toLowerCase();
 
   // Extract meaningful words
   const stopWords = new Set([
     "the", "and", "for", "with", "from", "that", "this", "have", "are", "was",
     "product", "url", "retail", "price", "about", "its", "our", "your", "new",
     "best", "great", "high", "quality", "premium", "luxury", "modern", "details",
-    "source", "description", "http", "https", "www", "com",
+    "source", "description", "http", "https", "www", "com", "unknown",
   ]);
 
-  const words = lower.replace(/[^a-z0-9\s]/g, " ").split(/\s+/)
+  const words = cleanContext.replace(/[^a-z0-9\s]/g, " ").split(/\s+/)
     .filter((w) => w.length > 2 && !stopWords.has(w));
 
   // Take 3-5 most relevant words as search query

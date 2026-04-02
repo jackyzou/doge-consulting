@@ -16,6 +16,11 @@ export async function POST(request: NextRequest) {
       customerName,
       customerEmail,
       customerPhone,
+      // Original search context for admin reference
+      originalSearchUrl,
+      originalSearchKeywords,
+      originalSearchType,
+      sourceRetailPrice,
     } = body;
 
     if (!customerName || !customerEmail) {
@@ -51,9 +56,14 @@ export async function POST(request: NextRequest) {
         validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         notes: [
           "AI Product Matcher Quote",
-          productUrl ? `Source: ${productUrl}` : null,
-          productPrice ? `1688 Price: $${productPrice}` : null,
+          productUrl ? `1688 Source: ${productUrl}` : null,
+          productPrice ? `1688 Factory Price: $${productPrice}` : null,
           `Estimated Doge Price: $${estimatedPrice}`,
+          sourceRetailPrice ? `US Retail Price: $${sourceRetailPrice}` : null,
+          "--- Customer's Original Search ---",
+          originalSearchUrl ? `Search URL: ${originalSearchUrl}` : null,
+          originalSearchKeywords ? `Search Keywords: ${originalSearchKeywords}` : null,
+          originalSearchType ? `Search Type: ${originalSearchType}` : null,
         ]
           .filter(Boolean)
           .join("\n"),
