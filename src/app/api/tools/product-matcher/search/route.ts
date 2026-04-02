@@ -5,7 +5,6 @@ import {
   searchProducts,
   searchByImage,
   extractProductId,
-  buildSearchUrl,
 } from "@/lib/sourcing/1688order";
 import {
   extractCanonicalProfile,
@@ -44,10 +43,11 @@ export async function POST(request: NextRequest) {
         const product = await getProductDetails(productId);
         if (product) {
           const query = await storeQuery({ sourceUrl, description, sourcePrice, inputType: "direct-1688" });
+          const { detailUrl: _strip, ...safeProduct } = product;
           return NextResponse.json({
             id: query.id,
             results: [{
-              product,
+              product: safeProduct,
               relevanceScore: 100,
               matchConfidence: "High",
               matchReason: "Direct product lookup",
@@ -58,7 +58,6 @@ export async function POST(request: NextRequest) {
                 savingsPercent: null,
               },
             }],
-            searchUrl: product.detailUrl,
             query: product.name,
             profile: { title: product.name, searchQuery: product.name, category: "direct" },
             inputType: "direct-lookup",
@@ -102,9 +101,7 @@ export async function POST(request: NextRequest) {
       sourcePrice ? parseFloat(sourcePrice) : null,
     );
 
-    const searchUrl = buildSearchUrl(searchQuery);
-
-    // Store the query for tracking
+    // Store the query for tracking (admin can see 1688 URLs in the DB)
     const query = await storeQuery({
       sourceUrl,
       imageData,
@@ -114,10 +111,18 @@ export async function POST(request: NextRequest) {
       searchKeywords: searchQuery,
     });
 
+    // Strip 1688 detail URLs from user-facing response — only visible in admin
+    const sanitizedResults = ranked.slice(0, 10).map((r) => ({
+      ...r,
+      product: {
+        ...r.product,
+        detailUrl: undefined, // Don't expose 1688 links to users
+      },
+    }));
+
     return NextResponse.json({
       id: query.id,
-      results: ranked.slice(0, 10),
-      searchUrl,
+      results: sanitizedResults,
       query: searchQuery,
       profile: {
         title: profile.title,

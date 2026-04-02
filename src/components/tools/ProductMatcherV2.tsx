@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Upload, Link2, DollarSign, Loader2, CheckCircle2,
-  X, Sparkles, Camera, Globe, ShoppingBag, ExternalLink, Star,
+  X, Sparkles, Camera, Globe, ShoppingBag, Star,
   TrendingDown, Package, ArrowRight, RotateCcw,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -45,7 +45,6 @@ interface ProductResult {
 interface SearchResponse {
   id: string;
   results: ProductResult[];
-  searchUrl: string;
   query: string;
   profile?: {
     title?: string;
@@ -477,30 +476,10 @@ export default function ProductMatcherV2() {
               <Card className="p-6 text-center">
                 <Package className="h-10 w-10 mx-auto text-slate-300 mb-3" />
                 <p className="text-sm text-muted-foreground">
-                  No matching products found in our catalog. Try different keywords or{" "}
-                  <a
-                    href={searchResponse.searchUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-teal hover:underline"
-                  >
-                    browse 1688order.com directly
-                  </a>.
+                  No matching products found for this search. Try different keywords or upload a clearer photo.
                 </p>
               </Card>
             )}
-
-            {/* Browse more link */}
-            <div className="text-center">
-              <a
-                href={searchResponse.searchUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm text-teal hover:text-teal/80 font-medium"
-              >
-                Browse more on 1688order.com <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -640,14 +619,6 @@ function ProductCard({
             >
               {isQuoting ? "Cancel" : "Get Quote"}
             </Button>
-            <a
-              href={product.detailUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-muted-foreground hover:text-teal flex items-center gap-0.5"
-            >
-              View on 1688order <ExternalLink className="h-2.5 w-2.5" />
-            </a>
           </div>
         </div>
       </div>
