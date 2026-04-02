@@ -407,31 +407,123 @@ export default function ProductMatcherV2() {
               )}
             </Button>
 
-            {/* Loading animation */}
+            {/* Loading animation — interactive engagement sequence */}
             <AnimatePresence>
               {loading && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2">
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <div className="h-2 flex-1 rounded-full bg-slate-100 overflow-hidden">
-                      <motion.div
-                        className="h-full bg-gradient-to-r from-teal to-teal-light rounded-full"
-                        initial={{ width: "0%" }}
-                        animate={{ width: "90%" }}
-                        transition={{ duration: 4, ease: "easeOut" }}
-                      />
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+                  {/* Progress bar */}
+                  <div className="h-2 flex-1 rounded-full bg-slate-100 overflow-hidden">
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-teal via-teal-light to-teal rounded-full"
+                      initial={{ width: "0%" }}
+                      animate={{ width: ["0%", "30%", "55%", "75%", "88%", "92%"] }}
+                      transition={{ duration: 15, times: [0, 0.1, 0.25, 0.5, 0.8, 1], ease: "easeOut" }}
+                    />
+                  </div>
+
+                  {/* Step-by-step status updates */}
+                  <div className="space-y-2.5">
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="flex items-center gap-2.5 text-sm"
+                    >
+                      <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="shrink-0">
+                        <Sparkles className="h-4 w-4 text-teal" />
+                      </motion.div>
+                      <span className="text-navy font-medium">Analyzing your product...</span>
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 2 }}
+                      className="flex items-center gap-2.5 text-sm"
+                    >
+                      <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 1.5, repeat: Infinity }} className="shrink-0">
+                        <Globe className="h-4 w-4 text-teal" />
+                      </motion.div>
+                      <span className="text-navy font-medium">Connecting to factory networks...</span>
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 4 }}
+                      className="flex items-center gap-2.5 text-sm"
+                    >
+                      <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 1, repeat: Infinity }} className="shrink-0">
+                        <Package className="h-4 w-4 text-teal" />
+                      </motion.div>
+                      <span className="text-navy font-medium">Scanning factory catalogs...</span>
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 7 }}
+                      className="flex items-center gap-2.5 text-sm"
+                    >
+                      <motion.div animate={{ scale: [1, 0.9, 1.1, 1] }} transition={{ duration: 2, repeat: Infinity }} className="shrink-0">
+                        <TrendingDown className="h-4 w-4 text-green-500" />
+                      </motion.div>
+                      <span className="text-navy font-medium">Comparing wholesale prices...</span>
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 10 }}
+                      className="flex items-center gap-2.5 text-sm"
+                    >
+                      <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ duration: 1.5, repeat: Infinity }} className="shrink-0">
+                        <Star className="h-4 w-4 text-amber-500" />
+                      </motion.div>
+                      <span className="text-navy font-medium">Ranking best matches...</span>
+                    </motion.div>
+                  </div>
+
+                  {/* Animated factory/supplier count */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 3 }}
+                    className="rounded-lg bg-gradient-to-r from-slate-50 to-teal/5 border p-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <motion.span
+                          className="font-mono font-bold text-teal text-sm"
+                          animate={{ opacity: [1, 0.5, 1] }}
+                          transition={{ duration: 1.5, repeat: Infinity }}
+                        >
+                          <FactoryCounter />
+                        </motion.span>
+                        <span>factories scanned</span>
+                      </div>
+                      <div className="flex gap-1">
+                        {[0, 1, 2].map((i) => (
+                          <motion.div
+                            key={i}
+                            className="w-1.5 h-1.5 rounded-full bg-teal"
+                            animate={{ opacity: [0.3, 1, 0.3] }}
+                            transition={{ duration: 1, repeat: Infinity, delay: i * 0.3 }}
+                          />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
-                    <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="flex items-center gap-2">
-                      <Sparkles className="h-3.5 w-3.5 text-teal animate-pulse" /> Analyzing your request with AI...
-                    </motion.span>
-                    <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }} className="flex items-center gap-2">
-                      <Package className="h-3.5 w-3.5 text-teal animate-pulse" /> Scanning thousands of China factories...
-                    </motion.span>
-                    <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 3 }} className="flex items-center gap-2">
-                      <TrendingDown className="h-3.5 w-3.5 text-teal animate-pulse" /> Calculating China-direct pricing...
-                    </motion.span>
-                  </div>
+                  </motion.div>
+
+                  {/* Fun fact while waiting */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 6 }}
+                    className="text-xs text-muted-foreground italic text-center"
+                  >
+                    <RotatingFact />
+                  </motion.div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -734,5 +826,56 @@ function ProductCard({
         </div>
       </div>
     </Card>
+  );
+}
+
+// ─── Loading Animation Helpers ───
+
+/** Animated counter that ticks up to simulate factory scanning */
+function FactoryCounter() {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCount((c) => {
+        if (c >= 12400) return c;
+        const increment = c < 1000 ? 47 : c < 5000 ? 83 : c < 10000 ? 31 : 7;
+        return Math.min(c + increment, 12400);
+      });
+    }, 100);
+    return () => clearInterval(interval);
+  }, []);
+  return <>{count.toLocaleString()}</>;
+}
+
+const SOURCING_FACTS = [
+  "💡 China produces 28% of all manufactured goods worldwide",
+  "📦 The average factory-direct price is 60-80% less than US retail",
+  "🏭 Guangdong province alone has over 300,000 factories",
+  "🚢 A standard 40ft container holds ~2,400 sofa cushions",
+  "💰 Removing middlemen typically saves 3-5x on unit costs",
+  "🌏 Over 50% of global furniture is manufactured in China",
+  "⚡ Our AI matches products across multiple factory networks",
+  "📊 We compare prices from verified suppliers with quality ratings",
+];
+
+/** Rotates through fun sourcing facts while user waits */
+function RotatingFact() {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setIdx((i) => (i + 1) % SOURCING_FACTS.length), 4000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <AnimatePresence mode="wait">
+      <motion.span
+        key={idx}
+        initial={{ opacity: 0, y: 5 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -5 }}
+        transition={{ duration: 0.3 }}
+      >
+        {SOURCING_FACTS[idx]}
+      </motion.span>
+    </AnimatePresence>
   );
 }
