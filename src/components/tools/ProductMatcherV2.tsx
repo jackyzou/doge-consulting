@@ -138,7 +138,8 @@ export default function ProductMatcherV2() {
     if (file && file.type.startsWith("image/")) handleImageSelect(file);
   }, [handleImageSelect]);
 
-  const canSubmit = url.trim() || imageData || description.trim();
+  // Only check the active mode for submit readiness
+  const canSubmit = mode === "url" ? url.trim() : mode === "image" ? !!imageData : description.trim();
 
   const handleSubmit = async () => {
     if (!canSubmit || loading) return;

@@ -68,28 +68,53 @@ async function searchByKeyword(keyword) {
 async function searchByImage(imageBase64) {
   const raw = imageBase64.replace(/^data:image\/[^;]+;base64,/, "");
   const buffer = Buffer.from(raw, "base64");
-  const tempFile = path.join(os.tmpdir(), `doge-img-${Date.now()}.jpg`);
+  
+  // Detect file extension from data URI
+  const mimeMatch = imageBase64.match(/^data:image\/([\w+]+);/);
+  const ext = mimeMatch ? mimeMatch[1].replace("jpeg", "jpg") : "jpg";
+  const tempFile = path.join(os.tmpdir(), `doge-img-${Date.now()}.${ext}`);
   fs.writeFileSync(tempFile, buffer);
+  console.log(`[1688] Image: ${buffer.length} bytes, format: ${ext}`);
 
   const { page, context } = await createPage();
   try {
     await page.goto("https://1688order.com/pc/", { waitUntil: "domcontentloaded", timeout: 15000 });
     await page.waitForTimeout(3000);
 
+    // Click the "AI Image Search" button first to activate the upload
+    const aiSearchBtn = page.locator('.picture-btn, :text("Image Search")').first();
+    const btnVisible = await aiSearchBtn.isVisible().catch(() => false);
+    if (btnVisible) {
+      console.log("[1688] Clicking AI Image Search button...");
+      await aiSearchBtn.click();
+      await page.waitForTimeout(1000);
+    }
+
+    // Now upload via the file input
     const fileInput = page.locator('input[type="file"]');
     if ((await fileInput.count()) === 0) {
       console.error("[1688] No file input found");
       return [];
     }
 
+    console.log("[1688] Uploading image file:", tempFile, "size:", buffer.length, "bytes");
     await fileInput.setInputFiles(tempFile);
-    console.log("[1688] Image uploaded, waiting for results...");
+    console.log("[1688] File set, waiting for navigation...");
 
-    await page.waitForURL("**/goods_list**", { timeout: 20000 }).catch(() => {
-      console.error("[1688] No navigation after upload. URL:", page.url());
+    // Wait for navigation to search results (goods_list?searchType=img)
+    await page.waitForURL("**/goods_list**", { timeout: 25000 }).catch(() => {
+      console.error("[1688] No navigation after upload. Current URL:", page.url());
     });
-    await page.waitForSelector('a[href*="goods_details"]', { timeout: 15000 }).catch(() => {});
-    await page.waitForTimeout(3000);
+    
+    // The image search results page needs extra time to load
+    await page.waitForTimeout(4000);
+    await page.waitForSelector('a[href*="goods_details"]', { timeout: 15000 }).catch(() => {
+      console.error("[1688] No product links found on results page");
+    });
+    await page.waitForTimeout(2000);
+
+    const finalUrl = page.url();
+    console.log("[1688] Final URL:", finalUrl);
 
     let html = await page.content();
     let products = parseSearchResults(html);

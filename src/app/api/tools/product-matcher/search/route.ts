@@ -17,6 +17,11 @@ import {
 //   1. Input (URL / Image / Text) → Canonical Product Profile
 //   2. Canonical Profile → Search 1688order.com
 //   3. Results → Rank & Score → Return to user
+
+// Allow large request bodies for image uploads (up to 4MB)
+export const config = {
+  api: { bodyParser: { sizeLimit: "4mb" } },
+};
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
