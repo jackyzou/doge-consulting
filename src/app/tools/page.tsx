@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Calculator, Package, Ship, Globe, Box, DollarSign, Search, Container } from "lucide-react";
+import { Calculator, Package, Ship, Globe, Box, DollarSign, Search, Container, Sparkles } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Free Import & Shipping Tools | Doge Consulting",
-  description: "Free tools for importers: Freight Rate Calculator, CBM Calculator, Duty Calculator, Revenue Calculator, 3D Room Visualizer, Live Vessel Tracker, Container Tracker, and Shipping Tracker. No signup required.",
+  description: "Free tools for importers: AI Product Matcher, Freight Rate Calculator, CBM Calculator, Duty Calculator, Revenue Calculator, 3D Room Visualizer, Live Vessel Tracker, Container Tracker, and Shipping Tracker. No signup required.",
   openGraph: {
     title: "Free Import & Shipping Tools | Doge Consulting",
     description: "8 free tools to help you import from China to the USA. Calculate costs, track shipments, and visualize products — all without signing up.",
@@ -14,6 +14,14 @@ export const metadata: Metadata = {
 };
 
 const tools = [
+  {
+    name: "AI Product Matcher",
+    description: "Find any product at China factory-direct prices with AI. Paste a link, upload a photo, or describe what you need.",
+    href: "/tools/product-matcher",
+    icon: Sparkles,
+    color: "bg-teal/10 text-teal",
+    tag: "AI Powered",
+  },
   {
     name: "Freight Rate Calculator",
     description: "Compare real-time freight rates from Shenzhen, Shanghai, Guangzhou, and Hong Kong to 7 US ports. Sea freight, air freight, and express shipping.",
@@ -86,7 +94,7 @@ export default function ToolsPage() {
         <div className="relative mx-auto max-w-5xl px-4 text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm backdrop-blur-sm mb-6">
             <span className="h-2 w-2 rounded-full bg-teal animate-pulse" />
-            8 Free Tools · No Signup Required
+            9 Free Tools · No Signup Required
           </div>
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl mb-4">
             Free Import & Shipping <span className="text-teal">Tools</span>

@@ -12,7 +12,6 @@ import {
   Loader2, Brain,
 } from "lucide-react";
 import Link from "next/link";
-import ProductMatcher from "@/components/catalog/ProductMatcher";
 import FurniturePackages from "@/components/catalog/FurniturePackages";
 import { useTranslation } from "@/lib/i18n";
 
@@ -93,9 +92,40 @@ export default function CatalogPage() {
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 -mt-8 relative z-10 space-y-12 pb-20">
 
-        {/* ══════════ AI PRODUCT MATCHER (prominent) ══════════ */}
+        {/* ══════════ AI PRODUCT MATCHER CTA ══════════ */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <ProductMatcher />
+          <Link href="/tools/product-matcher" className="block group">
+            <div className="relative overflow-hidden rounded-2xl border border-teal/20 bg-gradient-to-r from-navy via-navy-light to-navy p-6 sm:p-8 text-white hover:shadow-2xl transition-all hover:-translate-y-0.5">
+              {/* Animated background glow */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-teal/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 group-hover:bg-teal/20 transition-colors" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-gold/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
+
+              <div className="relative flex items-center justify-between gap-6">
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal/30 to-teal/10 shrink-0 ring-1 ring-teal/20">
+                    <Sparkles className="h-7 w-7 text-teal" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2.5 mb-1">
+                      <h3 className="text-xl font-bold tracking-tight">AI Product Matcher</h3>
+                      <Badge className="bg-teal/20 text-teal-light border-teal/30 text-[10px] animate-pulse">NEW</Badge>
+                    </div>
+                    <p className="text-sm text-slate-300">Find any product at <span className="text-teal font-semibold">factory-direct prices</span> — paste a link, upload a photo, or describe what you need</p>
+                    <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
+                      <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /> AI-powered</span>
+                      <span>·</span>
+                      <span>50,000+ factories</span>
+                      <span>·</span>
+                      <span>Save 30-70%</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-teal/20 shrink-0 group-hover:bg-teal/30 transition-colors">
+                  <ArrowRight className="h-5 w-5 text-teal group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </div>
+            </div>
+          </Link>
         </motion.div>
 
         {/* ══════════ CATEGORY GRID ══════════ */}
