@@ -1033,14 +1033,22 @@ console.log(`   Page Views:    ${db?.pageViews ?? 0} total`);
 console.log(`   Product Matches: ${db?.productMatches ?? 0}`);
 console.log(`   Site Version:  v${version} | ${pageCount} pages`);
 
-console.log(`\n📋 DECISIONS THIS STANDUP (${allDecisions.length}):`);
+// Cap decisions at 7 per CoC + format concisely
+const cappedDecisions = allDecisions.slice(0, 7);
+const overflowCount = allDecisions.length - cappedDecisions.length;
+console.log(`\n📋 DECISIONS THIS STANDUP (${cappedDecisions.length} of ${allDecisions.length} — max 7 per CoC):`);
 console.log(`   #  Agent      Decision                                              Status`);
-console.log(`   ${"─".repeat(75)}`);
-allDecisions.forEach((d, i) => {
+console.log(`   ${"─".repeat(80)}`);
+cappedDecisions.forEach((d, i) => {
   const name = CONFIG.agents.find(a => a.id === d.agent)?.name || d.agent;
-  const truncated = d.text.length > 55 ? d.text.substring(0, 52) + "..." : d.text;
-  console.log(`   ${String(i + 1).padStart(2)}  ${name.padEnd(10)} ${truncated.padEnd(55)} ${d.status}`);
+  // Clean up decision text: strip markdown bold, trim, cap at 58 chars
+  const cleaned = d.text.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+  const truncated = cleaned.length > 58 ? cleaned.substring(0, 55) + "..." : cleaned;
+  console.log(`   ${String(i + 1).padStart(2)}  ${name.padEnd(10)} ${truncated.padEnd(58)} ${d.status}`);
 });
+if (overflowCount > 0) {
+  console.log(`   ... +${overflowCount} more decisions deferred (Alex to decide next standup)`);
+}
 
 console.log(`\n📨 CROSS-TEAM REQUESTS (${allRequests.length}):`);
 allRequests.forEach(r => {
