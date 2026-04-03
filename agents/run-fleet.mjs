@@ -131,14 +131,18 @@ try {
   const dbPath = existsSync(prodDbPath) ? prodDbPath : devDbPath;
   if (existsSync(dbPath)) {
     const conn = new Database(dbPath, { readonly: true });
+    const safeCount = (sql) => { try { return conn.prepare(sql).get()?.c ?? 0; } catch { return 0; } };
     db = {
-      blogPosts: conn.prepare("SELECT COUNT(*) as c FROM BlogPost WHERE published = 1 AND language = 'en'").get()?.c ?? 0,
-      totalQuotes: conn.prepare("SELECT COUNT(*) as c FROM Quote").get()?.c ?? 0,
-      pendingQuotes: conn.prepare("SELECT COUNT(*) as c FROM Quote WHERE status IN ('draft','sent')").get()?.c ?? 0,
-      totalOrders: conn.prepare("SELECT COUNT(*) as c FROM [Order]").get()?.c ?? 0,
-      subscribers: conn.prepare("SELECT COUNT(*) as c FROM Subscriber").get()?.c ?? 0,
-      contactInquiries: conn.prepare("SELECT COUNT(*) as c FROM ContactInquiry WHERE status = 'new'").get()?.c ?? 0,
-      recentChats: conn.prepare("SELECT COUNT(*) as c FROM AgentLog WHERE type = 'chat' AND createdAt > datetime('now', '-2 days')").get()?.c ?? 0,
+      blogPosts: safeCount("SELECT COUNT(*) as c FROM BlogPost WHERE published = 1 AND language = 'en'"),
+      totalQuotes: safeCount("SELECT COUNT(*) as c FROM Quote"),
+      pendingQuotes: safeCount("SELECT COUNT(*) as c FROM Quote WHERE status IN ('draft','sent')"),
+      totalOrders: safeCount("SELECT COUNT(*) as c FROM [Order]"),
+      subscribers: safeCount("SELECT COUNT(*) as c FROM Subscriber"),
+      contactInquiries: safeCount("SELECT COUNT(*) as c FROM ContactInquiry WHERE status = 'new'"),
+      recentChats: safeCount("SELECT COUNT(*) as c FROM AgentLog WHERE type = 'chat' AND createdAt > datetime('now', '-2 days')"),
+      totalRevenue: safeCount("SELECT COALESCE(SUM(totalAmount),0) as c FROM [Order] WHERE status NOT IN ('cancelled')"),
+      pageViews: safeCount("SELECT COUNT(*) as c FROM PageView"),
+      productMatches: safeCount("SELECT COUNT(*) as c FROM ProductMatchQuery"),
     };
     conn.close();
   }
@@ -149,7 +153,7 @@ try {
 console.log(`\n${"═".repeat(60)}`);
 console.log(`🐕 Doge Consulting Agent Fleet — ${mode === "morning" ? "Morning Brief" : "Evening Summary"}`);
 console.log(`📅 ${today} | ⏰ ${timestamp} PST`);
-console.log(`🔖 v${version} | 📄 ${pageCount} pages | 📝 ${db?.blogPosts ?? "?"} blog posts | 👥 ${db?.subscribers ?? "?"} subscribers`);
+console.log(`🔖 v${version} | 📄 ${pageCount} pages | 📝 ${db?.blogPosts ?? 0} blog posts | 👥 ${db?.subscribers ?? 0} subscribers`);
 console.log(`${"═".repeat(60)}`);
 
 // ═══════════════════════════════════════════════════════════
@@ -987,12 +991,14 @@ console.log(`
 `);
 
 console.log(`📊 KPI SNAPSHOT`);
-console.log(`   Revenue:       $0 / $${CONFIG.revenue.monthlyTarget.toLocaleString()}/mo (target: $${CONFIG.revenue.target.toLocaleString()} by EOY)`);
-console.log(`   Blog Posts:    ${db?.blogPosts ?? "?"} published (+12 pending review)`);
-console.log(`   Subscribers:   ${db?.subscribers ?? "?"} / ${CONFIG.kpis.subscribers.target.toLocaleString()} target`);
+console.log(`   Revenue:       $${db?.totalRevenue ?? 0} / $${CONFIG.revenue.monthlyTarget.toLocaleString()}/mo (target: $${CONFIG.revenue.target.toLocaleString()} by EOY)`);
+console.log(`   Blog Posts:    ${db?.blogPosts ?? 0} published`);
+console.log(`   Subscribers:   ${db?.subscribers ?? 0} / ${CONFIG.kpis.subscribers.target.toLocaleString()} target`);
 console.log(`   Quotes:        ${db?.totalQuotes ?? 0} total, ${db?.pendingQuotes ?? 0} pending`);
 console.log(`   Orders:        ${db?.totalOrders ?? 0}`);
 console.log(`   CRM Inquiries: ${db?.contactInquiries ?? 0} new`);
+console.log(`   Page Views:    ${db?.pageViews ?? 0} total`);
+console.log(`   Product Matches: ${db?.productMatches ?? 0}`);
 console.log(`   Site Version:  v${version} | ${pageCount} pages`);
 
 console.log(`\n📋 DECISIONS THIS STANDUP (${allDecisions.length}):`);
