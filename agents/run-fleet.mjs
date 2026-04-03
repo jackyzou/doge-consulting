@@ -123,37 +123,69 @@ if (existsSync(syncPullPath)) {
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 let db = null;
+let dbSource = "none";
+
+// Strategy 1: Fetch live stats from production site API (most accurate)
 try {
-  const Database = require("better-sqlite3");
-  // Prefer data/production.db (has real data from sync), fall back to dev.db
-  const prodDbPath = join(ROOT, "data", "production.db");
-  const devDbPath = join(ROOT, "dev.db");
-  const dbPath = existsSync(prodDbPath) ? prodDbPath : devDbPath;
-  if (existsSync(dbPath)) {
-    const conn = new Database(dbPath, { readonly: true });
-    const safeCount = (sql) => { try { return conn.prepare(sql).get()?.c ?? 0; } catch { return 0; } };
+  const prodUrl = "https://doge-consulting.com";
+  const analyticsRes = await fetch(`${prodUrl}/api/admin/analytics?days=30`, {
+    signal: AbortSignal.timeout(8000),
+    headers: { Cookie: `doge_session=${process.env.ADMIN_SESSION_TOKEN || ""}` },
+  }).catch(() => null);
+
+  if (analyticsRes?.ok) {
+    const analytics = await analyticsRes.json();
     db = {
-      blogPosts: safeCount("SELECT COUNT(*) as c FROM BlogPost WHERE published = 1 AND language = 'en'"),
-      totalQuotes: safeCount("SELECT COUNT(*) as c FROM Quote"),
-      pendingQuotes: safeCount("SELECT COUNT(*) as c FROM Quote WHERE status IN ('draft','sent')"),
-      totalOrders: safeCount("SELECT COUNT(*) as c FROM [Order]"),
-      subscribers: safeCount("SELECT COUNT(*) as c FROM Subscriber"),
-      contactInquiries: safeCount("SELECT COUNT(*) as c FROM ContactInquiry WHERE status = 'new'"),
-      recentChats: safeCount("SELECT COUNT(*) as c FROM AgentLog WHERE type = 'chat' AND createdAt > datetime('now', '-2 days')"),
-      totalRevenue: safeCount("SELECT COALESCE(SUM(totalAmount),0) as c FROM [Order] WHERE status NOT IN ('cancelled')"),
-      pageViews: safeCount("SELECT COUNT(*) as c FROM PageView"),
-      productMatches: safeCount("SELECT COUNT(*) as c FROM ProductMatchQuery"),
+      blogPosts: analytics.topBlogPosts?.length || 0,
+      totalQuotes: 0,
+      pendingQuotes: 0,
+      totalOrders: 0,
+      subscribers: analytics.totals?.totalSubscribers ?? 0,
+      contactInquiries: 0,
+      recentChats: 0,
+      totalRevenue: 0,
+      pageViews: analytics.totals?.pageViews ?? 0,
+      productMatches: 0,
     };
-    conn.close();
+    dbSource = "production-api";
   }
-} catch (e) {
-  console.log(`⚠️ DB stats unavailable: ${e.message}`);
+} catch { /* API unavailable, fall through to local DB */ }
+
+// Strategy 2: Read from local production.db (synced from production)
+if (!db) {
+  try {
+    const Database = require("better-sqlite3");
+    // ONLY use production.db — never fall back to dev.db for standup stats
+    const prodDbPath = join(ROOT, "data", "production.db");
+    if (existsSync(prodDbPath)) {
+      const conn = new Database(prodDbPath, { readonly: true });
+      const safeCount = (sql) => { try { return conn.prepare(sql).get()?.c ?? 0; } catch { return 0; } };
+      db = {
+        blogPosts: safeCount("SELECT COUNT(*) as c FROM BlogPost WHERE published = 1 AND language = 'en'"),
+        totalQuotes: safeCount("SELECT COUNT(*) as c FROM Quote"),
+        pendingQuotes: safeCount("SELECT COUNT(*) as c FROM Quote WHERE status IN ('draft','sent')"),
+        totalOrders: safeCount("SELECT COUNT(*) as c FROM [Order]"),
+        subscribers: safeCount("SELECT COUNT(*) as c FROM Subscriber"),
+        contactInquiries: safeCount("SELECT COUNT(*) as c FROM ContactInquiry WHERE status = 'new'"),
+        recentChats: safeCount("SELECT COUNT(*) as c FROM AgentLog WHERE type = 'chat' AND createdAt > datetime('now', '-2 days')"),
+        totalRevenue: safeCount("SELECT COALESCE(SUM(totalAmount),0) as c FROM [Order] WHERE status NOT IN ('cancelled')"),
+        pageViews: safeCount("SELECT COUNT(*) as c FROM PageView"),
+        productMatches: safeCount("SELECT COUNT(*) as c FROM ProductMatchQuery"),
+      };
+      conn.close();
+      dbSource = "production.db";
+    } else {
+      console.log("⚠️ data/production.db not found — run sync to get production stats");
+    }
+  } catch (e) {
+    console.log(`⚠️ DB stats unavailable: ${e.message}`);
+  }
 }
 
 console.log(`\n${"═".repeat(60)}`);
 console.log(`🐕 Doge Consulting Agent Fleet — ${mode === "morning" ? "Morning Brief" : "Evening Summary"}`);
 console.log(`📅 ${today} | ⏰ ${timestamp} PST`);
-console.log(`🔖 v${version} | 📄 ${pageCount} pages | 📝 ${db?.blogPosts ?? 0} blog posts | 👥 ${db?.subscribers ?? 0} subscribers`);
+console.log(`🔖 v${version} | 📄 ${pageCount} pages | 📝 ${db?.blogPosts ?? 0} blog posts | 👥 ${db?.subscribers ?? 0} subscribers | 📊 ${dbSource}`);
 console.log(`${"═".repeat(60)}`);
 
 // ═══════════════════════════════════════════════════════════
