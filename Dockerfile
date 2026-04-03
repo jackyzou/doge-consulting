@@ -36,6 +36,11 @@ FROM node:20-slim AS runner
 
 RUN apt-get update && apt-get install -y \
     openssl \
+    # Playwright Chromium dependencies for 1688 search microservice
+    libnss3 libatk-bridge2.0-0 libdrm2 libxkbcommon0 libgbm1 \
+    libpango-1.0-0 libcairo2 libasound2 libxshmfence1 libx11-6 \
+    libxcomposite1 libxdamage1 libxext6 libxfixes3 libxrandr2 \
+    libatspi2.0-0 libcups2 libdbus-1-3 libgtk-3-0 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -68,6 +73,12 @@ COPY --from=builder /app/prisma/seed-blog-blinds.mjs ./prisma/seed-blog-blinds.m
 
 # Copy VERSION file for health endpoint
 COPY --from=builder /app/VERSION ./VERSION
+
+# Copy 1688 search microservice
+COPY --from=builder /app/scripts/1688-search-server.mjs ./scripts/1688-search-server.mjs
+
+# Install Playwright Chromium browser (for 1688 search)
+RUN npx playwright install chromium 2>/dev/null || echo 'Playwright install skipped'
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data

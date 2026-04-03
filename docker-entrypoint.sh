@@ -32,5 +32,13 @@ for f in prisma/seed-blog-*.mjs; do
   fi
 done
 
+# Start 1688 search microservice in background (for AI Product Matcher)
+if [ -f scripts/1688-search-server.mjs ]; then
+  echo "Starting 1688 search microservice on port 4688..."
+  node scripts/1688-search-server.mjs &
+  SEARCH_PID=$!
+  echo "  Search microservice PID: $SEARCH_PID"
+fi
+
 echo "Starting Next.js server..."
 exec "$@"
