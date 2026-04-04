@@ -9,6 +9,14 @@ import { useTranslation } from "@/lib/i18n";
 export function CTABanner() {
   const { t } = useTranslation();
 
+  const trackClick = (label: string) => {
+    fetch("/api/analytics/click", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ eventType: "cta_click", path: window.location.pathname, label }),
+    }).catch(() => {});
+  };
+
   return (
     <section className="gradient-hero py-20 text-white">
       <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
@@ -26,12 +34,12 @@ export function CTABanner() {
           </p>
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link href="/quote">
-              <Button size="lg" className="bg-teal text-white hover:bg-teal/90 text-base px-8">
+              <Button size="lg" className="bg-teal text-white hover:bg-teal/90 text-base px-8" onClick={() => trackClick("cta_quote")}>
                 {t("cta.cta1")} <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link href="/contact">
-              <Button size="lg" variant="outline" className="border-white/25 bg-white/10 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-sm hover:bg-white/18 hover:border-white/40 text-base">
+              <Button size="lg" variant="outline" className="border-white/25 bg-white/10 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-sm hover:bg-white/18 hover:border-white/40 text-base" onClick={() => trackClick("cta_contact")}>
                 {t("cta.cta2")}
               </Button>
             </Link>
