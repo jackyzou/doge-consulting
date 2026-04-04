@@ -32,30 +32,29 @@ const priorityConfig: Record<string, { label: string; color: string; border: str
 const agentColors: Record<string, string> = { alex: "#0F2B46", amy: "#059669", seth: "#2563EB", rachel: "#D97706", seto: "#7C3AED", tiffany: "#EC4899", kim: "#8B5CF6", jacky: "#2EC4B6" };
 const typeIcons: Record<string, string> = { decision: "📋", standup: "🌅", action: "⚡", alert: "🚨", note: "📝" };
 
-// Markdown prose classes — designed to match VS Code preview readability
-const mdClasses = `prose prose-lg max-w-none
+// Markdown prose classes — optimized for standup log readability
+const mdClasses = `prose prose-slate max-w-none
   prose-headings:text-navy prose-headings:font-bold prose-headings:tracking-tight
-  prose-h1:text-3xl prose-h1:mt-10 prose-h1:mb-4 prose-h1:pb-3 prose-h1:border-b-2 prose-h1:border-navy/20
-  prose-h2:text-xl prose-h2:mt-10 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b-2 prose-h2:border-teal/30
-  prose-h3:text-lg prose-h3:mt-8 prose-h3:mb-3
-  prose-h4:text-base prose-h4:mt-6 prose-h4:mb-2 prose-h4:text-navy/80
-  prose-p:text-foreground/80 prose-p:leading-7 prose-p:my-3 prose-p:text-sm
-  prose-li:text-foreground/80 prose-li:leading-7 prose-li:my-1 prose-li:text-sm
-  prose-ul:my-3 prose-ul:space-y-0.5 prose-ol:my-3 prose-ol:space-y-0.5
-  prose-strong:text-foreground prose-strong:font-semibold
-  prose-em:text-foreground/60
-  prose-blockquote:border-l-4 prose-blockquote:border-teal/40 prose-blockquote:bg-teal/5 prose-blockquote:rounded-r-lg prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:my-4 prose-blockquote:not-italic prose-blockquote:text-sm
+  prose-h1:text-2xl prose-h1:mt-8 prose-h1:mb-4 prose-h1:pb-3 prose-h1:border-b-2 prose-h1:border-navy/15
+  prose-h2:text-lg prose-h2:mt-8 prose-h2:mb-3 prose-h2:pb-2 prose-h2:border-b prose-h2:border-teal/20
+  prose-h3:text-base prose-h3:mt-6 prose-h3:mb-2 prose-h3:text-navy/90
+  prose-h4:text-sm prose-h4:mt-4 prose-h4:mb-1.5 prose-h4:text-navy/70 prose-h4:font-semibold
+  prose-p:text-foreground/75 prose-p:leading-relaxed prose-p:my-2.5 prose-p:text-[13px]
+  prose-li:text-foreground/75 prose-li:leading-relaxed prose-li:my-1 prose-li:text-[13px]
+  prose-ul:my-2 prose-ol:my-2
+  prose-strong:text-foreground/90 prose-strong:font-semibold
+  prose-em:text-muted-foreground
+  prose-blockquote:border-l-3 prose-blockquote:border-teal/30 prose-blockquote:bg-teal/5 prose-blockquote:rounded-r-md prose-blockquote:py-2 prose-blockquote:px-3.5 prose-blockquote:my-3 prose-blockquote:not-italic prose-blockquote:text-[13px]
   prose-a:text-teal prose-a:no-underline hover:prose-a:underline
-  prose-hr:my-8 prose-hr:border-t prose-hr:border-border/30
-  prose-code:bg-slate-100 prose-code:text-navy prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-xs prose-code:font-normal prose-code:before:content-none prose-code:after:content-none
-  prose-pre:bg-slate-900 prose-pre:text-slate-100 prose-pre:rounded-xl prose-pre:p-4 prose-pre:my-4 prose-pre:text-xs
-  prose-img:rounded-xl prose-img:shadow-md
-  [&_table]:w-full [&_table]:my-6 [&_table]:border-collapse [&_table]:border [&_table]:border-border/30 [&_table]:rounded-lg [&_table]:overflow-hidden [&_table]:shadow-sm [&_table]:text-sm
-  [&_th]:bg-navy/5 [&_th]:text-navy [&_th]:font-semibold [&_th]:text-left [&_th]:py-2.5 [&_th]:px-3 [&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wider [&_th]:border-b-2 [&_th]:border-border/30
-  [&_td]:py-2 [&_td]:px-3 [&_td]:text-sm [&_td]:border-b [&_td]:border-border/15 [&_td]:align-top
-  [&_tr:hover]:bg-muted/30
+  prose-hr:my-6 prose-hr:border-t prose-hr:border-border/20
+  prose-code:bg-muted prose-code:text-navy prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
+  prose-pre:bg-slate-900 prose-pre:text-slate-100 prose-pre:rounded-lg prose-pre:p-3.5 prose-pre:my-3 prose-pre:text-xs
+  prose-img:rounded-lg prose-img:shadow-sm
+  [&_table]:w-full [&_table]:my-4 [&_table]:border-collapse [&_table]:rounded-lg [&_table]:overflow-hidden [&_table]:text-[13px] [&_table]:shadow-sm [&_table]:border [&_table]:border-border/20
+  [&_th]:bg-slate-50 [&_th]:text-navy/80 [&_th]:font-semibold [&_th]:text-left [&_th]:py-2.5 [&_th]:px-3.5 [&_th]:text-xs [&_th]:border-b [&_th]:border-border/20 [&_th]:whitespace-nowrap
+  [&_td]:py-2 [&_td]:px-3.5 [&_td]:border-b [&_td]:border-border/10 [&_td]:align-top [&_td]:text-[13px]
+  [&_tr:nth-child(even)]:bg-slate-50/50
   [&_tr:last-child_td]:border-b-0
-  [&_.decision-tag]:inline-flex [&_.decision-tag]:items-center [&_.decision-tag]:px-2 [&_.decision-tag]:py-0.5 [&_.decision-tag]:rounded-md [&_.decision-tag]:text-xs [&_.decision-tag]:font-semibold
   overflow-x-auto`;
 
 export default function OperationsPage() {
