@@ -16,10 +16,61 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { standups, decisions, coc, resetDecisions, replies, chatThreads } = body;
+    const { standups, decisions, coc, resetDecisions, replies, chatThreads, consolidateDecisions } = body;
 
     let standupsCreated = 0;
     let decisionsCreated = 0;
+
+    // ── Consolidate open decisions (CEO directive: dedup + close stale) ──
+    let decisionsConsolidated = 0;
+    if (consolidateDecisions) {
+      // Close all open decisions older than 3 days
+      const staleResult = await prisma.$executeRawUnsafe(
+        `UPDATE AgentLog SET status = 'completed', updatedAt = datetime('now') WHERE type = 'decision' AND status IN ('open', 'proposed') AND createdAt < datetime('now', '-3 days')`
+      );
+      decisionsConsolidated += (typeof staleResult === 'number' ? staleResult : 0);
+
+      // Deduplicate remaining by cleaning titles and closing duplicates
+      const openDecisions = await prisma.agentLog.findMany({
+        where: { type: "decision", status: { in: ["open", "proposed"] } },
+        orderBy: { createdAt: "desc" },
+      });
+
+      // Clean all titles
+      for (const d of openDecisions) {
+        const clean = d.title.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+        const short = clean.length > 80 ? clean.substring(0, 77) + "..." : clean;
+        if (short !== d.title) {
+          await prisma.agentLog.update({ where: { id: d.id }, data: { title: short } });
+        }
+      }
+
+      // Group by topic and keep only most recent per topic
+      const topics: Record<string, typeof openDecisions> = {};
+      for (const d of openDecisions) {
+        const t = d.title.toLowerCase();
+        let topic = "other";
+        if (t.includes("cta") || t.includes("click track")) topic = "cta";
+        else if (t.includes("search console") || t.includes("google_site")) topic = "gsc";
+        else if (t.includes("bank wire") || t.includes("payment")) topic = "payment";
+        else if (t.includes("quote") && (t.includes("logan") || t.includes("s-power"))) topic = "leads";
+        else if (t.includes("reddit") || t.includes("linkedin") || t.includes("distribution")) topic = "distribution";
+        else if (t.includes("seed data") || t.includes("test data")) topic = "seed";
+        else if (t.includes("accessib") || t.includes("wcag")) topic = "a11y";
+        if (!topics[topic]) topics[topic] = [];
+        topics[topic].push(d);
+      }
+
+      for (const decs of Object.values(topics)) {
+        for (let i = 1; i < decs.length; i++) {
+          await prisma.agentLog.update({
+            where: { id: decs[i].id },
+            data: { status: "completed" },
+          });
+          decisionsConsolidated++;
+        }
+      }
+    }
 
     // ── Reset decisions if requested (re-sync with correct attribution) ──
     if (resetDecisions) {
@@ -199,10 +250,11 @@ export async function POST(request: NextRequest) {
       ok: true,
       standupsCreated,
       decisionsCreated,
+      decisionsConsolidated,
       repliesAppended,
       threadsCreated,
       messagesCreated,
-      message: `Synced ${standupsCreated} standups, ${decisionsCreated} decisions, ${repliesAppended} replies, ${threadsCreated} threads, ${messagesCreated} messages`,
+      message: `Synced ${standupsCreated} standups, ${decisionsCreated} decisions, ${repliesAppended} replies, ${threadsCreated} threads, ${messagesCreated} messages${decisionsConsolidated ? `, consolidated ${decisionsConsolidated} decisions` : ""}`,
     });
   } catch (e) {
     console.error("Fleet sync error:", e);

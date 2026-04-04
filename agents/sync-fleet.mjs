@@ -169,7 +169,7 @@ try {
   const res = await fetch(targetUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-fleet-secret": syncSecret },
-    body: JSON.stringify({ standups, decisions, coc, resetDecisions: flags.resetDecisions || false, replies, chatThreads }),
+    body: JSON.stringify({ standups, decisions, coc, resetDecisions: flags.resetDecisions || false, replies, chatThreads, consolidateDecisions: true }),
   });
   const data = await res.json();
   if (res.ok) {
