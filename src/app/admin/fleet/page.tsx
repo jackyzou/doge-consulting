@@ -249,6 +249,9 @@ export default function OperationsPage() {
           <div className="flex gap-2">
             <Button onClick={() => setShowNewDecision(true)} className="bg-navy hover:bg-navy/90"><Plus className="h-4 w-4 mr-2" /> New Task</Button>
             <Button variant="outline" onClick={() => setShowArchive(!showArchive)}><Archive className="h-4 w-4 mr-2" /> Archive ({completedDecisions.length + rejectedDecisions.length})</Button>
+            {openDecisions.length > 0 && (
+              <Button variant="outline" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={() => { openDecisions.forEach(d => updateDecision(d.id, "completed")); }}><Check className="h-4 w-4 mr-2" /> Approve All ({openDecisions.length})</Button>
+            )}
           </div>
           {openDecisions.length > 0 && (
             <div className="space-y-2">
@@ -258,7 +261,7 @@ export default function OperationsPage() {
                   <CardContent className="p-3 sm:p-4"><div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1"><Badge className={`${p.color} border text-[10px] px-1.5`}>{p.label}</Badge>{d.assignedTo && <Badge variant="outline" className="text-[10px]">→ {d.assignedTo}</Badge>}</div>
-                      <h4 className="font-semibold text-sm leading-snug">{d.title}</h4>
+                      <h4 className="font-semibold text-sm leading-snug">{d.title.replace(/\*\*/g, "").substring(0, 80)}</h4>
                       {d.content && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{d.content.split("\n---")[0]}</p>}
                       <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground">
                         {agent && <span className="flex items-center gap-1"><span className="w-4 h-4 rounded-full text-[8px] text-white flex items-center justify-center font-bold" style={{ background: agent.color }}>{agent.avatar[0]}</span>{agent.name}</span>}

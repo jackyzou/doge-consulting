@@ -1216,13 +1216,17 @@ try {
     const checkStmt = conn.prepare(`SELECT id FROM AgentLog WHERE type='decision' AND title=?`);
     const insertStmt = conn.prepare(`INSERT INTO AgentLog (id,agent,type,priority,title,content,status,relatedTo,createdAt,updatedAt) VALUES (?,?,?,?,?,?,?,?,?,?)`);
     const ts = new Date().toISOString();
-    for (const d of allDecisions) {
+    for (const d of allDecisions.slice(0, 7)) {
+      // Clean title: strip markdown bold, collapse whitespace, truncate to 80 chars
+      const cleanTitle = d.text.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+      const shortTitle = cleanTitle.length > 80 ? cleanTitle.substring(0, 77) + "..." : cleanTitle;
+
       // Skip if already exists (avoids duplicates across multiple standup runs)
-      const existing = checkStmt.get(d.text);
+      const existing = checkStmt.get(shortTitle);
       if (!existing) {
         insertStmt.run(
           randomUUID(), d.agent, 'decision', 'normal',
-          d.text, `From standup ${today} (proposed by ${d.agent}): ${d.text}`,
+          shortTitle, `From standup ${today} (proposed by ${d.agent}): ${cleanTitle}`,
           'open', `standup:${today}`, ts, ts
         );
         decisionsWritten++;
