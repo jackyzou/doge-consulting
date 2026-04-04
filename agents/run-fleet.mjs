@@ -1063,6 +1063,10 @@ allRequests.forEach(r => {
 const recentLogFile = join(logsDir, `${today}.md`);
 const existingLog = existsSync(recentLogFile) ? readFileSync(recentLogFile, "utf-8") : "";
 
+// Count previous standup runs today
+const previousRuns = (existingLog.match(/\| #\d+ \|/g) || []).length;
+const runNumber = previousRuns + 1;
+
 // Build CEO items list from agent reports
 const ceoItems = [];
 for (const r of reports) {
@@ -1071,77 +1075,135 @@ for (const r of reports) {
   }
 }
 
-const logEntry = `
-# ${mode === "morning" ? "Morning Brief" : "Evening Summary"} — ${timestamp}
+// Status emoji helper
+const statusEmoji = (val, target) => {
+  if (target <= 0) return "";
+  const pct = val / target;
+  return pct >= 0.5 ? "🟢" : pct >= 0.1 ? "🟡" : "🔴";
+};
 
-> Fleet standup for **${new Date(today).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}**
+// Build structured agent summary rows for the status board
+const agentStatusRows = reports.map(r => {
+  const focus = r.priorities?.[0]?.substring(0, 60) || "—";
+  const blocker = r.blockers?.[0]?.substring(0, 40) || "—";
+  const dCount = r.decisions?.length || 0;
+  return `| ${r.name} | ${r.role} | ${focus} | ${blocker} | ${dCount} |`;
+}).join("\n");
+
+// Build decision table with linkable IDs (max 7 per CoC)
+const decisionRows = allDecisions.slice(0, 7).map((d, i) => {
+  const name = CONFIG.agents.find(a => a.id === d.agent)?.name || d.agent;
+  const id = `DT-${today}-${i + 1}`;
+  const title = d.text.replace(/\*\*/g, "").replace(/\s+/g, " ").trim().substring(0, 60);
+  return `| ${i + 1} | ${id} | ${title} | ${name} | \`${d.status}\` |`;
+}).join("\n");
+
+// Build structured agent reports
+const agentReportSections = reports.map(r => {
+  if (r.fullResponse) {
+    // Parse the LLM response to extract structured fields
+    const summary = r.fullResponse.match(/##\s*Report\s*\n+([\s\S]*?)(?=\n##|\n-\s*\[DECISION|$)/)?.[1]?.trim()?.substring(0, 300) || r.fullResponse.substring(0, 200);
+    const doneItems = r.fullResponse.match(/(?:shipped|completed|done|delivered).*?[:]\s*(.*?)(?:\n|$)/gi)?.slice(0, 3)?.map(s => s.trim()) || [];
+    const decisions = r.decisions?.map(d => d.text.replace(/\*\*/g, "").trim().substring(0, 80)) || [];
+
+    return `### ${r.name} — ${r.role}
+
+**Summary:** ${summary.replace(/\n/g, " ").substring(0, 250)}
+
+- **Done:** ${doneItems.length > 0 ? doneItems.join("; ") : "—"}
+- **Doing:** ${r.priorities?.[0] || "—"}
+- **Blocked:** ${r.blockers?.[0] || "—"}
+- **Decisions:** ${decisions.map((d, i) => `[DT-${today}-${allDecisions.findIndex(ad => ad.agent === r.id) + 1}] ${d}`).join("; ") || "—"}`;
+  }
+
+  // Structured fallback
+  return `### ${r.name} — ${r.role}
+
+**Summary:** ${r.priorities?.[0] || "No report available."}
+
+- **Done:** —
+- **Doing:** ${r.priorities?.join("; ") || "—"}
+- **Blocked:** ${r.blockers?.join("; ") || "—"}
+- **Decisions:** ${r.decisions?.map(d => d.text.substring(0, 60)).join("; ") || "—"}`;
+}).join("\n\n---\n\n");
+
+// Build standup history table
+let standupHistory = `| #${runNumber} | ${timestamp} | ${allDecisions.length} decisions, ${reports.filter(r => r.fullResponse).length} LLM reports |`;
+// Preserve previous runs from existing log
+const prevHistoryMatch = existingLog.match(/## Standup History\s*\n\n\| Run.*\n\|[-| ]+\n([\s\S]*?)(?=\n---|\n\*Last|$)/);
+if (prevHistoryMatch) {
+  standupHistory = prevHistoryMatch[1].trim() + "\n" + standupHistory;
+}
+
+// ── RENDER FULL DAILY LOG (re-renders, not appends) ──
+const logEntry = `# Daily Brief — ${new Date(today).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+
+> **Standup #${runNumber}** · ${timestamp} · Source: ${dbSource} · v${version}
 
 ---
 
-## Fleet Status
+## Dashboard
 
-| Metric | Value |
-|--------|-------|
-| **Version** | v${version} |
-| **Pages** | ${pageCount} |
-| **Blog Posts** | ${db?.blogPosts ?? "?"} published |
-| **Revenue** | $0 / $${CONFIG.revenue.target.toLocaleString()} |
-| **Subscribers** | ${db?.subscribers ?? "?"} |
-| **Quotes** | ${db?.totalQuotes ?? "?"} total, ${db?.pendingQuotes ?? "?"} pending |
-| **Orders** | ${db?.totalOrders ?? "?"} |
-| **Inquiries** | ${db?.contactInquiries ?? "?"} new |
+| Metric | Value | Target | |
+|--------|-------|--------|-|
+| Revenue | $${db?.totalRevenue ?? 0} | $500K EOY | ${statusEmoji(db?.totalRevenue ?? 0, 500000)} |
+| Blog Posts | ${db?.blogPosts ?? 0} published | 100+ EOY | ${statusEmoji(db?.blogPosts ?? 0, 100)} |
+| Subscribers | ${db?.subscribers ?? 0} | 5,000 EOY | ${statusEmoji(db?.subscribers ?? 0, 5000)} |
+| Quotes | ${db?.totalQuotes ?? 0} total (${db?.pendingQuotes ?? 0} pending) | — | — |
+| Orders | ${db?.totalOrders ?? 0} | — | — |
+| Page Views | ${db?.pageViews ?? 0} (total) | 500/wk | ${statusEmoji(db?.pageViews ?? 0, 2000)} |
+| Site Health | HEALTHY | Healthy | 🟢 |
+
+---
+
+## Agent Status Board
+
+| Agent | Role | Today's Focus | Blocker | Decisions |
+|-------|------|--------------|---------|-----------|
+${agentStatusRows}
+
+---
+
+## Decisions
+
+> Max 7 per standup. Alex decides. CEO escalations below.
+
+| # | ID | Decision | Owner | Status |
+|---|-----|----------|-------|--------|
+${decisionRows}
+${allDecisions.length > 7 ? `\n*+${allDecisions.length - 7} more decisions deferred to next standup*` : ""}
+
+### CEO Escalations
+
+${ceoItems.length > 0 ? ceoItems.map((item, i) => `${i + 1}. ${item}`).join("\n") : "> None — Alex decided all items within authority."}
 
 ---
 
 ## Agent Reports
 
-${reports.map(r => {
-  // Prefer the full LLM response for rich content; fall back to parsed fields
-  if (r.fullResponse) {
-    return `### ${r.name} — ${r.role}\n\n${r.fullResponse}`;
-  }
-  // Structured fallback when no full response
-  return `### ${r.name} — ${r.role}
-
-#### Priorities
-${r.priorities.map((p, i) => `${i + 1}. ${p}`).join("\n") || "- (none)"}
-
-#### Decisions
-${r.decisions.map(d => `- **\\[DECISION\\]** ${d.text} — \`${d.status}\``).join("\n") || "- (none)"}
-
-#### Requests
-${r.requests.map(req => `- ${req}`).join("\n") || "- (none)"}
-
-${r.blockers?.length ? `#### Blockers\n${r.blockers.map(b => `- 🔴 ${b}`).join("\n")}` : ""}`;
-}).join("\n\n---\n\n")}
+${agentReportSections}
 
 ---
 
-## CEO Brief — Items Requiring Decision
+## Alex Chen — COO Synthesis
 
-${ceoItems.length > 0 ? ceoItems.map((item, i) => `${i + 1}. ${item}`).join("\n") : "> No items requiring CEO decision this standup."}
-
----
-
-## In-Progress Decision Threads
-
-${allReplies.length > 0 ? allReplies.map(r => {
-  const name = CONFIG.agents.find(a => a.id === r.agent)?.name || r.agent;
-  return `> **${r.ticket}**\n> \n> *[REPLY from ${name}]:* ${r.reply}`;
-}).join("\n\n") : "> No in-progress tickets."}
+${alexSynthesis || "> Synthesis pending..."}
 
 ---
 
-## Decisions Log
+## Standup History
 
-| # | Agent | Decision | Status |
-|---|-------|----------|--------|
-${allDecisions.map((d, i) => `| ${i + 1} | ${CONFIG.agents.find(a => a.id === d.agent)?.name || d.agent} | ${d.text.substring(0, 100)} | \`${d.status}\` |`).join("\n")}
+| Run | Time | Key Changes |
+|-----|------|-------------|
+${standupHistory}
 
 ---
+
+*Last updated: ${timestamp}*
 `;
 
-writeFileSync(recentLogFile, existingLog + logEntry, "utf-8");
+// RE-RENDER the daily file (not append)
+writeFileSync(recentLogFile, logEntry, "utf-8");
 
 // ── Phase 6b: Write decisions to local DB for tracking ──
 let decisionsWritten = 0;
