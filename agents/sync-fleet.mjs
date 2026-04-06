@@ -64,35 +64,27 @@ const decisions = [];
 for (const file of files) {
   const content = readFileSync(join(logsDir, file), "utf-8");
   const date = file.replace(".md", "");
-  const agentMatches = content.match(/\*\*(Alex|Amy|Seth|Rachel|Seto|Tiffany|Jacky)\b/g);
+  const agentMatches = content.match(/\*\*(Alex|Amy|Seth|Rachel|Seto|Tiffany|Jacky|Kim)\b/g);
   const agents = [...new Set((agentMatches || []).map(m => m.replace(/\*\*/g, "")))];
 
   standups.push({ date, content, agents });
   console.log(`  📝 ${date} — ${(content.length / 1024).toFixed(1)} KB, ${agents.length} agents`);
 
-  // Extract decisions with correct agent attribution
-  // Track which agent section we're inside by looking for #### Agent Name headers
+  // Extract decisions from log files (legacy format)
   let currentAgent = "alex";
-  const agentMap = { "seth": "seth", "seto": "seto", "rachel": "rachel", "amy": "amy", "tiffany": "tiffany", "alex": "alex" };
+  const agentMap = { "seth": "seth", "seto": "seto", "rachel": "rachel", "amy": "amy", "tiffany": "tiffany", "alex": "alex", "kim": "kim" };
 
   for (const line of content.split("\n")) {
     const trimmed = line.trim();
-
-    // Detect agent section headers like "#### Seth Parker (CTO)" or "#### Amy Lin (CFO)"
-    const agentHeader = trimmed.match(/^#{1,4}\s+(Seth|Seto|Rachel|Amy|Tiffany|Alex)\s/i);
-    if (agentHeader) {
-      currentAgent = agentMap[agentHeader[1].toLowerCase()] || "alex";
-    }
-    // Also detect "### Round 2 — Alex" synthesis sections
-    if (trimmed.match(/Round\s*2|Synthesis|Alex Chen Synthesis/i)) {
-      currentAgent = "alex";
-    }
+    const agentHeader = trimmed.match(/^#{1,4}\s+(Seth|Seto|Rachel|Amy|Tiffany|Alex|Kim)\s/i);
+    if (agentHeader) currentAgent = agentMap[agentHeader[1].toLowerCase()] || "alex";
+    if (trimmed.match(/Round\s*2|Synthesis|Alex Chen Synthesis/i)) currentAgent = "alex";
 
     const decMatch = trimmed.match(/\[DECISION\]\s*(.+?)\s*—\s*(NEEDS_CEO|PROPOSED|APPROVED|REJECTED|MODIFIED)/i);
     if (decMatch) {
       decisions.push({
         agent: currentAgent,
-        title: decMatch[1].trim(),
+        title: decMatch[1].replace(/\*\*/g, "").trim().substring(0, 80),
         content: `From standup ${date} (proposed by ${currentAgent}): ${decMatch[1].trim()}`,
         status: decMatch[2] === "NEEDS_CEO" ? "open" : decMatch[2] === "PROPOSED" ? "open" : "completed",
         priority: decMatch[2] === "NEEDS_CEO" ? "critical" : "normal",
@@ -101,6 +93,44 @@ for (const file of files) {
       });
     }
   }
+}
+
+// Also read decisions from dev.db (primary source — run-fleet.mjs writes here)
+try {
+  const Database = require("better-sqlite3");
+  const devDbPath = join(ROOT, "dev.db");
+  if (existsSync(devDbPath)) {
+    const conn = new Database(devDbPath, { readonly: true });
+    const dbDecisions = conn.prepare(
+      `SELECT id, agent, title, content, status, priority, assignedTo, relatedTo, createdAt
+       FROM AgentLog WHERE type = 'decision' AND createdAt > datetime('now', '-${days} days')
+       ORDER BY createdAt DESC`
+    ).all();
+    
+    // Merge DB decisions (avoid duplicates by title)
+    const existingTitles = new Set(decisions.map(d => d.title.toLowerCase().substring(0, 40)));
+    let dbAdded = 0;
+    for (const d of dbDecisions) {
+      const shortTitle = d.title?.substring(0, 40).toLowerCase() || "";
+      if (!existingTitles.has(shortTitle)) {
+        decisions.push({
+          agent: d.agent || "alex",
+          title: d.title?.substring(0, 80) || "Untitled",
+          content: d.content || "",
+          status: d.status || "open",
+          priority: d.priority || "normal",
+          assignedTo: d.assignedTo || null,
+          relatedTo: d.relatedTo || null,
+        });
+        existingTitles.add(shortTitle);
+        dbAdded++;
+      }
+    }
+    conn.close();
+    if (dbAdded > 0) console.log(`  📊 Added ${dbAdded} decisions from dev.db`);
+  }
+} catch (e) {
+  console.log(`  ⚠️ Could not read decisions from dev.db: ${e.message}`);
 }
 
 console.log(`\n📊 Total: ${standups.length} standups, ${decisions.length} decisions`);
