@@ -105,7 +105,7 @@ try {
     const conn = new Database(devDbPath, { readonly: true });
     const dbDecisions = conn.prepare(
       `SELECT id, agent, title, content, status, priority, assignedTo, relatedTo, createdAt
-       FROM AgentLog WHERE type = 'decision' AND createdAt > datetime('now', '-${days} days')
+       FROM AgentLog WHERE type = 'decision' AND createdAt > datetime('now', '-30 days')
        ORDER BY createdAt DESC`
     ).all();
     
