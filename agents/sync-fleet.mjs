@@ -97,6 +97,8 @@ for (const file of files) {
 
 // Also read decisions from dev.db (primary source — run-fleet.mjs writes here)
 try {
+  const { createRequire } = await import("module");
+  const require = createRequire(import.meta.url);
   const Database = require("better-sqlite3");
   const devDbPath = join(ROOT, "dev.db");
   if (existsSync(devDbPath)) {
