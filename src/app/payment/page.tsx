@@ -240,18 +240,18 @@ function PaymentContent() {
                   <Card className="mt-6">
                     <CardHeader><CardTitle className="text-lg">{t("paymentPage.bankDetailsTitle")}</CardTitle></CardHeader>
                     <CardContent className="space-y-4 text-sm">
-                      <p className="text-muted-foreground">{t("paymentPage.bankInstructions")}</p>
-                      <div className="rounded-lg bg-muted p-4 space-y-2">
-                        <div className="flex justify-between"><span className="text-muted-foreground">{t("paymentPage.bankName")}</span><span className="font-medium">{t("paymentPage.bankNameValue")}</span></div>
-                        <div className="flex justify-between"><span className="text-muted-foreground">{t("paymentPage.accountName")}</span><span className="font-medium">{t("paymentPage.accountNameValue")}</span></div>
-                        <div className="flex justify-between"><span className="text-muted-foreground">{t("paymentPage.accountNumber")}</span><span className="font-medium font-mono">XXX-XXXXXX-XXX</span></div>
-                        <div className="flex justify-between"><span className="text-muted-foreground">{t("paymentPage.swiftCode")}</span><span className="font-medium font-mono">HSBCHKHHHKH</span></div>
-                        <div className="flex justify-between"><span className="text-muted-foreground">{t("paymentPage.currency")}</span><span className="font-medium">USD</span></div>
-                        <div className="flex justify-between"><span className="text-muted-foreground">{t("paymentPage.reference")}</span><span className="font-medium text-teal">{order.orderId}</span></div>
+                      <p className="text-muted-foreground">
+                        To pay by bank wire transfer, please contact us directly and we will provide you with our bank details.
+                      </p>
+                      <div className="rounded-lg bg-teal/5 border border-teal/20 p-4 text-center space-y-2">
+                        <p className="font-medium text-navy">Contact for Wire Transfer Details</p>
+                        <p className="text-sm text-muted-foreground">Email: <a href="mailto:dogetech77@gmail.com" className="text-teal hover:underline">dogetech77@gmail.com</a></p>
+                        <p className="text-sm text-muted-foreground">Phone: <a href="tel:+14252230449" className="text-teal hover:underline">+1 (425) 223-0449</a></p>
+                        <p className="text-xs text-muted-foreground mt-2">Reference your order: <span className="font-medium text-teal">{order.orderId}</span></p>
                       </div>
                       <div className="flex items-start gap-2 text-xs text-muted-foreground">
                         <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-                        {t("paymentPage.bankNote")}
+                        Wire transfers typically take 1-3 business days to process. Lower processing fees than credit card.
                       </div>
                     </CardContent>
                   </Card>
