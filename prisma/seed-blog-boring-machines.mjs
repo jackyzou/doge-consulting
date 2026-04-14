@@ -259,13 +259,16 @@ For field service businesses, rental equipment companies, and heavy equipment de
 // Insert the blog post
 try {
   const existing = db.prepare("SELECT id FROM BlogPost WHERE slug = ?").get(post.slug);
+  const excerpt = "Compare the S-Power XDT50 against Sir Meccanica, Climax, and other portable line boring machines. Learn how to source factory-direct from China at 50-65% below US retail.";
   if (existing) {
-    console.log("Blog post already exists, skipping:", post.slug);
+    db.prepare(`UPDATE BlogPost SET title=?, excerpt=?, content=?, readTime=?, updatedAt=datetime('now') WHERE slug=?`)
+      .run(post.title, excerpt, post.content, post.readTime, post.slug);
+    console.log("✅ Blog post UPDATED:", post.slug);
   } else {
     db.prepare(`INSERT INTO BlogPost (id, slug, title, excerpt, content, category, language, published, authorName, emoji, readTime, createdAt, updatedAt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`)
-      .run(post.id, post.slug, post.title, "Compare the S-Power XDT50 against Sir Meccanica, Climax, and other portable line boring machines. Learn how to source factory-direct from China at 50-65% below US retail.", post.content, post.category, post.language, post.published ? 1 : 0, post.authorName, post.emoji, post.readTime);
-    console.log("✅ Blog post seeded:", post.title);
+      .run(post.id, post.slug, post.title, excerpt, post.content, post.category, post.language, post.published ? 1 : 0, post.authorName, post.emoji, post.readTime);
+    console.log("✅ Blog post INSERTED:", post.slug);
   }
 } catch (e) {
   console.error("Error seeding blog post:", e.message);

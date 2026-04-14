@@ -5,7 +5,6 @@ const db = new Database(process.env.DATABASE_PATH || "dev.db");
 const slug = "lpddr5-memory-sourcing-guide-startups";
 
 const existing = db.prepare("SELECT id FROM BlogPost WHERE slug = ?").get(slug);
-if (existing) { console.log("Already exists"); db.close(); process.exit(0); }
 
 const title = "Navigating the LPDDR5 Supply Chain: Why the Silicon Valley-China Corridor is Critical for Hardware Startups";
 const excerpt = "A comprehensive analysis of the LPDDR5 memory market for hardware startups. Learn how the Silicon Valley-China sourcing corridor can reduce your BOM cost by 40-60%, why our Top 3 SKU strategy minimizes risk, and how to build a resilient hybrid supply chain for embodied AI and edge computing devices.";
@@ -468,9 +467,16 @@ At **Doge Consulting Group Limited**, we specialize in this hybrid model. Whethe
 *Seattle · Hong Kong · Shenzhen*
 `;
 
-db.prepare(`INSERT INTO BlogPost (id, slug, title, excerpt, content, category, language, published, authorName, emoji, readTime, createdAt, updatedAt)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`)
-  .run(randomUUID(), slug, title, excerpt, content, "electronics", "en", 1, "Seto Nakamura", "💾", "18 min");
+if (existing) {
+  // Update existing post with expanded content
+  db.prepare(`UPDATE BlogPost SET title=?, excerpt=?, content=?, readTime=?, updatedAt=datetime('now') WHERE slug=?`)
+    .run(title, excerpt, content, "18 min", slug);
+  console.log("Blog post UPDATED:", title);
+} else {
+  db.prepare(`INSERT INTO BlogPost (id, slug, title, excerpt, content, category, language, published, authorName, emoji, readTime, createdAt, updatedAt)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`)
+    .run(randomUUID(), slug, title, excerpt, content, "electronics", "en", 1, "Seto Nakamura", "💾", "18 min");
+  console.log("Blog post INSERTED:", title);
+}
 
-console.log("Blog post seeded:", title);
 db.close();
