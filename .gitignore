@@ -74,3 +74,8 @@ test-result.txt
 test-ops-output.txt
 test-features.mjs
 check-*.jstmp-issue-body.md
+
+# Client quotes & generated PDFs (confidential, local only)
+*.pdf
+LPDDR5_Quotation_*.html
+standup-*.txt
