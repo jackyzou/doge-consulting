@@ -9,7 +9,9 @@ const existing = db.prepare("SELECT id FROM BlogPost WHERE slug = ?").get(slug);
 const title = "Navigating the LPDDR5 Supply Chain: Why the Silicon Valley-China Corridor is Critical for Hardware Startups";
 const excerpt = "A comprehensive analysis of the LPDDR5 memory market for hardware startups. Learn how the Silicon Valley-China sourcing corridor can reduce your BOM cost by 40-60%, why our Top 3 SKU strategy minimizes risk, and how to build a resilient hybrid supply chain for embodied AI and edge computing devices.";
 
-const content = `# Navigating the LPDDR5 Supply Chain: Why the Silicon Valley-China Corridor is Critical for Hardware Startups
+const content = `![LPDDR5 Memory Chips for Hardware Startups](https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&h=630&fit=crop)
+
+# Navigating the LPDDR5 Supply Chain: Why the Silicon Valley-China Corridor is Critical for Hardware Startups
 
 *A strategic analysis for founders, hardware engineers, and procurement leaders building the next generation of edge AI, robotics, and mobile computing devices.*
 

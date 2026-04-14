@@ -12,7 +12,9 @@ const post = {
   id: randomUUID(),
   slug: "portable-line-boring-machines-guide",
   title: "The Complete Guide to Portable Line Boring & Bore Welding Machines: XDT50 vs Competitors (2026)",
-  content: `# The Complete Guide to Portable Line Boring & Bore Welding Machines
+  content: `![Portable Line Boring Machine in Field Service](https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=1200&h=630&fit=crop)
+
+# The Complete Guide to Portable Line Boring & Bore Welding Machines
 
 Portable line boring machines are essential tools for on-site repair of heavy equipment — excavators, loaders, bulldozers, cranes, and industrial machinery. Instead of dismantling a $500K excavator and shipping it to a machine shop, a portable boring machine goes to the equipment and repairs the bore in place.
 
