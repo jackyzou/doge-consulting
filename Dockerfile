@@ -74,8 +74,9 @@ COPY --from=builder /app/prisma/seed-blog-blinds.mjs ./prisma/seed-blog-blinds.m
 # Copy VERSION file for health endpoint
 COPY --from=builder /app/VERSION ./VERSION
 
-# Copy 1688 search microservice
+# Copy 1688 search microservice + quote seed scripts
 COPY --from=builder /app/scripts/1688-search-server.mjs ./scripts/1688-search-server.mjs
+COPY --from=builder /app/scripts/seed-quote-kevin.mjs ./scripts/seed-quote-kevin.mjs
 
 # Install Playwright Chromium browser (for 1688 search)
 RUN npx playwright install chromium 2>/dev/null || echo 'Playwright install skipped'

@@ -32,6 +32,14 @@ for f in prisma/seed-blog-*.mjs; do
   fi
 done
 
+# Seed quotes (idempotent — checks before inserting)
+for f in scripts/seed-quote-*.mjs; do
+  if [ -f "$f" ]; then
+    echo "  Seeding quote: $f..."
+    node "$f" || echo "  Warning: $f failed (non-fatal)"
+  fi
+done
+
 # Start 1688 search microservice in background (for AI Product Matcher)
 if [ -f scripts/1688-search-server.mjs ]; then
   echo "Starting 1688 search microservice on port 4688..."

@@ -43,9 +43,10 @@ playwright.config.ts
 test-out.txt
 test-output.txt
 
-# Scripts not needed in image (except 1688 search microservice)
+# Scripts not needed in image (except search microservice + quote seeds)
 scripts/
 !scripts/1688-search-server.mjs
+!scripts/seed-quote-*.mjs
 
 # Docs
 README.md
